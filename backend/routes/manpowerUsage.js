@@ -91,4 +91,44 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// POST bulk
+router.post('/bulk', async (req, res) => {
+  const { entries } = req.body;
+
+  if (!entries || !Array.isArray(entries) || entries.length === 0) {
+    return res.status(400).json({ success: false, message: 'No entries provided' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    for (const entry of entries) {
+      const {
+        project_id,
+        worker_id,
+        work_days,
+        daily_rate,
+        work_date,
+        recorded_by
+      } = entry;
+
+      await connection.execute(
+        `INSERT INTO manpower_usage (project_id, worker_id, work_days, daily_rate, work_date, recorded_by)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [project_id, worker_id, work_days, daily_rate, work_date, recorded_by || null]
+      );
+    }
+
+    await connection.commit();
+    res.json({ success: true, inserted: entries.length, message: `${entries.length} manpower records saved` });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Bulk manpower insert error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
 module.exports = router;

@@ -89,4 +89,46 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// POST bulk
+router.post('/bulk', async (req, res) => {
+  const { entries } = req.body;
+
+  if (!entries || !Array.isArray(entries) || entries.length === 0) {
+    return res.status(400).json({ success: false, message: 'No entries provided' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    for (const entry of entries) {
+      const {
+        project_id,
+        machine_id,
+        usage_hours,
+        rate_per_hour,
+        usage_date,
+        operator_name,
+        recorded_by
+      } = entry;
+
+      await connection.execute(
+        `INSERT INTO machine_usage
+         (project_id, machine_id, usage_hours, hourly_rate, usage_date, operator_name, recorded_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [project_id, machine_id, usage_hours, rate_per_hour, usage_date, operator_name || null, recorded_by || null]
+      );
+    }
+
+    await connection.commit();
+    res.json({ success: true, inserted: entries.length, message: `${entries.length} machine records saved` });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Bulk machine insert error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
 module.exports = router;

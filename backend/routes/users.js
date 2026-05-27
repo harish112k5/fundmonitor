@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const bcrypt = require('bcryptjs');
 
 // GET all users (with role name)
 router.get('/', async (req, res) => {
@@ -40,9 +41,14 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, email, password_hash, role_id } = req.body;
+    let finalHash = 'temp_hash';
+    if (password_hash) {
+      const salt = await bcrypt.genSalt(10);
+      finalHash = await bcrypt.hash(password_hash, salt);
+    }
     const [result] = await db.query(
       'INSERT INTO users (name, email, password_hash, role_id) VALUES (?, ?, ?, ?)',
-      [name, email, password_hash || 'temp_hash', role_id]
+      [name, email, finalHash, role_id]
     );
     res.status(201).json({ user_id: result.insertId, name, email, role_id });
   } catch (err) {
