@@ -29,6 +29,7 @@ import AlertsPage from './pages/AlertsPage';
 import BudgetComparison from './pages/BudgetComparison';
 import ProjectDetail from './pages/ProjectDetail';
 import RecycleBin from './pages/RecycleBin';
+import AdminPanel from './pages/AdminPanel';
 
 // Protected route wrapper
 function ProtectedRoute({ children, roles }) {
@@ -142,6 +143,9 @@ function AppRoutes() {
               } />
               <Route path="/audit-log" element={
                 <ProtectedRoute roles={['admin']}><AuditLog /></ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute roles={['admin']}><AdminPanel /></ProtectedRoute>
               } />
 
               {/* Fallback */}

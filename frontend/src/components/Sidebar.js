@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   HiOutlineViewGrid,
@@ -28,6 +28,7 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [recycleCount, setRecycleCount] = useState(0);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout, hasRole } = useAuth();
 
   React.useEffect(() => {
@@ -147,9 +148,16 @@ export default function Sidebar() {
 
         {/* User info */}
         {user && (
-          <div className="sidebar-user">
-            <div className="sidebar-user-avatar">
+          <div className="sidebar-user" onClick={() => { if(user.role_name === 'admin') navigate('/admin'); }} style={{ cursor: user.role_name === 'admin' ? 'pointer' : 'default' }}>
+            <div className="sidebar-user-avatar" style={user.role_name === 'admin' ? { position: 'relative' } : {}}>
               {user.name?.charAt(0)?.toUpperCase()}
+              {user.role_name === 'admin' && (
+                <span style={{
+                  position: 'absolute', bottom: -2, right: -2,
+                  background: '#ef4444', borderRadius: '50%',
+                  width: 12, height: 12, border: '1px solid #0f0f1a'
+                }}></span>
+              )}
             </div>
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{user.name}</div>
