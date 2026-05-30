@@ -44,6 +44,7 @@ app.use('/api/project-team', require('./routes/projectTeam'));
 app.use('/api/audit-log', require('./routes/auditLog'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/recycle-bin', require('./routes/recycleBin'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Health check
 app.get('/api/health', (req, res) => {
