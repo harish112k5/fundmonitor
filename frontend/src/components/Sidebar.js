@@ -59,6 +59,7 @@ export default function Sidebar() {
         { path: '/projects', label: 'Projects', icon: HiOutlineOfficeBuilding },
         { path: '/project-progress', label: 'Progress', icon: HiOutlineChartBar },
         { path: '/project-team', label: 'Team', icon: HiOutlineUserGroup, roles: ['admin', 'manager'] },
+        { path: '/import', label: 'Import Project', icon: HiOutlineDocumentText, roles: ['admin', 'manager'] },
       ]
     },
     {
