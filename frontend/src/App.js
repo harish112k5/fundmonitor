@@ -29,6 +29,7 @@ import AlertsPage from './pages/AlertsPage';
 import BudgetComparison from './pages/BudgetComparison';
 import ProjectDetail from './pages/ProjectDetail';
 import RecycleBin from './pages/RecycleBin';
+import ImportProject from './pages/ImportProject';
 import AdminPanel from './pages/AdminPanel';
 
 // Protected route wrapper
@@ -135,6 +136,9 @@ function AppRoutes() {
               } />
               <Route path="/recycle-bin" element={
                 <ProtectedRoute roles={['admin', 'manager']}><RecycleBin /></ProtectedRoute>
+              } />
+              <Route path="/import" element={
+                <ProtectedRoute roles={['admin', 'manager']}><ImportProject /></ProtectedRoute>
               } />
 
               {/* Admin only */}
