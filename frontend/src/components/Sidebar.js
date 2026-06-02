@@ -29,7 +29,7 @@ export default function Sidebar() {
   const [recycleCount, setRecycleCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, hasRole } = useAuth();
+  const { user, logout } = useAuth();
 
   React.useEffect(() => {
     if (['admin', 'manager'].includes(user?.role_name)) {

@@ -16,7 +16,6 @@ export default function AdminPanel() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [loadingActivities, setLoadingActivities] = useState(false);
-  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
     // If not admin, boot them
@@ -32,14 +31,12 @@ export default function AdminPanel() {
   }, [user, navigate]);
 
   const fetchStats = async () => {
-    setLoadingStats(true);
     try {
       const { data } = await API.get('/admin/stats');
       if (data.success) setStats(data.data);
     } catch (err) {
       console.error(err);
     }
-    setLoadingStats(false);
   };
 
   const fetchUsers = async () => {

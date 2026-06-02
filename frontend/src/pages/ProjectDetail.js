@@ -10,16 +10,12 @@ import {
   HiOutlineArrowLeft,
   HiOutlineOfficeBuilding,
   HiOutlineCurrencyDollar,
-  HiOutlineUsers,
-  HiOutlineTruck,
   HiOutlineCube,
   HiOutlineDocumentText,
   HiOutlineCash,
   HiOutlineChartBar,
   HiOutlineClipboardList,
   HiOutlineUserGroup,
-  HiOutlineCog,
-  HiOutlineCalendar,
   HiOutlineLocationMarker,
 } from 'react-icons/hi';
 

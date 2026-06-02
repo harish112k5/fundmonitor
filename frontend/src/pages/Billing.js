@@ -11,7 +11,6 @@ const initialForm = { project_id: '', invoice_number: '', amount: '', status: 'd
 export default function Billing() {
   const [data, setData] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -20,8 +19,8 @@ export default function Billing() {
   const [form, setForm] = useState(initialForm);
 
   const load = () => {
-    Promise.all([API.get('/billing'), API.get('/projects'), API.get('/users')])
-      .then(([d, p, u]) => { setData(d.data); setProjects(p.data); setUsers(u.data); })
+    Promise.all([API.get('/billing'), API.get('/projects')])
+      .then(([d, p]) => { setData(d.data); setProjects(p.data); })
       .catch(() => toast.error('Failed')).finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);

@@ -12,7 +12,6 @@ export default function Loans() {
   const [data, setData] = useState([]);
   const [projects, setProjects] = useState([]);
   const [financiers, setFinanciers] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -21,8 +20,8 @@ export default function Loans() {
   const [form, setForm] = useState(initialForm);
 
   const load = () => {
-    Promise.all([API.get('/loans'), API.get('/projects'), API.get('/financiers'), API.get('/users')])
-      .then(([d, p, f, u]) => { setData(d.data); setProjects(p.data); setFinanciers(f.data); setUsers(u.data); })
+    Promise.all([API.get('/loans'), API.get('/projects'), API.get('/financiers')])
+      .then(([d, p, f]) => { setData(d.data); setProjects(p.data); setFinanciers(f.data); })
       .catch(() => toast.error('Failed')).finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
