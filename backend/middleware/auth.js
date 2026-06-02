@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'construction_erp_secret_key_2024';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Verify JWT token
 function authMiddleware(req, res, next) {
