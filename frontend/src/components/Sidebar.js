@@ -98,6 +98,7 @@ export default function Sidebar() {
         { path: '/finance-dashboard', label: 'Dashboard', icon: HiOutlineChartBar },
         { path: '/finance-budgeting', label: 'Budgeting', icon: HiOutlineCash },
         { path: '/finance-statements', label: 'Statements', icon: HiOutlineDocumentText },
+        { path: '/finance-ratios', label: 'Financial Ratios', icon: HiOutlineChartBar },
       ]
     },
     {

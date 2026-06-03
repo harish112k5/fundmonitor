@@ -203,4 +203,122 @@ router.get('/statements/:projectId', async (req, res) => {
   }
 });
 
+router.get('/ratios/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const costs = await getProjectCosts(projectId);
+    const revenues = await getProjectRevenues(projectId);
+    const funding = await getProjectFunding(projectId);
+
+    // Current Assets: Cash + Receivables + Unused Inventory
+    const cash = funding.total + revenues.paid - costs.total;
+    const receivables = revenues.pending;
+    const currentAssets = (cash > 0 ? cash : 0) + receivables;
+
+    const currentLiabilities = funding.loans || 1; // Avoid divide by zero
+
+    // Metrics
+    const netSales = revenues.total || 0;
+    const grossProfit = netSales - (costs.material + costs.manpower + costs.machine);
+    const netIncome = grossProfit - costs.other;
+
+    const totalAssets = currentAssets > 0 ? currentAssets : 1;
+    const totalEquity = funding.investments > 0 ? funding.investments : 1;
+
+    // Profitability
+    const grossProfitRate = netSales > 0 ? (grossProfit / netSales) * 100 : 0;
+    const returnOnSales = netSales > 0 ? (netIncome / netSales) * 100 : 0;
+    const returnOnAssets = (netIncome / totalAssets) * 100;
+    const returnOnEquity = (netIncome / totalEquity) * 100;
+
+    // Liquidity
+    const currentRatio = currentAssets / currentLiabilities;
+    const cashRatio = (cash > 0 ? cash : 0) / currentLiabilities;
+    const netWorkingCapital = currentAssets - currentLiabilities;
+
+    // Efficiency
+    const totalAssetTurnover = netSales / totalAssets;
+
+    // Leverage
+    const debtRatio = funding.loans / totalAssets;
+    const equityRatio = totalEquity / totalAssets;
+    const debtToEquity = funding.loans / totalEquity;
+
+    // Valuation
+    const [corpResult] = await pool.query('SELECT * FROM corporate_metrics WHERE project_id = ?', [projectId]);
+    const corp = corpResult[0] || { market_price_per_share: 100, common_shares_outstanding: 10000, preferred_dividends: 0 };
+    
+    const eps = (netIncome - parseFloat(corp.preferred_dividends || 0)) / parseFloat(corp.common_shares_outstanding || 1);
+    const peRatio = eps > 0 ? (parseFloat(corp.market_price_per_share) / eps) : 0;
+    
+    res.json({
+      profitability: { grossProfitRate, returnOnSales, returnOnAssets, returnOnEquity },
+      liquidity: { currentRatio, cashRatio, netWorkingCapital },
+      efficiency: { totalAssetTurnover },
+      leverage: { debtRatio, equityRatio, debtToEquity },
+      valuation: { eps, peRatio, marketPrice: corp.market_price_per_share, shares: corp.common_shares_outstanding }
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate ratios' });
+  }
+});
+
+router.get('/statements/full/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const costs = await getProjectCosts(projectId);
+    const revenues = await getProjectRevenues(projectId);
+    const funding = await getProjectFunding(projectId);
+
+    const cash = funding.total + revenues.paid - costs.total;
+    const receivables = revenues.pending;
+    
+    // Balance Sheet
+    const balanceSheet = {
+      assets: {
+        current: [
+          { name: 'Cash and Cash Equivalents', amount: cash > 0 ? cash : 0 },
+          { name: 'Accounts Receivable', amount: receivables },
+          { name: 'Inventory (Materials)', amount: 0 } // Mocked for now
+        ],
+        nonCurrent: [
+          { name: 'Property, Plant & Equipment', amount: costs.machine }
+        ]
+      },
+      liabilities: {
+        current: [
+          { name: 'Accounts Payable', amount: 0 },
+          { name: 'Short-term Loans', amount: funding.loans }
+        ]
+      },
+      equity: [
+        { name: 'Owner Contributions / Investments', amount: funding.investments },
+        { name: 'Retained Earnings', amount: revenues.total - costs.total }
+      ]
+    };
+
+    // Cash Flow Statement
+    const cashFlow = {
+      operating: [
+        { name: 'Cash received from customers', amount: revenues.paid },
+        { name: 'Cash paid to suppliers/employees', amount: -(costs.total) }
+      ],
+      investing: [
+        { name: 'Purchase of equipment', amount: -(costs.machine) }
+      ],
+      financing: [
+        { name: 'Proceeds from loans', amount: funding.loans },
+        { name: 'Proceeds from investors', amount: funding.investments }
+      ]
+    };
+
+    res.json({ balanceSheet, cashFlow });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate full statements' });
+  }
+});
+
 module.exports = router;

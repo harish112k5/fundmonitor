@@ -34,6 +34,7 @@ import AdminPanel from './pages/AdminPanel';
 import FinancialDashboard from './pages/FinancialDashboard';
 import Budgeting from './pages/Budgeting';
 import FinancialStatements from './pages/FinancialStatements';
+import FinancialRatios from './pages/FinancialRatios';
 // Protected route wrapper
 function ProtectedRoute({ children, roles }) {
   const { isAuthenticated, loading, user } = useAuth();
@@ -150,6 +151,9 @@ function AppRoutes() {
               } />
               <Route path="/finance-statements" element={
                 <ProtectedRoute roles={['admin', 'manager']}><FinancialStatements /></ProtectedRoute>
+              } />
+              <Route path="/finance-ratios" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialRatios /></ProtectedRoute>
               } />
 
               {/* Admin only */}
