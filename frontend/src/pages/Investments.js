@@ -1,10 +1,10 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import DeleteConfirm from '../components/DeleteConfirm';
 import toast from 'react-hot-toast';
-import { HiOutlinePlus } from 'react-icons/hi';
+
 
 const initialForm = { project_id: '', investor_id: '', amount: '', investment_date: '', notes: '', created_by: '' };
 

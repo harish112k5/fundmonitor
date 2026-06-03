@@ -4,7 +4,7 @@ import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import DeleteConfirm from '../components/DeleteConfirm';
 import toast from 'react-hot-toast';
-import { HiOutlinePlus } from 'react-icons/hi';
+
 
 const initialForm = { project_id: '', invoice_number: '', amount: '', status: 'draft', billing_date: '', due_date: '', created_by: '' };
 

@@ -1,10 +1,10 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import DeleteConfirm from '../components/DeleteConfirm';
 import toast from 'react-hot-toast';
-import { HiOutlinePlus } from 'react-icons/hi';
+
 
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const initialForm = { project_id: '', month: '', year: new Date().getFullYear().toString(), progress_percentage: '', remarks: '', recorded_by: '' };
