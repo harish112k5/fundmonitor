@@ -31,7 +31,16 @@ export default function LoginPage() {
         toast.success('Welcome back!');
       }
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Authentication failed');
+      const code = err.response?.data?.code;
+      const msg = err.response?.data?.error;
+
+      if (code === 'ACCOUNT_BLOCKED') {
+        toast.error('🚫 Account suspended. Contact admin.');
+      } else if (err.response?.status === 401) {
+        toast.error('Invalid email or password');
+      } else {
+        toast.error(msg || 'Authentication failed');
+      }
     } finally {
       setLoading(false);
     }

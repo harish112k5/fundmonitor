@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -67,8 +67,38 @@ export default function Billing() {
 
   return (
     <div className="animate-in">
-      <div className="page-header">
-        <div className="page-header-left"><h1>Billing</h1><p>Manage invoices</p></div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        flexWrap: 'nowrap'
+      }}>
+        <div>
+          <h1 style={{ margin: 0, color: '#F1F5F9' }}>Billing</h1>
+          <p style={{ margin: 0, color: '#94A3B8' }}>Manage invoices</p>
+        </div>
+        <button
+          onClick={() => {
+            setEditing(null);
+            setForm(initialForm);
+            setShowModal(true);
+          }}
+          style={{
+            backgroundColor: '#7C3AED',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 18px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            flexShrink: 0,
+            whiteSpace: 'nowrap'
+          }}
+        >
+          + Add Invoice
+        </button>
       </div>
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}

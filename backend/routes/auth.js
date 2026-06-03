@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
 
     // Find user
     const [users] = await db.query(`
-      SELECT u.user_id, u.name, u.email, u.password_hash, u.role_id, r.role_name
+      SELECT u.user_id, u.name, u.email, u.password_hash, u.role_id, r.role_name, u.is_active
       FROM users u JOIN roles r ON u.role_id = r.role_id
       WHERE u.email = ? AND u.is_deleted = 0
     `, [email]);
@@ -77,6 +77,11 @@ router.post('/login', async (req, res) => {
     }
 
     const user = users[0];
+
+    // Check blocked BEFORE password
+    if (user.is_active === 0) {
+      return res.status(403).json({ code: 'ACCOUNT_BLOCKED', error: 'Account suspended' });
+    }
 
     // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -90,6 +95,16 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    try {
+      // Log session
+      await db.query(
+        'INSERT INTO session_log (session_id, user_id, ip_address, login_time, status) VALUES (UUID(), ?, ?, NOW(), ?)',
+        [user.user_id, req.ip, 'active']
+      );
+    } catch (e) {
+      console.error('Session log error:', e);
+    }
 
     res.json({
       message: 'Login successful',

@@ -16,5 +16,20 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-export default API;
+// Handle 401/403 globally
+API.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401) {
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+    if (err.response?.data?.code === 'ACCOUNT_BLOCKED') {
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
 
+export default API;
