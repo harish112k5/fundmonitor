@@ -412,7 +412,7 @@ export default function MachineUsage() {
 
                   <div className="responsive-grid-cell-wrapper" data-label="Total Cost">
                     <div style={{ ...inputStyle, background: 'var(--bg-secondary)', color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-                      {fmt(calcTotal())}
+                      {fmt(cost)}
                     </div>
                   </div>
 
