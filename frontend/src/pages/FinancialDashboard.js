@@ -103,10 +103,10 @@ export default function FinancialDashboard() {
             
             {/* Trend Chart */}
             <div className="redesign-card">
-              <h3 style={{ marginBottom: '16px' }}><HiOutlineTrendingUp /> Monthly Cash Flow & Profit Trend</h3>
+              <h3 style={{ marginBottom: '16px' }}><HiOutlineTrendingUp /> Monthly Revenue vs Costs</h3>
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer>
-                  <ComposedChart data={data.trends} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <BarChart data={data.trends} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
                     <XAxis dataKey="month" stroke="var(--text-secondary)" />
                     <YAxis stroke="var(--text-secondary)" tickFormatter={(value) => '₹' + (value/100000).toFixed(1) + 'L'} />
@@ -114,8 +114,7 @@ export default function FinancialDashboard() {
                     <Legend />
                     <Bar dataKey="revenue" fill="#10b981" name="Revenue" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="cost" fill="#ef4444" name="Costs" radius={[4, 4, 0, 0]} />
-                    <Line type="monotone" dataKey="profit" stroke="#3b82f6" name="Net Profit" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  </ComposedChart>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
