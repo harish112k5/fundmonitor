@@ -41,7 +41,13 @@ export function AuthProvider({ children }) {
     return userData;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Tell backend to mark session as ended
+    try {
+      await API.post('/auth/logout');
+    } catch (_) {
+      // Ignore errors — always log out locally
+    }
     localStorage.removeItem('token');
     delete API.defaults.headers.common['Authorization'];
     setUser(null);

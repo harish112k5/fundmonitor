@@ -99,9 +99,17 @@ router.post('/login', async (req, res) => {
     );
 
     // Update last_login and record session
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
     const ua = req.headers['user-agent'] || null;
     await db.query(`UPDATE users SET last_login = NOW() WHERE user_id = ?`, [user.user_id]);
+
+    // Mark any old active sessions for this user as expired
+    await db.query(
+      `UPDATE session_log SET status = 'expired', logout_time = NOW()
+       WHERE user_id = ? AND status = 'active' AND login_time < DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+      [user.user_id]
+    );
+
     await db.query(
       `INSERT INTO session_log (session_id, user_id, login_time, ip_address, user_agent, status)
        VALUES (?, ?, NOW(), ?, ?, 'active')`,
@@ -144,6 +152,40 @@ router.get('/me', async (req, res) => {
     res.json(users[0]);
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// POST /api/auth/logout — mark session as ended
+router.post('/logout', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        // Mark the specific session as logged_out
+        if (decoded.session_id) {
+          await db.query(
+            `UPDATE session_log SET status = 'logged_out', logout_time = NOW()
+             WHERE session_id = ?`,
+            [decoded.session_id]
+          );
+        } else {
+          // Fallback: mark the most recent active session for this user
+          await db.query(
+            `UPDATE session_log SET status = 'logged_out', logout_time = NOW()
+             WHERE user_id = ? AND status = 'active'
+             ORDER BY login_time DESC LIMIT 1`,
+            [decoded.user_id]
+          );
+        }
+      } catch (_) {
+        // Token invalid/expired — still OK to logout
+      }
+    }
+    res.json({ success: true, message: 'Logged out' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
