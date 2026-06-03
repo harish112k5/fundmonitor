@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
 
     // Find user
     const [users] = await db.query(`
-      SELECT u.user_id, u.name, u.email, u.password_hash, u.role_id, r.role_name
+      SELECT u.user_id, u.name, u.email, u.password_hash, u.role_id, u.is_active, r.role_name
       FROM users u JOIN roles r ON u.role_id = r.role_id
       WHERE u.email = ? AND u.is_deleted = 0
     `, [email]);
@@ -77,6 +77,11 @@ router.post('/login', async (req, res) => {
     }
 
     const user = users[0];
+
+    // Check if user is blocked
+    if (!user.is_active) {
+      return res.status(403).json({ error: 'Your account has been blocked. Please contact the administrator.' });
+    }
 
     // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -112,12 +117,18 @@ router.get('/me', async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET);
 
     const [users] = await db.query(`
-      SELECT u.user_id, u.name, u.email, u.role_id, r.role_name
+      SELECT u.user_id, u.name, u.email, u.role_id, u.is_active, r.role_name
       FROM users u JOIN roles r ON u.role_id = r.role_id
       WHERE u.user_id = ? AND u.is_deleted = 0
     `, [decoded.user_id]);
 
     if (users.length === 0) return res.status(404).json({ error: 'User not found' });
+
+    // Reject token if user has been blocked since it was issued
+    if (!users[0].is_active) {
+      return res.status(403).json({ error: 'Account is blocked.' });
+    }
+
     res.json(users[0]);
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
