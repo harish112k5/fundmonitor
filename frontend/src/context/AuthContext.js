@@ -34,11 +34,8 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password, role_id) => {
     const res = await API.post('/auth/register', { name, email, password, role_id });
-    const { token, user: userData } = res.data;
-    localStorage.setItem('token', token);
-    API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    setUser(userData);
-    return userData;
+    // Don't auto-login — account needs admin approval first
+    return res.data;
   };
 
   const logout = async () => {

@@ -33,6 +33,8 @@ router.get('/users', adminOnly, async (req, res) => {
         u.name,
         u.email,
         u.is_active,
+        u.is_approved,
+        u.role_id,
         u.login_attempts,
         u.last_login,
         u.created_at,
@@ -165,6 +167,184 @@ router.get('/stats', adminOnly, async (req, res) => {
         total_actions_today,
       }
     });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── PATCH /api/admin/users/:id/approve ─────────────────────────────
+router.patch('/users/:id/approve', adminOnly, async (req, res) => {
+  try {
+    await db.query(
+      `UPDATE users SET is_approved = 1 WHERE user_id = ?`,
+      [req.params.id]
+    );
+    // log this admin action
+    await db.query(
+      `INSERT INTO activity_log (user_id, action, table_name, record_id, ip_address)
+       VALUES (?, 'APPROVE_USER', 'users', ?, ?)`,
+      [req.user.user_id, req.params.id, req.ip || req.headers['x-forwarded-for'] || 'unknown']
+    );
+    res.json({ success: true, message: 'User approved' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── PATCH /api/admin/users/:id/reject ─────────────────────────────
+router.patch('/users/:id/reject', adminOnly, async (req, res) => {
+  try {
+    await db.query(
+      `DELETE FROM users WHERE user_id = ? AND is_approved = 0`,
+      [req.params.id]
+    );
+    await db.query(
+      `INSERT INTO activity_log (user_id, action, table_name, record_id, ip_address)
+       VALUES (?, 'REJECT_USER', 'users', ?, ?)`,
+      [req.user.user_id, req.params.id, req.ip || req.headers['x-forwarded-for'] || 'unknown']
+    );
+    res.json({ success: true, message: 'User rejected and removed' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── POST /api/admin/create-admin ──────────────────────────────────
+// Only existing admins can create new admin accounts (max 2)
+const bcrypt = require('bcryptjs');
+router.post('/create-admin', adminOnly, async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    }
+
+    // Enforce max 2 admin accounts
+    const [[{ count: adminCount }]] = await db.query(
+      'SELECT COUNT(*) as count FROM users WHERE role_id = 1 AND is_deleted = 0'
+    );
+    if (adminCount >= 2) {
+      return res.status(403).json({ success: false, message: 'Maximum 2 admin accounts allowed' });
+    }
+
+    const [existing] = await db.query('SELECT user_id FROM users WHERE email = ? AND is_deleted = 0', [email]);
+    if (existing.length > 0) {
+      return res.status(409).json({ success: false, message: 'Email already exists' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+
+    await db.query(
+      'INSERT INTO users (name, email, password_hash, role_id, is_active, is_approved) VALUES (?, ?, ?, 1, 1, 1)',
+      [name, email, hash]
+    );
+
+    await db.query(
+      `INSERT INTO activity_log (user_id, action, table_name, record_id, ip_address)
+       VALUES (?, 'CREATE_ADMIN', 'users', ?, ?)`,
+      [req.user.user_id, email, req.ip || req.headers['x-forwarded-for'] || 'unknown']
+    );
+
+    res.status(201).json({ success: true, message: 'Admin account created' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── GET /api/admin/unassigned-users ───────────────────────────────
+// Engineers/managers with no project assignment
+router.get('/unassigned-users', adminOnly, async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT u.user_id, u.name, u.email, u.created_at, u.role_id, r.role_name
+      FROM users u
+      JOIN roles r ON u.role_id = r.role_id
+      WHERE u.role_id IN (2, 3)
+        AND u.is_active = 1
+        AND u.is_deleted = 0
+        AND u.user_id NOT IN (SELECT DISTINCT user_id FROM project_team)
+      ORDER BY u.created_at DESC
+    `);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── GET /api/admin/assigned-users ─────────────────────────────────
+// Engineers/managers already assigned to projects
+router.get('/assigned-users', adminOnly, async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT u.user_id, u.name, u.email, r.role_name,
+             p.project_name, p.project_id, pt.role AS team_role
+      FROM users u
+      JOIN roles r ON u.role_id = r.role_id
+      JOIN project_team pt ON pt.user_id = u.user_id
+      JOIN projects p ON p.project_id = pt.project_id
+      WHERE u.role_id IN (2, 3) AND u.is_active = 1 AND u.is_deleted = 0
+      ORDER BY u.name
+    `);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── POST /api/admin/assign-project ────────────────────────────────
+// Assign a user to a project
+router.post('/assign-project', adminOnly, async (req, res) => {
+  try {
+    const { user_id, project_id, team_role } = req.body;
+    if (!user_id || !project_id) {
+      return res.status(400).json({ success: false, message: 'user_id and project_id required' });
+    }
+
+    // Check if already assigned
+    const [existing] = await db.query(
+      'SELECT id FROM project_team WHERE user_id = ? AND project_id = ?',
+      [user_id, project_id]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({ success: false, message: 'User already assigned to this project' });
+    }
+
+    await db.query(
+      'INSERT INTO project_team (project_id, user_id, role) VALUES (?, ?, ?)',
+      [project_id, user_id, team_role || 'engineer']
+    );
+
+    // Log the action
+    await db.query(
+      `INSERT INTO activity_log (user_id, action, table_name, record_id, ip_address)
+       VALUES (?, 'ASSIGN_PROJECT', 'project_team', ?, ?)`,
+      [req.user.user_id, `${user_id}→${project_id}`, req.ip || req.headers['x-forwarded-for'] || 'unknown']
+    );
+
+    res.json({ success: true, message: 'Project assigned successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── DELETE /api/admin/unassign ────────────────────────────────────
+// Remove a user's project assignment
+router.delete('/unassign', adminOnly, async (req, res) => {
+  try {
+    const { user_id, project_id } = req.body;
+    await db.query(
+      'DELETE FROM project_team WHERE user_id = ? AND project_id = ?',
+      [user_id, project_id]
+    );
+
+    await db.query(
+      `INSERT INTO activity_log (user_id, action, table_name, record_id, ip_address)
+       VALUES (?, 'UNASSIGN_PROJECT', 'project_team', ?, ?)`,
+      [req.user.user_id, `${user_id}←${project_id}`, req.ip || req.headers['x-forwarded-for'] || 'unknown']
+    );
+
+    res.json({ success: true, message: 'Assignment removed' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

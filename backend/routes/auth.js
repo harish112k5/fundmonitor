@@ -15,6 +15,18 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
+    // BLOCK: No self-registration as admin (role_id = 1)
+    const userRoleId = parseInt(role_id) || 4;
+    if (userRoleId === 1) {
+      return res.status(403).json({ error: 'Admin accounts cannot be self-registered' });
+    }
+
+    // BLOCK: Only valid roles allowed (2=manager, 3=engineer, 4=viewer)
+    const allowedRoles = [2, 3, 4, 5];
+    if (!allowedRoles.includes(userRoleId)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
     // Check if email already exists
     const [existing] = await db.query('SELECT user_id FROM users WHERE email = ? AND is_deleted = 0', [email]);
     if (existing.length > 0) {
@@ -25,32 +37,14 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Default role_id = 4 (viewer) if not provided
-    const userRoleId = role_id || 4;
-
+    // is_approved = 0 by default — admin must approve before user can login
     const [result] = await db.query(
-      'INSERT INTO users (name, email, password_hash, role_id) VALUES (?, ?, ?, ?)',
+      'INSERT INTO users (name, email, password_hash, role_id, is_active, is_approved) VALUES (?, ?, ?, ?, 1, 0)',
       [name, email, password_hash, userRoleId]
     );
 
-    // Generate token
-    const [userRows] = await db.query(`
-      SELECT u.user_id, u.name, u.email, u.role_id, r.role_name
-      FROM users u JOIN roles r ON u.role_id = r.role_id
-      WHERE u.user_id = ?
-    `, [result.insertId]);
-
-    const user = userRows[0];
-    const token = jwt.sign(
-      { user_id: user.user_id, name: user.name, email: user.email, role_id: user.role_id, role_name: user.role_name },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
     res.status(201).json({
-      message: 'Registration successful',
-      token,
-      user: { user_id: user.user_id, name: user.name, email: user.email, role_id: user.role_id, role_name: user.role_name }
+      message: 'Account created. Awaiting admin approval.'
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -68,7 +62,7 @@ router.post('/login', async (req, res) => {
 
     // Find user
     const [users] = await db.query(`
-      SELECT u.user_id, u.name, u.email, u.password_hash, u.role_id, r.role_name, u.is_active
+      SELECT u.user_id, u.name, u.email, u.password_hash, u.role_id, r.role_name, u.is_active, u.is_approved
       FROM users u JOIN roles r ON u.role_id = r.role_id
       WHERE u.email = ? AND u.is_deleted = 0
     `, [email]);
@@ -83,6 +77,8 @@ router.post('/login', async (req, res) => {
     if (user.is_active === 0 || !user.is_active) {
       return res.status(403).json({ code: 'ACCOUNT_BLOCKED', error: 'Account suspended' });
     }
+
+    // No is_approved gate here — users are gated at DATA level (project assignment)
 
     // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);

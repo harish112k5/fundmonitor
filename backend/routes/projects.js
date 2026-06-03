@@ -1,18 +1,47 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { roleGuard } = require('../middleware/auth');
+const { authMiddleware, roleGuard } = require('../middleware/auth');
 
-// GET all projects
-router.get('/', async (req, res) => {
+// GET all projects (role-based filtering)
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT p.*, u.name AS created_by_name
-      FROM projects p
-      LEFT JOIN users u ON p.created_by = u.user_id
-      WHERE p.is_deleted = 0
-      ORDER BY p.project_id DESC
-    `);
+    const { user_id, role_id } = req.user;
+    let query = '';
+    let params = [];
+
+    if (role_id === 1 || role_id === 2) {
+      // Admin + Manager: all projects
+      query = `
+        SELECT p.*, u.name AS created_by_name
+        FROM projects p
+        LEFT JOIN users u ON p.created_by = u.user_id
+        WHERE p.is_deleted = 0
+        ORDER BY p.project_id DESC
+      `;
+    } else if (role_id === 3) {
+      // Engineer: ONLY assigned projects
+      query = `
+        SELECT p.*, u.name AS created_by_name
+        FROM projects p
+        INNER JOIN project_team pt ON pt.project_id = p.project_id
+        LEFT JOIN users u ON p.created_by = u.user_id
+        WHERE pt.user_id = ? AND p.is_deleted = 0
+        ORDER BY p.project_id DESC
+      `;
+      params = [user_id];
+    } else {
+      // Viewer / Other roles: all projects (read-only)
+      query = `
+        SELECT p.*, u.name AS created_by_name
+        FROM projects p
+        LEFT JOIN users u ON p.created_by = u.user_id
+        WHERE p.is_deleted = 0
+        ORDER BY p.project_id DESC
+      `;
+    }
+
+    const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });

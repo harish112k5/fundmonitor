@@ -1,6 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../api';
+import { useAuth } from '../context/AuthContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import DeleteConfirm from '../components/DeleteConfirm';
@@ -13,6 +14,7 @@ const initialForm = {
 };
 
 export default function Projects() {
+  const { user } = useAuth();
   const [data, setData] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +103,23 @@ export default function Projects() {
   ];
 
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+
+  if (data.length === 0 && user?.role_id === 3) {
+    return (
+      <div className="animate-in" style={{ textAlign: 'center', padding: '80px 20px', color: '#94A3B8' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏗️</div>
+        <h3 style={{ color: '#F1F5F9', marginBottom: '8px' }}>No Projects Assigned Yet</h3>
+        <p>Your admin will assign you to a project shortly. Check back soon.</p>
+        <button
+          onClick={load}
+          className="btn btn-secondary"
+          style={{ margin: '24px auto 0' }}
+        >
+          Refresh
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-in">
