@@ -119,6 +119,7 @@ body::after {
 #root {
   position: relative;
   z-index: 1;
+  overflow-x: hidden;
 }
 
 a {
@@ -162,6 +163,8 @@ a {
   margin-left: var(--sidebar-width);
   padding: 28px 32px;
   min-height: 100vh;
+  min-width: 0;         /* CRITICAL: prevents flex child overflow past sidebar */
+  overflow-x: hidden;
   transition: margin-left var(--transition-normal);
 }
 
@@ -306,10 +309,20 @@ a {
 .page-header {
   margin-bottom: 28px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 16px;
+}
+
+.page-header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .page-header-left h1 {
@@ -542,10 +555,11 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: var(--glass-border);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px;
+  min-width: 0;
 }
 
 .table-search {

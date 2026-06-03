@@ -250,20 +250,22 @@ export default function ManpowerUsage() {
           <h1>Manpower Usage</h1>
           <p>Track worker attendance & costs</p>
         </div>
-        <button className="btn btn-primary" onClick={() => {
-          setEditing(null);
-          setRows([emptyRow()]);
-          setSharedProject('');
-          setSharedDate('');
-          setShowModal(true);
-        }}>
-          <HiOutlinePlus /> Log Attendance
-        </button>
       </div>
 
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}
         searchPlaceholder="Search..." emptyIcon="👷" emptyTitle="No manpower usage logged"
+        addButton={
+          <button className="btn btn-primary" onClick={() => {
+            setEditing(null);
+            setRows([emptyRow()]);
+            setSharedProject('');
+            setSharedDate('');
+            setShowModal(true);
+          }}>
+            <HiOutlinePlus /> Log Attendance
+          </button>
+        }
       />
 
       <Modal

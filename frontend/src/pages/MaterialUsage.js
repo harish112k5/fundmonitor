@@ -252,20 +252,22 @@ export default function MaterialUsage() {
           <h1>Material Usage</h1>
           <p>Track material consumption per project</p>
         </div>
-        <button className="btn btn-primary" onClick={() => {
-          setEditing(null);
-          setRows([emptyRow()]);
-          setSharedProject('');
-          setSharedDate('');
-          setShowModal(true);
-        }}>
-          <HiOutlinePlus /> Log Usage
-        </button>
       </div>
 
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}
         searchPlaceholder="Search usage..." emptyIcon="📦" emptyTitle="No material usage logged"
+        addButton={
+          <button className="btn btn-primary" onClick={() => {
+            setEditing(null);
+            setRows([emptyRow()]);
+            setSharedProject('');
+            setSharedDate('');
+            setShowModal(true);
+          }}>
+            <HiOutlinePlus /> Log Usage
+          </button>
+        }
       />
 
       <Modal
