@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { JWT_SECRET } = require('../middleware/auth');
 
@@ -79,7 +80,7 @@ router.post('/login', async (req, res) => {
     const user = users[0];
 
     // Check blocked BEFORE password
-    if (user.is_active === 0) {
+    if (user.is_active === 0 || !user.is_active) {
       return res.status(403).json({ code: 'ACCOUNT_BLOCKED', error: 'Account suspended' });
     }
 
@@ -90,17 +91,30 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate token
+    const sessionId = uuidv4();
     const token = jwt.sign(
-      { user_id: user.user_id, name: user.name, email: user.email, role_id: user.role_id, role_name: user.role_name },
+      { user_id: user.user_id, name: user.name, email: user.email, role_id: user.role_id, role_name: user.role_name, session_id: sessionId },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     try {
-      // Log session
+      // Update last_login and record session
+      const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
+      const ua = req.headers['user-agent'] || null;
+      await db.query(`UPDATE users SET last_login = NOW() WHERE user_id = ?`, [user.user_id]);
+
+      // Mark any old active sessions for this user as expired
       await db.query(
-        'INSERT INTO session_log (session_id, user_id, ip_address, login_time, status) VALUES (UUID(), ?, ?, NOW(), ?)',
-        [user.user_id, req.ip, 'active']
+        `UPDATE session_log SET status = 'expired', logout_time = NOW()
+         WHERE user_id = ? AND status = 'active' AND login_time < DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+        [user.user_id]
+      );
+
+      await db.query(
+        `INSERT INTO session_log (session_id, user_id, login_time, ip_address, user_agent, status)
+         VALUES (?, ?, NOW(), ?, ?, 'active')`,
+        [sessionId, user.user_id, ip, ua]
       );
     } catch (e) {
       console.error('Session log error:', e);
@@ -127,15 +141,55 @@ router.get('/me', async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET);
 
     const [users] = await db.query(`
-      SELECT u.user_id, u.name, u.email, u.role_id, r.role_name
+      SELECT u.user_id, u.name, u.email, u.role_id, u.is_active, r.role_name
       FROM users u JOIN roles r ON u.role_id = r.role_id
       WHERE u.user_id = ? AND u.is_deleted = 0
     `, [decoded.user_id]);
 
     if (users.length === 0) return res.status(404).json({ error: 'User not found' });
+
+    // Reject token if user has been blocked since it was issued
+    if (!users[0].is_active) {
+      return res.status(403).json({ error: 'Account is blocked.' });
+    }
+
     res.json(users[0]);
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// POST /api/auth/logout — mark session as ended
+router.post('/logout', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        // Mark the specific session as logged_out
+        if (decoded.session_id) {
+          await db.query(
+            `UPDATE session_log SET status = 'logged_out', logout_time = NOW()
+             WHERE session_id = ?`,
+            [decoded.session_id]
+          );
+        } else {
+          // Fallback: mark the most recent active session for this user
+          await db.query(
+            `UPDATE session_log SET status = 'logged_out', logout_time = NOW()
+             WHERE user_id = ? AND status = 'active'
+             ORDER BY login_time DESC LIMIT 1`,
+            [decoded.user_id]
+          );
+        }
+      } catch (_) {
+        // Token invalid/expired — still OK to logout
+      }
+    }
+    res.json({ success: true, message: 'Logged out' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -15,7 +15,7 @@ export default function AuditLog() {
   }, []);
 
   const columns = [
-    { header: 'ID', accessor: 'id', style: { width: 60 } },
+    { header: 'ID', accessor: 'log_id', style: { width: 60 } },
     { header: 'Table', accessor: 'table_name', render: r => (
       <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: '0.8rem' }}>{r.table_name}</span>
     )},
