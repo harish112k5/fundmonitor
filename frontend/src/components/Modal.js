@@ -1,10 +1,11 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { HiOutlineX } from 'react-icons/hi';
 
 export default function Modal({ isOpen, onClose, title, children, footer, className = '', style = {} }) {
   if (!isOpen) return null;
 
-  return (
+  return ReactDOM.createPortal(
     <div 
       className="modal-overlay" 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -48,6 +49,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, classN
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
