@@ -42,6 +42,29 @@ async function getProjectFunding(projectId) {
   };
 }
 
+// IRR Calculator function
+function calculateIRR(cashFlows, guess = 0.1) {
+  if (!cashFlows || cashFlows.length < 2) return 0;
+  const maxTries = 100;
+  const tolerance = 1e-5;
+  let rate = guess;
+  for (let i = 0; i < maxTries; i++) {
+    let npv = 0;
+    let npvDerivative = 0;
+    for (let t = 0; t < cashFlows.length; t++) {
+      npv += cashFlows[t] / Math.pow(1 + rate, t);
+      if (t > 0) {
+        npvDerivative -= (t * cashFlows[t]) / Math.pow(1 + rate, t + 1);
+      }
+    }
+    if (Math.abs(npvDerivative) < 1e-9) break;
+    const newRate = rate - npv / npvDerivative;
+    if (Math.abs(newRate - rate) < tolerance) return (newRate * 100).toFixed(2);
+    rate = newRate;
+  }
+  return 0;
+}
+
 // 1. Dashboard Metrics
 router.get('/dashboard/:projectId', async (req, res) => {
   try {
@@ -59,18 +82,18 @@ router.get('/dashboard/:projectId', async (req, res) => {
       SELECT 
         DATE_FORMAT(usage_date, '%Y-%m') as month,
         SUM(quantity * unit_price) as cost
-      FROM material_usage WHERE project_id = ? GROUP BY month
+      FROM material_usage WHERE project_id = ? AND usage_date IS NOT NULL GROUP BY month
       UNION ALL
-      SELECT DATE_FORMAT(work_date, '%Y-%m') as month, SUM(work_days * daily_rate) as cost FROM manpower_usage WHERE project_id = ? GROUP BY month
+      SELECT DATE_FORMAT(work_date, '%Y-%m') as month, SUM(work_days * daily_rate) as cost FROM manpower_usage WHERE project_id = ? AND work_date IS NOT NULL GROUP BY month
       UNION ALL
-      SELECT DATE_FORMAT(usage_date, '%Y-%m') as month, SUM(usage_hours * hourly_rate) as cost FROM machine_usage WHERE project_id = ? GROUP BY month
+      SELECT DATE_FORMAT(usage_date, '%Y-%m') as month, SUM(usage_hours * hourly_rate) as cost FROM machine_usage WHERE project_id = ? AND usage_date IS NOT NULL GROUP BY month
       UNION ALL
-      SELECT DATE_FORMAT(expense_date, '%Y-%m') as month, SUM(amount) as cost FROM expenses WHERE project_id = ? GROUP BY month
+      SELECT DATE_FORMAT(expense_date, '%Y-%m') as month, SUM(amount) as cost FROM expenses WHERE project_id = ? AND expense_date IS NOT NULL GROUP BY month
     `, [projectId, projectId, projectId, projectId]);
 
     const [monthlyRev] = await pool.query(`
       SELECT DATE_FORMAT(billing_date, '%Y-%m') as month, SUM(amount) as revenue
-      FROM billing WHERE project_id = ? AND status = 'paid' GROUP BY month
+      FROM billing WHERE project_id = ? AND status = 'paid' AND billing_date IS NOT NULL GROUP BY month
     `, [projectId]);
 
     // Aggregate monthly
@@ -89,6 +112,12 @@ router.get('/dashboard/:projectId', async (req, res) => {
       profit: t.revenue - t.cost
     }));
 
+    // Calculate IRR
+    // Initial investment is negative, followed by monthly profits
+    const initialInvestment = funding.total > 0 ? -funding.total : -costs.total;
+    const cashFlows = [initialInvestment, ...trends.map(t => t.profit)];
+    const irr = calculateIRR(cashFlows);
+
     res.json({
       metrics: {
         totalRevenue: revenues.paid,
@@ -96,6 +125,7 @@ router.get('/dashboard/:projectId', async (req, res) => {
         totalCosts: costs.total,
         netProfit,
         roi: parseFloat(roi.toFixed(2)),
+        irr: parseFloat(irr),
         totalFunding: funding.total
       },
       costBreakdown: [

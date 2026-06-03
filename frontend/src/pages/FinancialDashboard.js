@@ -3,7 +3,7 @@ import API from '../api';
 import { formatCurrency } from '../utils/currencyFormat';
 import toast from 'react-hot-toast';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  ComposedChart, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
 import { HiOutlineTrendingUp, HiOutlineTrendingDown, HiOutlineCash, HiOutlineChartPie } from 'react-icons/hi';
@@ -86,6 +86,12 @@ export default function FinancialDashboard() {
               <p className="card-sub-text">Revenue - Costs</p>
             </div>
 
+            <div className="redesign-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+              <h3>IRR (Internal Rate of Return)</h3>
+              <div className="card-value-text">{data.metrics.irr}%</div>
+              <p className="card-sub-text">Estimated over project lifetime</p>
+            </div>
+            
             <div className="redesign-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
               <h3>ROI (Return on Investment)</h3>
               <div className="card-value-text">{data.metrics.roi}%</div>
@@ -100,16 +106,16 @@ export default function FinancialDashboard() {
               <h3 style={{ marginBottom: '16px' }}><HiOutlineTrendingUp /> Monthly Cash Flow & Profit Trend</h3>
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer>
-                  <LineChart data={data.trends} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <ComposedChart data={data.trends} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
                     <XAxis dataKey="month" stroke="var(--text-secondary)" />
                     <YAxis stroke="var(--text-secondary)" tickFormatter={(value) => '₹' + (value/100000).toFixed(1) + 'L'} />
                     <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: 'none', borderRadius: '8px', color: '#fff' }} />
                     <Legend />
-                    <Line type="monotone" dataKey="revenue" stroke="#10b981" name="Revenue" strokeWidth={2} />
-                    <Line type="monotone" dataKey="cost" stroke="#ef4444" name="Costs" strokeWidth={2} />
-                    <Line type="monotone" dataKey="profit" stroke="#3b82f6" name="Net Profit" strokeWidth={2} />
-                  </LineChart>
+                    <Bar dataKey="revenue" fill="#10b981" name="Revenue" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="cost" fill="#ef4444" name="Costs" radius={[4, 4, 0, 0]} />
+                    <Line type="monotone" dataKey="profit" stroke="#3b82f6" name="Net Profit" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             </div>
