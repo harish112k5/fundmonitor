@@ -32,9 +32,9 @@ router.get('/users', adminOnly, async (req, res) => {
         u.user_id,
         u.name,
         u.email,
-        u.is_active,
-        u.login_attempts,
-        u.last_login,
+        (1 - u.is_deleted) AS is_active,
+        0 AS login_attempts,
+        NULL AS last_login,
         u.created_at,
         r.role_name
       FROM users u
@@ -51,7 +51,7 @@ router.get('/users', adminOnly, async (req, res) => {
 router.patch('/users/:id/block', adminOnly, async (req, res) => {
   try {
     await db.query(
-      `UPDATE users SET is_active = 0 WHERE user_id = ?`,
+      `UPDATE users SET is_deleted = 1 WHERE user_id = ?`,
       [req.params.id]
     );
     // log this admin action
@@ -70,7 +70,7 @@ router.patch('/users/:id/block', adminOnly, async (req, res) => {
 router.patch('/users/:id/unblock', adminOnly, async (req, res) => {
   try {
     await db.query(
-      `UPDATE users SET is_active = 1, login_attempts = 0 WHERE user_id = ?`,
+      `UPDATE users SET is_deleted = 0 WHERE user_id = ?`,
       [req.params.id]
     );
     await db.query(
@@ -142,8 +142,8 @@ router.get('/activity', adminOnly, async (req, res) => {
 router.get('/stats', adminOnly, async (req, res) => {
   try {
     const [[{ total_users }]]   = await db.query(`SELECT COUNT(*) AS total_users FROM users`);
-    const [[{ active_users }]]  = await db.query(`SELECT COUNT(*) AS active_users FROM users WHERE is_active = 1`);
-    const [[{ blocked_users }]] = await db.query(`SELECT COUNT(*) AS blocked_users FROM users WHERE is_active = 0`);
+    const [[{ active_users }]]  = await db.query(`SELECT COUNT(*) AS active_users FROM users WHERE is_deleted = 0`);
+    const [[{ blocked_users }]] = await db.query(`SELECT COUNT(*) AS blocked_users FROM users WHERE is_deleted = 1`);
     const [[{ active_sessions }]] = await db.query(
       `SELECT COUNT(*) AS active_sessions FROM session_log WHERE status = 'active'`
     );

@@ -97,26 +97,26 @@ export default function AdminPanel() {
 
   const styles = {
     page: {
-      background: '#0f0f1a',
+      background: 'var(--bg-primary)',
       minHeight: '100vh',
       padding: '24px 32px',
-      color: '#f1f5f9',
+      color: 'var(--text-primary)',
     },
     card: {
-      background: '#1a1a2e',
-      border: '1px solid #2a2a45',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-subtle)',
       borderRadius: 12,
       padding: '20px 24px',
     },
     sectionTitle: {
       fontSize: 18,
       fontWeight: 700,
-      color: '#f1f5f9',
+      color: 'var(--text-primary)',
       marginBottom: 4,
     },
     sectionSub: {
       fontSize: 13,
-      color: '#64748b',
+      color: 'var(--text-muted)',
       marginBottom: 20,
     },
     table: {
@@ -129,15 +129,15 @@ export default function AdminPanel() {
       fontWeight: 600,
       textTransform: 'uppercase',
       letterSpacing: '0.06em',
-      color: '#64748b',
+      color: 'var(--text-muted)',
       padding: '10px 12px',
-      borderBottom: '1px solid #2a2a45',
+      borderBottom: '1px solid var(--border-subtle)',
     },
     td: {
       padding: '12px',
       fontSize: 14,
-      color: '#cbd5e1',
-      borderBottom: '1px solid #1e1e35',
+      color: 'var(--text-secondary)',
+      borderBottom: '1px solid var(--border-subtle)',
       verticalAlign: 'middle',
     },
     blockBtn: {
@@ -217,7 +217,7 @@ export default function AdminPanel() {
         }}>
           ← Back
         </button>
-        <h1 style={{ margin: 0, fontSize: 24, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <h1 style={{ margin: 0, fontSize: 24, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
           🛡 Admin Control Panel
         </h1>
       </div>
@@ -226,35 +226,35 @@ export default function AdminPanel() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: 24, marginBottom: 24 }}>
         <div style={styles.card}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#7c3aed', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 'bold' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--accent-start)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 'bold' }}>
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>{user?.name}</h2>
-              <div style={{ color: '#7c3aed', fontSize: 13, fontWeight: 600 }}>ADMIN</div>
+              <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>{user?.name}</h2>
+              <div style={{ color: 'var(--accent-start)', fontSize: 13, fontWeight: 600 }}>ADMIN</div>
             </div>
           </div>
-          <div style={{ marginTop: 16, fontSize: 13, color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div><strong style={{color:'#cbd5e1'}}>Email:</strong> {user?.email}</div>
+          <div style={{ marginTop: 16, fontSize: 13, color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div><strong style={{color:'var(--text-secondary)'}}>Email:</strong> {user?.email}</div>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>Total Users</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Users</div>
             <div style={{ fontSize: 32, fontWeight: 700, color: '#3b82f6' }}>{stats?.total_users || 0}</div>
           </div>
           <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>Active Sessions</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#10b981' }}>{stats?.active_sessions || 0}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Active Sessions</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--success)' }}>{stats?.active_sessions || 0}</div>
           </div>
           <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>Blocked Users</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#ef4444' }}>{stats?.blocked_users || 0}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Blocked Users</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--danger)' }}>{stats?.blocked_users || 0}</div>
           </div>
           <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>Actions Today</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#f59e0b' }}>{stats?.total_actions_today || 0}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Actions Today</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--warning)' }}>{stats?.total_actions_today || 0}</div>
           </div>
         </div>
       </div>
@@ -280,8 +280,8 @@ export default function AdminPanel() {
               {users.map(u => (
                 <tr key={u.user_id}>
                   <td style={styles.td}>
-                    <div style={{ fontWeight: 600, color: '#fff' }}>{u.name}</div>
-                    <div style={{ fontSize: 12, color: '#64748b' }}>{u.email}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.email}</div>
                   </td>
                   <td style={styles.td}>{u.role_name}</td>
                   <td style={styles.td}>
@@ -295,7 +295,7 @@ export default function AdminPanel() {
                   <td style={styles.td}>{new Date(u.created_at).toLocaleDateString()}</td>
                   <td style={styles.td}>
                     {u.user_id === user?.user_id ? (
-                      <span style={{ padding: '4px 10px', background: '#334155', borderRadius: 4, fontSize: 12 }}>You</span>
+                      <span style={{ padding: '4px 10px', background: 'var(--bg-card-hover)', borderRadius: 4, fontSize: 12, color: 'var(--text-secondary)' }}>You</span>
                     ) : (
                       u.is_active === 1 ? (
                         <button style={styles.blockBtn} onClick={() => handleBlock(u.user_id, u.name)}>Block</button>
@@ -333,8 +333,8 @@ export default function AdminPanel() {
               {sessions.map(s => (
                 <tr key={s.session_id}>
                   <td style={styles.td}>
-                    <div style={{ fontWeight: 600, color: '#fff' }}>{s.user_name}</div>
-                    <div style={{ fontSize: 12, color: '#64748b' }}>{s.user_email}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{s.user_name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.user_email}</div>
                   </td>
                   <td style={styles.td}>{s.role_name}</td>
                   <td style={styles.td}>{new Date(s.login_time).toLocaleString()}</td>
@@ -347,12 +347,12 @@ export default function AdminPanel() {
                   </td>
                   <td style={styles.td}>
                     <div style={{ fontSize: 13 }}>{s.ip_address}</div>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>{formatBrowser(s.user_agent)}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatBrowser(s.user_agent)}</div>
                   </td>
                   <td style={styles.td}>
                     {s.status === 'active' && <span style={{...styles.statusActive, fontWeight: 600}}><div style={styles.liveDot} /> Live</span>}
-                    {s.status === 'logged_out' && <span style={{color: '#64748b'}}>Ended</span>}
-                    {s.status === 'expired' && <span style={{color: '#f59e0b'}}>Expired</span>}
+                    {s.status === 'logged_out' && <span style={{color: 'var(--text-muted)'}}>Ended</span>}
+                    {s.status === 'expired' && <span style={{color: 'var(--warning)'}}>Expired</span>}
                   </td>
                 </tr>
               ))}
@@ -393,7 +393,7 @@ export default function AdminPanel() {
                     </span>
                   </td>
                   <td style={styles.td}>{a.table_name}</td>
-                  <td style={styles.td}><span style={{ color: '#fff' }}>{a.performed_by || 'Unknown'}</span></td>
+                  <td style={styles.td}><span style={{ color: 'var(--text-primary)' }}>{a.performed_by || 'Unknown'}</span></td>
                   <td style={styles.td}>{a.ip_address}</td>
                   <td style={styles.td}>{new Date(a.created_at).toLocaleString()}</td>
                 </tr>

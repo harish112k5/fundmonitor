@@ -401,8 +401,8 @@ export default function MaterialUsage() {
                   </div>
 
                   <div className="responsive-grid-cell-wrapper" data-label="Total Cost">
-                    <div style={{ ...inputStyle, background: '#0f0f1a', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-                      ₹{cost.toLocaleString('en-IN')}
+                    <div style={{ ...inputStyle, background: 'var(--bg-secondary)', color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                      {fmt(cost)}
                     </div>
                   </div>
 
@@ -457,7 +457,8 @@ export default function MaterialUsage() {
             <div style={{
               marginTop: 16,
               padding: '10px 16px',
-              background: '#0f0f1a',
+              background: 'var(--bg-secondary)',
+              borderTop: '1px solid var(--border-subtle)',
               borderRadius: 8,
               display: 'flex',
               justifyContent: 'space-between',

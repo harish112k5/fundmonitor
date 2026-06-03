@@ -143,13 +143,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-
-    // Dynamically set page background color to #0f0f1a on mount and restore on unmount
-    const originalBg = document.body.style.backgroundColor;
-    document.body.style.backgroundColor = '#0f0f1a';
-    return () => {
-      document.body.style.backgroundColor = originalBg;
-    };
   }, []);
 
   const fmt = (n) => {
@@ -208,8 +201,8 @@ export default function Dashboard() {
 
         /* Solid styling for the redesigned cards */
         .redesign-card {
-          background: #1a1a2e !important;
-          border: 1px solid #2a2a45 !important;
+          background: var(--bg-card) !important;
+          border: 1px solid var(--border-subtle) !important;
           border-radius: 12px !important;
           padding: 20px 24px !important;
           transition: all 0.2s ease !important;
@@ -222,8 +215,8 @@ export default function Dashboard() {
         }
 
         .redesign-card:hover {
-          background: #222238 !important;
-          border-color: #7c3aed !important;
+          background: var(--bg-card-hover) !important;
+          border-color: var(--accent-start) !important;
           transform: translateY(-2px);
         }
 
@@ -248,7 +241,7 @@ export default function Dashboard() {
           font-weight: 500;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: #64748b !important;
+          color: var(--text-muted) !important;
           margin: 0;
         }
 
@@ -262,14 +255,14 @@ export default function Dashboard() {
         .card-value-text {
           font-size: 28px !important;
           font-weight: 700 !important;
-          color: #f1f5f9 !important;
+          color: var(--text-primary) !important;
           margin: 4px 0 !important;
           line-height: 1.2;
         }
 
         .card-sub-text {
           font-size: 13px !important;
-          color: #94a3b8 !important;
+          color: var(--text-secondary) !important;
           margin-top: 4px;
         }
 
@@ -281,7 +274,7 @@ export default function Dashboard() {
           position: absolute;
           bottom: 12px;
           right: 16px;
-          color: #64748b;
+          color: var(--text-muted);
           font-size: 14px;
           transition: transform 0.2s ease, color 0.2s ease;
           opacity: 0.7;
@@ -297,7 +290,7 @@ export default function Dashboard() {
         .skeleton-pulse {
           width: 60%;
           height: 28px;
-          background-color: #2a2a45;
+          background-color: var(--border-subtle);
           border-radius: 4px;
           animation: pulse 1.5s infinite ease-in-out;
           margin: 6px 0;
@@ -320,14 +313,14 @@ export default function Dashboard() {
         .page-header-left h1 {
           font-size: 1.75rem;
           font-weight: 700;
-          color: #f1f5f9;
+          color: var(--text-primary);
           letter-spacing: -0.02em;
           margin: 0;
         }
 
         .page-header-left p {
           font-size: 0.875rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
           margin-top: 4px;
           margin-bottom: 0;
         }
@@ -339,9 +332,9 @@ export default function Dashboard() {
         }
 
         .refresh-btn {
-          background: #1a1a2e;
-          border: 1px solid #2a2a45;
-          color: #f1f5f9;
+          background: var(--bg-card);
+          border: 1px solid var(--border-subtle);
+          color: var(--text-primary);
           border-radius: 8px;
           width: 38px;
           height: 38px;
@@ -353,9 +346,9 @@ export default function Dashboard() {
         }
 
         .refresh-btn:hover {
-          background: #222238;
-          border-color: #7c3aed;
-          color: #7c3aed;
+          background: var(--bg-card-hover);
+          border-color: var(--accent-start);
+          color: var(--accent-start);
         }
 
         .alerts-btn {
@@ -394,8 +387,8 @@ export default function Dashboard() {
         }
 
         .activity-card {
-          background: #1a1a2e !important;
-          border: 1px solid #2a2a45 !important;
+          background: var(--bg-card) !important;
+          border: 1px solid var(--border-subtle) !important;
           border-radius: 12px !important;
           padding: 24px !important;
           backdrop-filter: none !important;
@@ -412,7 +405,7 @@ export default function Dashboard() {
         .activity-title {
           font-size: 16px !important;
           font-weight: 600 !important;
-          color: #f1f5f9 !important;
+          color: var(--text-primary) !important;
           margin: 0 !important;
         }
 
@@ -442,16 +435,16 @@ export default function Dashboard() {
           justify-content: space-between;
           align-items: center;
           padding: 12px 16px;
-          background: #131324;
-          border: 1px solid #2a2a45;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-subtle);
           border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s ease;
         }
 
         .activity-row-item:hover {
-          background: #222238;
-          border-color: #7c3aed;
+          background: var(--bg-card-hover);
+          border-color: var(--accent-start);
           transform: translateY(-1px);
         }
 
@@ -464,12 +457,12 @@ export default function Dashboard() {
         .activity-row-name {
           font-weight: 600;
           font-size: 14px;
-          color: #f1f5f9;
+          color: var(--text-primary);
         }
 
         .activity-row-subtext {
           font-size: 12px;
-          color: #94a3b8;
+          color: var(--text-secondary);
         }
 
         .activity-row-right {
@@ -487,7 +480,7 @@ export default function Dashboard() {
         .activity-row-budget {
           font-weight: 600;
           font-size: 14px;
-          color: #f1f5f9;
+          color: var(--text-primary);
         }
       `}</style>
 
