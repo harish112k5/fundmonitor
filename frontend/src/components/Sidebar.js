@@ -92,6 +92,15 @@ export default function Sidebar() {
       ]
     },
     {
+      title: 'Financial Analytics',
+      roles: ['admin', 'manager'],
+      items: [
+        { path: '/finance-dashboard', label: 'Dashboard', icon: HiOutlineChartBar },
+        { path: '/finance-budgeting', label: 'Budgeting', icon: HiOutlineCash },
+        { path: '/finance-statements', label: 'Statements', icon: HiOutlineDocumentText },
+      ]
+    },
+    {
       title: 'Billing & Expenses',
       roles: ['admin', 'manager'],
       items: [

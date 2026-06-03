@@ -46,6 +46,7 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/recycle-bin', require('./routes/recycleBin'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/import', require('./routes/import'));
+app.use('/api/finance', require('./routes/finance'));
 
 // Health check
 app.get('/api/health', (req, res) => {

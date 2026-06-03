@@ -31,7 +31,9 @@ import ProjectDetail from './pages/ProjectDetail';
 import RecycleBin from './pages/RecycleBin';
 import ImportProject from './pages/ImportProject';
 import AdminPanel from './pages/AdminPanel';
-
+import FinancialDashboard from './pages/FinancialDashboard';
+import Budgeting from './pages/Budgeting';
+import FinancialStatements from './pages/FinancialStatements';
 // Protected route wrapper
 function ProtectedRoute({ children, roles }) {
   const { isAuthenticated, loading, user } = useAuth();
@@ -139,6 +141,15 @@ function AppRoutes() {
               } />
               <Route path="/import" element={
                 <ProtectedRoute roles={['admin', 'manager']}><ImportProject /></ProtectedRoute>
+              } />
+              <Route path="/finance-dashboard" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialDashboard /></ProtectedRoute>
+              } />
+              <Route path="/finance-budgeting" element={
+                <ProtectedRoute roles={['admin', 'manager']}><Budgeting /></ProtectedRoute>
+              } />
+              <Route path="/finance-statements" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialStatements /></ProtectedRoute>
               } />
 
               {/* Admin only */}
