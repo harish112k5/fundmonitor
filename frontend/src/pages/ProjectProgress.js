@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -72,9 +72,6 @@ export default function ProjectProgress() {
     <div className="animate-in">
       <div className="page-header">
         <div className="page-header-left"><h1>Project Progress</h1><p>Monthly progress tracking</p></div>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-          <HiOutlinePlus /> Log Progress
-        </button>
       </div>
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}

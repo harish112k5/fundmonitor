@@ -68,7 +68,7 @@ router.post('/login', async (req, res) => {
 
     // Find user
     const [users] = await db.query(`
-      SELECT u.user_id, u.name, u.email, u.password_hash, u.role_id, u.is_active, r.role_name
+      SELECT u.user_id, u.name, u.email, u.password_hash, u.role_id, r.role_name, u.is_active
       FROM users u JOIN roles r ON u.role_id = r.role_id
       WHERE u.email = ? AND u.is_deleted = 0
     `, [email]);
@@ -79,9 +79,9 @@ router.post('/login', async (req, res) => {
 
     const user = users[0];
 
-    // Check if user is blocked
-    if (!user.is_active) {
-      return res.status(403).json({ error: 'Your account has been blocked. Please contact the administrator.' });
+    // Check blocked BEFORE password
+    if (user.is_active === 0 || !user.is_active) {
+      return res.status(403).json({ code: 'ACCOUNT_BLOCKED', error: 'Account suspended' });
     }
 
     // Verify password
@@ -98,23 +98,27 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    // Update last_login and record session
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
-    const ua = req.headers['user-agent'] || null;
-    await db.query(`UPDATE users SET last_login = NOW() WHERE user_id = ?`, [user.user_id]);
+    try {
+      // Update last_login and record session
+      const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
+      const ua = req.headers['user-agent'] || null;
+      await db.query(`UPDATE users SET last_login = NOW() WHERE user_id = ?`, [user.user_id]);
 
-    // Mark any old active sessions for this user as expired
-    await db.query(
-      `UPDATE session_log SET status = 'expired', logout_time = NOW()
-       WHERE user_id = ? AND status = 'active' AND login_time < DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
-      [user.user_id]
-    );
+      // Mark any old active sessions for this user as expired
+      await db.query(
+        `UPDATE session_log SET status = 'expired', logout_time = NOW()
+         WHERE user_id = ? AND status = 'active' AND login_time < DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+        [user.user_id]
+      );
 
-    await db.query(
-      `INSERT INTO session_log (session_id, user_id, login_time, ip_address, user_agent, status)
-       VALUES (?, ?, NOW(), ?, ?, 'active')`,
-      [sessionId, user.user_id, ip, ua]
-    );
+      await db.query(
+        `INSERT INTO session_log (session_id, user_id, login_time, ip_address, user_agent, status)
+         VALUES (?, ?, NOW(), ?, ?, 'active')`,
+        [sessionId, user.user_id, ip, ua]
+      );
+    } catch (e) {
+      console.error('Session log error:', e);
+    }
 
     res.json({
       message: 'Login successful',

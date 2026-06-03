@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -70,9 +70,6 @@ export default function Loans() {
     <div className="animate-in">
       <div className="page-header">
         <div className="page-header-left"><h1>Loans</h1><p>Manage project loans</p></div>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-          <HiOutlinePlus /> Add Loan
-        </button>
       </div>
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}

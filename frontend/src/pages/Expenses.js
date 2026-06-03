@@ -72,13 +72,16 @@ export default function Expenses() {
     <div className="animate-in">
       <div className="page-header">
         <div className="page-header-left"><h1>Expenses</h1><p>Track project expenses</p></div>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-          <HiOutlinePlus /> Add Expense
-        </button>
       </div>
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}
-        searchPlaceholder="Search expenses..." emptyIcon="💸" emptyTitle="No expenses" />
+        searchPlaceholder="Search expenses..." emptyIcon="💸" emptyTitle="No expenses"
+        addButton={
+          <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
+            <HiOutlinePlus /> Add Expense
+          </button>
+        }
+      />
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Expense' : 'New Expense'}
         footer={<><button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
           <button className="btn btn-primary" onClick={handleSubmit}>{editing ? 'Update' : 'Save'}</button></>}>

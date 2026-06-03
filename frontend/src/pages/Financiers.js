@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -59,13 +59,15 @@ export default function Financiers() {
     <div className="animate-in">
       <div className="page-header">
         <div className="page-header-left"><h1>Financiers</h1><p>Manage financier contacts</p></div>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-          <HiOutlinePlus /> Add Financier
-        </button>
       </div>
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}
         searchPlaceholder="Search financiers..." emptyIcon="🏦" emptyTitle="No financiers"
+              addButton={
+          <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
+            <HiOutlinePlus /> Add Financier
+          </button>
+        }
       />
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Financier' : 'New Financier'}
         footer={<><button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>

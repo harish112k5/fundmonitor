@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -82,14 +82,16 @@ export default function Materials() {
           <h1>Materials</h1>
           <p>Manage master material records</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-          <HiOutlinePlus /> Add Material
-        </button>
       </div>
 
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={(r) => { setDeleteTarget(r); setShowDelete(true); }}
         searchPlaceholder="Search materials..." emptyIcon="📦" emptyTitle="No materials"
+              addButton={
+          <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
+            <HiOutlinePlus /> Add Material
+          </button>
+        }
       />
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}

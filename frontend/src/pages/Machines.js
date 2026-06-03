@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -80,14 +80,16 @@ export default function Machines() {
           <h1>Machines</h1>
           <p>Manage machinery & equipment</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-          <HiOutlinePlus /> Add Machine
-        </button>
       </div>
 
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={(r) => { setDeleteTarget(r); setShowDelete(true); }}
         searchPlaceholder="Search machines..." emptyIcon="🚜" emptyTitle="No machines"
+              addButton={
+          <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
+            <HiOutlinePlus /> Add Machine
+          </button>
+        }
       />
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}

@@ -7,30 +7,10 @@ const swaggerUi = require('swagger-ui-express');
 const app = express();
 
 // ─────────────────────────── CORS ────────────────────────────────
-const allowedOrigins = [
-  'https://fundmonitor.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5173',
-];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman, Render health checks)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS: origin '${origin}' not allowed`));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 200, // Some browsers (IE11) choke on 204
-};
-
-// Handle ALL preflight OPTIONS requests before any route or auth middleware
-app.options(/(.*)/, cors(corsOptions));
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:5173', 'https://fundmonitor.vercel.app'],
+  credentials: true
+}));
 
 // ─────────────────────────── Middleware ───────────────────────────
 app.use(express.json());

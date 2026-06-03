@@ -83,14 +83,16 @@ export default function Workers() {
           <h1>Workers</h1>
           <p>Manage workforce & labor</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-          <HiOutlinePlus /> Add Worker
-        </button>
       </div>
 
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={(r) => { setDeleteTarget(r); setShowDelete(true); }}
         searchPlaceholder="Search workers..." emptyIcon="👷" emptyTitle="No workers"
+        addButton={
+          <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
+            <HiOutlinePlus /> Add Worker
+          </button>
+        }
       />
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}
