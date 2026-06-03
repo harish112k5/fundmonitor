@@ -8,7 +8,14 @@ const app = express();
 
 // ─────────────────────────── CORS ────────────────────────────────
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:5173', 'https://fundmonitor.vercel.app'],
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:3001', 
+    'http://localhost:3002', 
+    'http://localhost:5173', 
+    'https://fundmonitor.vercel.app',
+    /^https:\/\/.*\.vercel\.app$/
+  ],
   credentials: true
 }));
 
