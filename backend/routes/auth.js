@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { JWT_SECRET } = require('../middleware/auth');
 
@@ -90,10 +91,21 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate token
+    const sessionId = uuidv4();
     const token = jwt.sign(
-      { user_id: user.user_id, name: user.name, email: user.email, role_id: user.role_id, role_name: user.role_name },
+      { user_id: user.user_id, name: user.name, email: user.email, role_id: user.role_id, role_name: user.role_name, session_id: sessionId },
       JWT_SECRET,
       { expiresIn: '24h' }
+    );
+
+    // Update last_login and record session
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const ua = req.headers['user-agent'] || null;
+    await db.query(`UPDATE users SET last_login = NOW() WHERE user_id = ?`, [user.user_id]);
+    await db.query(
+      `INSERT INTO session_log (session_id, user_id, login_time, ip_address, user_agent, status)
+       VALUES (?, ?, NOW(), ?, ?, 'active')`,
+      [sessionId, user.user_id, ip, ua]
     );
 
     res.json({

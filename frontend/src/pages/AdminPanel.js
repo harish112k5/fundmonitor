@@ -189,12 +189,24 @@ export default function AdminPanel() {
   };
 
   const getActionColor = (action) => {
-    if (action.includes('INSERT')) return '#10b981'; // green
-    if (action.includes('UPDATE')) return '#3b82f6'; // blue
-    if (action.includes('DELETE')) return '#ef4444'; // red
-    if (action.includes('BLOCK')) return '#991b1b';  // dark red
-    if (action.includes('UNBLOCK')) return '#10b981'; // green
-    return '#64748b'; // default gray
+    if (!action) return '#64748b';
+    if (action.includes('UNBLOCK')) return '#10b981'; // green (check before BLOCK)
+    if (action.includes('BLOCK')) return '#991b1b';   // dark red
+    if (action.includes('INSERT')) return '#10b981';  // green
+    if (action.includes('UPDATE')) return '#3b82f6';  // blue
+    if (action.includes('DELETE')) return '#ef4444';  // red
+    if (action.includes('LOGIN')) return '#7c3aed';   // purple
+    if (action.includes('LOGOUT')) return '#64748b';  // gray
+    return '#64748b';
+  };
+
+  const formatDuration = (mins) => {
+    if (mins === null || mins === undefined || isNaN(mins)) return '—';
+    if (mins < 1) return '< 1 min';
+    if (mins < 60) return `${mins} min${mins !== 1 ? 's' : ''}`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
   };
 
   return (
@@ -312,49 +324,63 @@ export default function AdminPanel() {
       <div style={{ ...styles.card, marginBottom: 24 }}>
         <h2 style={styles.sectionTitle}>Session History</h2>
         <div style={styles.sectionSub}>Login and logout tracking across all users</div>
-        
-        {loadingSessions ? <p>Loading sessions...</p> : (
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>USER</th>
-                <th style={styles.th}>ROLE</th>
-                <th style={styles.th}>LOGIN TIME</th>
-                <th style={styles.th}>LOGOUT TIME</th>
-                <th style={styles.th}>DURATION</th>
-                <th style={styles.th}>IP / BROWSER</th>
-                <th style={styles.th}>STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map(s => (
-                <tr key={s.session_id}>
-                  <td style={styles.td}>
-                    <div style={{ fontWeight: 600, color: '#fff' }}>{s.user_name}</div>
-                    <div style={{ fontSize: 12, color: '#64748b' }}>{s.user_email}</div>
-                  </td>
-                  <td style={styles.td}>{s.role_name}</td>
-                  <td style={styles.td}>{new Date(s.login_time).toLocaleString()}</td>
-                  <td style={styles.td}>{s.logout_time ? new Date(s.logout_time).toLocaleString() : '—'}</td>
-                  <td style={styles.td}>
-                    {s.session_duration_mins < 60 
-                      ? `${s.session_duration_mins} mins` 
-                      : `${Math.floor(s.session_duration_mins / 60)}h ${s.session_duration_mins % 60}m`}
-                    {s.status === 'active' && ' (ongoing)'}
-                  </td>
-                  <td style={styles.td}>
-                    <div style={{ fontSize: 13 }}>{s.ip_address}</div>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>{formatBrowser(s.user_agent)}</div>
-                  </td>
-                  <td style={styles.td}>
-                    {s.status === 'active' && <span style={{...styles.statusActive, fontWeight: 600}}><div style={styles.liveDot} /> Live</span>}
-                    {s.status === 'logged_out' && <span style={{color: '#64748b'}}>Ended</span>}
-                    {s.status === 'expired' && <span style={{color: '#f59e0b'}}>Expired</span>}
-                  </td>
+
+        {loadingSessions ? <p style={{ color: '#64748b' }}>Loading sessions...</p> : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>USER</th>
+                  <th style={styles.th}>ROLE</th>
+                  <th style={styles.th}>LOGIN TIME</th>
+                  <th style={styles.th}>LOGOUT TIME</th>
+                  <th style={styles.th}>DURATION</th>
+                  <th style={styles.th}>IP / BROWSER</th>
+                  <th style={styles.th}>STATUS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sessions.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ ...styles.td, textAlign: 'center', padding: '32px', color: '#475569' }}>
+                      🔐 No session records yet. Sessions will appear here after users log in.
+                    </td>
+                  </tr>
+                ) : sessions.map(s => (
+                  <tr key={s.session_id}>
+                    <td style={styles.td}>
+                      <div style={{ fontWeight: 600, color: '#fff' }}>{s.user_name}</div>
+                      <div style={{ fontSize: 12, color: '#64748b' }}>{s.user_email}</div>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{ fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4, color: '#94a3b8' }}>
+                        {s.role_name}
+                      </span>
+                    </td>
+                    <td style={styles.td}>{new Date(s.login_time).toLocaleString()}</td>
+                    <td style={styles.td}>{s.logout_time ? new Date(s.logout_time).toLocaleString() : <span style={{ color: '#475569' }}>—</span>}</td>
+                    <td style={styles.td}>
+                      {formatDuration(s.session_duration_mins)}
+                      {s.status === 'active' && <span style={{ color: '#10b981', fontSize: 11, marginLeft: 4 }}>(ongoing)</span>}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ fontSize: 13 }}>{s.ip_address || '—'}</div>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>{formatBrowser(s.user_agent)}</div>
+                    </td>
+                    <td style={styles.td}>
+                      {s.status === 'active' && (
+                        <span style={{ ...styles.statusActive, fontWeight: 600 }}>
+                          <div style={styles.liveDot} /> Live
+                        </span>
+                      )}
+                      {s.status === 'logged_out' && <span style={{ color: '#64748b' }}>Ended</span>}
+                      {s.status === 'expired' && <span style={{ color: '#f59e0b' }}>Expired</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -362,41 +388,53 @@ export default function AdminPanel() {
       <div style={{ ...styles.card }}>
         <h2 style={styles.sectionTitle}>Activity Log</h2>
         <div style={styles.sectionSub}>All data modifications and admin actions</div>
-        
-        {loadingActivities ? <p>Loading activities...</p> : (
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>ACTION</th>
-                <th style={styles.th}>TABLE</th>
-                <th style={styles.th}>PERFORMED BY</th>
-                <th style={styles.th}>IP ADDRESS</th>
-                <th style={styles.th}>DATE & TIME</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activities.map(a => (
-                <tr key={a.log_id}>
-                  <td style={styles.td}>
-                    <span style={{ 
-                      background: getActionColor(a.action), 
-                      color: '#fff', 
-                      padding: '3px 8px', 
-                      borderRadius: 4, 
-                      fontSize: 11,
-                      fontWeight: 600
-                    }}>
-                      {a.action}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{a.table_name}</td>
-                  <td style={styles.td}><span style={{ color: '#fff' }}>{a.performed_by || 'Unknown'}</span></td>
-                  <td style={styles.td}>{a.ip_address}</td>
-                  <td style={styles.td}>{new Date(a.created_at).toLocaleString()}</td>
+
+        {loadingActivities ? <p style={{ color: '#64748b' }}>Loading activities...</p> : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>ACTION</th>
+                  <th style={styles.th}>TABLE</th>
+                  <th style={styles.th}>RECORD ID</th>
+                  <th style={styles.th}>PERFORMED BY</th>
+                  <th style={styles.th}>IP ADDRESS</th>
+                  <th style={styles.th}>DATE & TIME</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {activities.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ ...styles.td, textAlign: 'center', padding: '32px', color: '#475569' }}>
+                      📋 No activity recorded yet. Actions will appear here as users interact with data.
+                    </td>
+                  </tr>
+                ) : activities.map((a, i) => (
+                  <tr key={a.log_id ?? i}>
+                    <td style={styles.td}>
+                      <span style={{
+                        background: getActionColor(a.action),
+                        color: '#fff',
+                        padding: '3px 10px',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: '0.03em',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {a.action}
+                      </span>
+                    </td>
+                    <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: 13, color: '#94a3b8' }}>{a.table_name || '—'}</td>
+                    <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: 12, color: '#64748b' }}>{a.record_id || '—'}</td>
+                    <td style={styles.td}><span style={{ color: '#fff', fontWeight: 500 }}>{a.performed_by || <span style={{ color: '#475569' }}>Unknown</span>}</span></td>
+                    <td style={{ ...styles.td, fontSize: 12 }}>{a.ip_address || '—'}</td>
+                    <td style={{ ...styles.td, fontSize: 12, whiteSpace: 'nowrap' }}>{new Date(a.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
