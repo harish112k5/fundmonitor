@@ -1,10 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { authMiddleware } = require('../middleware/auth');
+const { getAllowedProjectIds, canAccessProject } = require('../utils/projectAccess');
 
 // GET all manpower usage
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
+    const { user_id, role_id } = req.user;
+    const projectIds = await getAllowedProjectIds(user_id, role_id);
+    if (projectIds.length === 0) return res.json([]);
+    const placeholders = projectIds.map(() => '?').join(',');
+
     const [rows] = await db.query(`
       SELECT mu.*, p.project_name, w.name AS worker_name, wr.role_name AS worker_role_name,
              u.name AS recorded_by_name, (mu.work_days * mu.daily_rate) AS total_cost
@@ -13,8 +20,9 @@ router.get('/', async (req, res) => {
       JOIN workers w ON mu.worker_id = w.worker_id
       LEFT JOIN worker_roles wr ON w.worker_role_id = wr.worker_role_id
       LEFT JOIN users u ON mu.recorded_by = u.user_id
+      WHERE mu.project_id IN (${placeholders})
       ORDER BY mu.work_date DESC
-    `);
+    `, projectIds);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -22,8 +30,12 @@ router.get('/', async (req, res) => {
 });
 
 // GET by project
-router.get('/project/:projectId', async (req, res) => {
+router.get('/project/:projectId', authMiddleware, async (req, res) => {
   try {
+    const { user_id, role_id } = req.user;
+    const allowed = await canAccessProject(user_id, role_id, req.params.projectId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
+
     const [rows] = await db.query(`
       SELECT mu.*, w.name AS worker_name, wr.role_name AS worker_role_name,
              u.name AS recorded_by_name, (mu.work_days * mu.daily_rate) AS total_cost
@@ -41,10 +53,15 @@ router.get('/project/:projectId', async (req, res) => {
 });
 
 // GET single
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM manpower_usage WHERE id = ?', [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Record not found' });
+    
+    const { user_id, role_id } = req.user;
+    const allowed = await canAccessProject(user_id, role_id, rows[0].project_id);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
+
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });

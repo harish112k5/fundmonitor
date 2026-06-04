@@ -167,8 +167,27 @@ export default function Dashboard() {
   const recentProjects = projects.slice(0, 3);
   const recentExpenses = expenses.slice(0, 5);
 
+  const isEngineer = user?.role_id === 3;
+  const noAccess = isEngineer && stats?.projects?.total_projects === 0;
+
   return (
     <div className="animate-in">
+      {noAccess ? (
+        <div style={{ textAlign: 'center', padding: '80px 20px', color: '#94A3B8' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏗️</div>
+          <h3 style={{ color: '#F1F5F9', marginBottom: '8px' }}>No Projects Assigned Yet</h3>
+          <p>Your admin will assign you to a project shortly. Check back soon.</p>
+          <button
+            onClick={fetchData}
+            className="refresh-btn"
+            style={{ margin: '24px auto 0' }}
+            title="Refresh Data"
+          >
+            <HiOutlineRefresh size={18} /> Refresh
+          </button>
+        </div>
+      ) : (
+        <>
       {/* Scope styles specifically for the redesigned dashboard */}
       <style>{`
         /* Container layouts */
@@ -756,6 +775,8 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

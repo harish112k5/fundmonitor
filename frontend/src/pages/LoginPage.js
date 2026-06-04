@@ -25,7 +25,9 @@ export default function LoginPage() {
     try {
       if (isRegister) {
         await register(form.name, form.email, form.password, parseInt(form.role_id));
-        toast.success('Account created successfully!');
+        toast.success('Account created! Awaiting admin approval before you can login.');
+        setIsRegister(false);
+        setForm({ name: '', email: '', password: '', role_id: '4' });
       } else {
         await login(form.email, form.password);
         toast.success('Welcome back!');
@@ -36,6 +38,8 @@ export default function LoginPage() {
 
       if (code === 'ACCOUNT_BLOCKED') {
         toast.error('🚫 Account suspended. Contact admin.');
+      } else if (code === 'PENDING_APPROVAL') {
+        toast.error('⏳ Account pending admin approval. Please wait.');
       } else if (err.response?.status === 401) {
         toast.error('Invalid email or password');
       } else {
@@ -106,7 +110,6 @@ export default function LoginPage() {
               <div className="login-field">
                 <div className="login-field-icon"><HiOutlineOfficeBuilding /></div>
                 <select name="role_id" value={form.role_id} onChange={handleChange} className="login-input login-select">
-                  <option value="1">Admin</option>
                   <option value="2">Manager</option>
                   <option value="3">Engineer</option>
                   <option value="4">Viewer</option>
