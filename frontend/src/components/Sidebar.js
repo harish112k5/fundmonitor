@@ -83,7 +83,7 @@ export default function Sidebar() {
       ]
     },
     {
-      title: 'Finance',
+      title: 'Finance (Core)',
       roles: ['admin', 'manager'],
       items: [
         { path: '/investors', label: 'Investors', icon: HiOutlineCurrencyDollar },
@@ -91,6 +91,28 @@ export default function Sidebar() {
         { path: '/investments', label: 'Investments', icon: HiOutlineCash },
         { path: '/loans', label: 'Loans', icon: HiOutlineCreditCard },
         { path: '/interest-payments', label: 'Interest Payments', icon: HiOutlineCurrencyDollar },
+      ]
+    },
+    {
+      title: 'Financial Analytics',
+      roles: ['admin', 'manager'],
+      items: [
+        { path: '/finance/dashboard', label: 'Financial Dashboard', icon: HiOutlineChartBar },
+        { path: '/finance/budgeting', label: 'Budgeting', icon: HiOutlineClipboardList },
+        { path: '/finance/forecast', label: 'Financial Forecast', icon: HiOutlineChartBar },
+        { path: '/finance/planning', label: 'Financial Planning', icon: HiOutlineDocumentText },
+        { path: '/finance/ratios', label: 'Financial Ratios', icon: HiOutlineChartBar },
+        { path: '/finance/statements', label: 'Statements', icon: HiOutlineDocumentText },
+        { path: '/finance/tax', label: 'Tax Compliance', icon: HiOutlineShieldCheck },
+      ]
+    },
+    {
+      title: 'Advanced Investors',
+      roles: ['admin', 'manager'],
+      items: [
+        { path: '/investor/dashboard', label: 'Investor Dashboard', icon: HiOutlineCurrencyDollar },
+        { path: '/investor/onboarding', label: 'Investor Onboarding', icon: HiOutlineUsers },
+        { path: '/investor/fund-tracking', label: 'Fund Tracking', icon: HiOutlineCash },
       ]
     },
     {

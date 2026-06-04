@@ -33,6 +33,18 @@ import RecycleBin from './pages/RecycleBin';
 import ImportProject from './pages/ImportProject';
 import AdminPanel from './pages/AdminPanel';
 
+// Finance & Investor Pages
+import Budgeting from './pages/Budgeting';
+import FinancialDashboard from './pages/FinancialDashboard';
+import FinancialForecast from './pages/FinancialForecast';
+import FinancialPlanning from './pages/FinancialPlanning';
+import FinancialRatios from './pages/FinancialRatios';
+import FinancialStatements from './pages/FinancialStatements';
+import FundTracking from './pages/FundTracking';
+import InvestorDashboard from './pages/InvestorDashboard';
+import InvestorOnboarding from './pages/InvestorOnboarding';
+import TaxCompliance from './pages/TaxCompliance';
+
 // Protected route wrapper
 function ProtectedRoute({ children, roles }) {
   const { isAuthenticated, loading, user } = useAuth();
@@ -140,6 +152,40 @@ function AppRoutes() {
               } />
               <Route path="/import" element={
                 <ProtectedRoute roles={['admin', 'manager']}><ImportProject /></ProtectedRoute>
+              } />
+              
+              {/* Finance Module Pages */}
+              <Route path="/finance/budgeting" element={
+                <ProtectedRoute roles={['admin', 'manager']}><Budgeting /></ProtectedRoute>
+              } />
+              <Route path="/finance/dashboard" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialDashboard /></ProtectedRoute>
+              } />
+              <Route path="/finance/forecast" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialForecast /></ProtectedRoute>
+              } />
+              <Route path="/finance/planning" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialPlanning /></ProtectedRoute>
+              } />
+              <Route path="/finance/ratios" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialRatios /></ProtectedRoute>
+              } />
+              <Route path="/finance/statements" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialStatements /></ProtectedRoute>
+              } />
+              <Route path="/finance/tax" element={
+                <ProtectedRoute roles={['admin', 'manager']}><TaxCompliance /></ProtectedRoute>
+              } />
+              
+              {/* Investor Module Pages */}
+              <Route path="/investor/dashboard" element={
+                <ProtectedRoute roles={['admin', 'manager']}><InvestorDashboard /></ProtectedRoute>
+              } />
+              <Route path="/investor/onboarding" element={
+                <ProtectedRoute roles={['admin', 'manager']}><InvestorOnboarding /></ProtectedRoute>
+              } />
+              <Route path="/investor/fund-tracking" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FundTracking /></ProtectedRoute>
               } />
 
               {/* Admin only */}

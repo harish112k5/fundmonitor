@@ -700,6 +700,7 @@ app.use('/api/audit-log',         require('./routes/auditLog'));
 app.use('/api/dashboard',         require('./routes/dashboard'));
 app.use('/api/recycle-bin',       require('./routes/recycleBin'));
 app.use('/api/admin',             require('./routes/admin'));
+app.use('/api/finance',           require('./routes/finance'));
 app.use('/api/import',            require('./routes/import'));
 
 // ─────────────────────── Error handler ───────────────────────────────

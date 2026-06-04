@@ -97,6 +97,7 @@ export default function AdminPanel() {
     } else if (user) {
       fetchAll();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, navigate]);
 
   const fetchAll = () => {
