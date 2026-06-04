@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   HiOutlineViewGrid,
   HiOutlineOfficeBuilding,
@@ -30,6 +31,7 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   React.useEffect(() => {
     if (['admin', 'manager'].includes(user?.role_name)) {
@@ -205,6 +207,51 @@ export default function Sidebar() {
             </div>
           ))}
         </nav>
+
+        {/* Theme Toggle */}
+        <div style={{ padding: '8px 12px' }}>
+          <button
+            onClick={toggleTheme}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(99,102,241,0.15)',
+              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(99,102,241,0.06)',
+              cursor: 'pointer',
+              color: isDark ? '#94a3b8' : '#6b7280',
+              fontSize: '13px',
+              fontWeight: 500,
+              transition: 'all 0.2s',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>{isDark ? '☀️' : '🌙'}</span>
+              {isDark ? 'Light Mode' : 'Dark Mode'}
+            </span>
+            <span style={{
+              width: 36, height: 20,
+              borderRadius: 10,
+              background: isDark ? '#6366f1' : '#d1d5db',
+              position: 'relative',
+              transition: 'background 0.3s',
+              flexShrink: 0,
+            }}>
+              <span style={{
+                position: 'absolute',
+                top: 3, left: isDark ? 18 : 3,
+                width: 14, height: 14,
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.3s',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              }} />
+            </span>
+          </button>
+        </div>
 
         {/* Logout */}
         <div className="sidebar-logout">
