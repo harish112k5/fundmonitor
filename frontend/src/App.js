@@ -15,6 +15,9 @@ import MaterialUsage from './pages/MaterialUsage';
 import ManpowerUsage from './pages/ManpowerUsage';
 import MachineUsage from './pages/MachineUsage';
 import Investors from './pages/Investors';
+import InvestorOnboarding from './pages/InvestorOnboarding';
+import InvestorDashboard from './pages/InvestorDashboard';
+import FundTracking from './pages/FundTracking';
 import Financiers from './pages/Financiers';
 import Investments from './pages/Investments';
 import Loans from './pages/Loans';
@@ -35,6 +38,9 @@ import FinancialDashboard from './pages/FinancialDashboard';
 import Budgeting from './pages/Budgeting';
 import FinancialStatements from './pages/FinancialStatements';
 import FinancialRatios from './pages/FinancialRatios';
+import FinancialPlanning from './pages/FinancialPlanning';
+import FinancialForecast from './pages/FinancialForecast';
+import TaxCompliance from './pages/TaxCompliance';
 // Protected route wrapper
 function ProtectedRoute({ children, roles }) {
   const { isAuthenticated, loading, user } = useAuth();
@@ -116,6 +122,15 @@ function AppRoutes() {
               <Route path="/investors" element={
                 <ProtectedRoute roles={['admin', 'manager']}><Investors /></ProtectedRoute>
               } />
+              <Route path="/investor-onboarding" element={
+                <ProtectedRoute roles={['admin', 'manager']}><InvestorOnboarding /></ProtectedRoute>
+              } />
+              <Route path="/investor-dashboard/:id" element={
+                <ProtectedRoute roles={['admin', 'manager', 'investor']}><InvestorDashboard /></ProtectedRoute>
+              } />
+              <Route path="/fund-receipt" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FundTracking /></ProtectedRoute>
+              } />
               <Route path="/financiers" element={
                 <ProtectedRoute roles={['admin', 'manager']}><Financiers /></ProtectedRoute>
               } />
@@ -146,6 +161,12 @@ function AppRoutes() {
               <Route path="/finance-dashboard" element={
                 <ProtectedRoute roles={['admin', 'manager']}><FinancialDashboard /></ProtectedRoute>
               } />
+              <Route path="/finance-planning" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialPlanning /></ProtectedRoute>
+              } />
+              <Route path="/finance-forecast" element={
+                <ProtectedRoute roles={['admin', 'manager']}><FinancialForecast /></ProtectedRoute>
+              } />
               <Route path="/finance-budgeting" element={
                 <ProtectedRoute roles={['admin', 'manager']}><Budgeting /></ProtectedRoute>
               } />
@@ -154,6 +175,9 @@ function AppRoutes() {
               } />
               <Route path="/finance-ratios" element={
                 <ProtectedRoute roles={['admin', 'manager']}><FinancialRatios /></ProtectedRoute>
+              } />
+              <Route path="/finance-tax" element={
+                <ProtectedRoute roles={['admin', 'manager']}><TaxCompliance /></ProtectedRoute>
               } />
 
               {/* Admin only */}

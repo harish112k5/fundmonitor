@@ -21,7 +21,8 @@ import {
   HiOutlineX,
   HiOutlineLogout,
   HiOutlineExclamationCircle,
-  HiOutlineTrash
+  HiOutlineTrash,
+  HiOutlineTrendingUp
 } from 'react-icons/hi';
 
 export default function Sidebar() {
@@ -96,9 +97,12 @@ export default function Sidebar() {
       roles: ['admin', 'manager'],
       items: [
         { path: '/finance-dashboard', label: 'Dashboard', icon: HiOutlineChartBar },
+        { path: '/finance-planning', label: 'Financial Planning', icon: HiOutlineCash },
+        { path: '/finance-forecast', label: 'Forecasting', icon: HiOutlineTrendingUp },
         { path: '/finance-budgeting', label: 'Budgeting', icon: HiOutlineCash },
         { path: '/finance-statements', label: 'Statements', icon: HiOutlineDocumentText },
         { path: '/finance-ratios', label: 'Financial Ratios', icon: HiOutlineChartBar },
+        { path: '/finance-tax', label: 'Tax Compliance', icon: HiOutlineShieldCheck },
       ]
     },
     {

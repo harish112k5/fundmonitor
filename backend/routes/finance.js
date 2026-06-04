@@ -351,4 +351,89 @@ router.get('/statements/full/:projectId', async (req, res) => {
   }
 });
 
+// 3. Forecast Endpoints
+router.post('/forecast/generate', async (req, res) => {
+  try {
+    const { projectId, type, period, amount, scenario } = req.body;
+    const [result] = await pool.query(
+      'INSERT INTO financial_forecasts (project_id, forecast_type, forecast_period, amount, scenario) VALUES (?, ?, ?, ?, ?)',
+      [projectId, type, period, amount, scenario || 'realistic']
+    );
+    res.json({ success: true, id: result.insertId });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate forecast' });
+  }
+});
+
+router.get('/forecast/:projectId/:type', async (req, res) => {
+  try {
+    const { projectId, type } = req.params;
+    const [forecasts] = await pool.query(
+      'SELECT * FROM financial_forecasts WHERE project_id = ? AND forecast_type = ? ORDER BY forecast_period',
+      [projectId, type]
+    );
+    res.json({ forecasts });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch forecasts' });
+  }
+});
+
+// 4. Planning & Goals Endpoints
+router.post('/plan/create-goal', async (req, res) => {
+  try {
+    const { projectId, target_roi, target_profit_margin, target_revenue } = req.body;
+    // Insert or update
+    await pool.query(
+      `INSERT INTO financial_goals (project_id, target_roi, target_profit_margin, target_revenue)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE target_roi=?, target_profit_margin=?, target_revenue=?`,
+      [projectId, target_roi, target_profit_margin, target_revenue, target_roi, target_profit_margin, target_revenue]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create goal' });
+  }
+});
+
+router.get('/plan/:projectId/goals', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const [goals] = await pool.query('SELECT * FROM financial_goals WHERE project_id = ?', [projectId]);
+    res.json({ goals: goals[0] || null });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch goals' });
+  }
+});
+
+// 5. Tax Compliance Endpoints
+router.get('/tax/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const [taxes] = await pool.query('SELECT * FROM tax_compliance WHERE project_id = ? ORDER BY due_date ASC', [projectId]);
+    res.json({ taxes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch tax compliance data' });
+  }
+});
+
+router.post('/tax/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { tax_type, period, amount_due, amount_paid, due_date, status, notes } = req.body;
+    await pool.query(
+      'INSERT INTO tax_compliance (project_id, tax_type, period, amount_due, amount_paid, due_date, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [projectId, tax_type, period, amount_due, amount_paid, due_date, status, notes]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to add tax record' });
+  }
+});
+
 module.exports = router;

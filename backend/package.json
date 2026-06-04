@@ -7,7 +7,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node migrate_finance.js && node migrate_finance_advanced.js && node migrate_ratios.js && node server.js",
     "dev": "node server.js"
   },
   "keywords": [],
