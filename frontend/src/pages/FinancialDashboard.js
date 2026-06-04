@@ -3,7 +3,7 @@ import API from '../api';
 import { formatCurrency } from '../utils/currencyFormat';
 import toast from 'react-hot-toast';
 import { 
-  Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
 import { HiOutlineTrendingUp, HiOutlineChartPie } from 'react-icons/hi';
