@@ -2,20 +2,21 @@ const pool = require('../db');
 
 /**
  * Returns array of project IDs the user is allowed to access.
- * Admin/Manager = all projects.
- * Engineer = only project_team assigned.
- * Investor = via project_investments.
- * Financier = via project_loans.
+ * Admin (role_id=1)      = all projects.
+ * Manager (role_id=2)    = only assigned via project_team (same as engineer).
+ * Engineer (role_id=3)   = only assigned via project_team.
+ * Investor (role_id=4)   = via project_investments.
+ * Financier (role_id=5)  = via project_loans.
  */
 async function getAllowedProjectIds(userId, roleId) {
-  if (roleId === 1 || roleId === 2) {
-    // Admin + Manager: all
+  if (roleId === 1) {
+    // Admin only: all projects
     const [rows] = await pool.query('SELECT project_id as id FROM projects WHERE is_deleted = 0');
     return rows.map(r => r.id);
   }
 
-  if (roleId === 3) {
-    // Engineer: only assigned
+  if (roleId === 2 || roleId === 3) {
+    // Manager + Engineer: only assigned projects via project_team
     const [rows] = await pool.query(
       'SELECT project_id as id FROM project_team WHERE user_id = ?',
       [userId]
@@ -52,3 +53,4 @@ async function canAccessProject(userId, roleId, projectId) {
 }
 
 module.exports = { getAllowedProjectIds, canAccessProject };
+

@@ -41,6 +41,7 @@ router.get('/users', adminOnly, async (req, res) => {
         r.role_name
       FROM users u
       JOIN roles r ON u.role_id = r.role_id
+      WHERE u.is_deleted = 0
       ORDER BY u.created_at DESC
     `);
     res.json({ success: true, data: rows });
@@ -143,9 +144,9 @@ router.get('/activity', adminOnly, async (req, res) => {
 // Admin panel summary numbers
 router.get('/stats', adminOnly, async (req, res) => {
   try {
-    const [[{ total_users }]]   = await db.query(`SELECT COUNT(*) AS total_users FROM users`);
-    const [[{ active_users }]]  = await db.query(`SELECT COUNT(*) AS active_users FROM users WHERE is_active = 1`);
-    const [[{ blocked_users }]] = await db.query(`SELECT COUNT(*) AS blocked_users FROM users WHERE is_active = 0`);
+    const [[{ total_users }]]   = await db.query(`SELECT COUNT(*) AS total_users FROM users WHERE is_deleted = 0`);
+    const [[{ active_users }]]  = await db.query(`SELECT COUNT(*) AS active_users FROM users WHERE is_active = 1 AND is_deleted = 0`);
+    const [[{ blocked_users }]] = await db.query(`SELECT COUNT(*) AS blocked_users FROM users WHERE is_active = 0 AND is_deleted = 0`);
     const [[{ active_sessions }]] = await db.query(
       `SELECT COUNT(*) AS active_sessions FROM session_log WHERE status = 'active'`
     );
@@ -210,7 +211,7 @@ router.patch('/users/:id/reject', adminOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/create-admin ──────────────────────────────────
-// Only existing admins can create new admin accounts (max 2)
+// Only existing admins can create new admin accounts (no hard cap — admins can always add more)
 const bcrypt = require('bcryptjs');
 router.post('/create-admin', adminOnly, async (req, res) => {
   try {
@@ -219,14 +220,7 @@ router.post('/create-admin', adminOnly, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
     }
 
-    // Enforce max 2 admin accounts
-    const [[{ count: adminCount }]] = await db.query(
-      'SELECT COUNT(*) as count FROM users WHERE role_id = 1 AND is_deleted = 0'
-    );
-    if (adminCount >= 2) {
-      return res.status(403).json({ success: false, message: 'Maximum 2 admin accounts allowed' });
-    }
-
+    // Check for duplicate email
     const [existing] = await db.query('SELECT user_id FROM users WHERE email = ? AND is_deleted = 0', [email]);
     if (existing.length > 0) {
       return res.status(409).json({ success: false, message: 'Email already exists' });
@@ -235,7 +229,7 @@ router.post('/create-admin', adminOnly, async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
-    await db.query(
+    const [result] = await db.query(
       'INSERT INTO users (name, email, password_hash, role_id, is_active, is_approved) VALUES (?, ?, ?, 1, 1, 1)',
       [name, email, hash]
     );
@@ -246,7 +240,7 @@ router.post('/create-admin', adminOnly, async (req, res) => {
       [req.user.user_id, email, req.ip || req.headers['x-forwarded-for'] || 'unknown']
     );
 
-    res.status(201).json({ success: true, message: 'Admin account created' });
+    res.status(201).json({ success: true, message: 'Admin account created', user_id: result.insertId });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

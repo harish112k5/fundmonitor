@@ -315,14 +315,10 @@ export default function AdminPanel() {
           </h1>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {adminCount < 2 ? (
-            <button onClick={() => setShowCreateAdmin(true)} style={{
-              padding: '8px 16px', background: COLORS.purple, border: 'none',
-              borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500,
-            }}>+ Create Admin</button>
-          ) : (
-            <span style={{ color: '#64748B', fontSize: 12 }}>Max 2 admins</span>
-          )}
+          <button onClick={() => setShowCreateAdmin(true)} style={{
+            padding: '8px 16px', background: COLORS.purple, border: 'none',
+            borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+          }}>+ Create Admin</button>
           <button onClick={fetchAll} style={{
             padding: '8px 16px', background: 'transparent', border: '1px solid #2a2a45',
             borderRadius: 8, color: '#94a3b8', cursor: 'pointer', fontSize: 13,
@@ -338,7 +334,7 @@ export default function AdminPanel() {
             { label: 'Active Sessions', value: stats?.active_sessions  || 0, color: '#10b981' },
             { label: 'Blocked Users',   value: stats?.blocked_users    || 0, color: '#ef4444' },
             { label: 'Actions Today',   value: stats?.total_actions_today || 0, color: '#f59e0b' },
-            { label: 'Admin Accounts',  value: `${adminCount}/2`, color: '#7c3aed' },
+            { label: 'Admin Accounts',  value: adminCount, color: '#7c3aed' },
             { label: 'Unassigned',      value: unassigned.length, color: unassigned.length > 0 ? '#f59e0b' : '#10b981' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ ...S.card, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -438,14 +434,14 @@ export default function AdminPanel() {
       {/* ══════════ TAB: ASSIGNMENTS ══════════ */}
       {activeTab === 'assignments' && (
         <div>
-          {/* Unassigned Users — needs action */}
+          {/* Unassigned Users — zero project assignments */}
           <div style={{ ...S.card, marginBottom: 24, borderColor: unassigned.length > 0 ? COLORS.amber : COLORS.border }}>
             <h2 style={{ ...S.sectionTitle, color: COLORS.amber }}>
-              ⚠️ Users Without Project Assignment ({unassigned.length})
+              ⚠️ Users Without Any Project Assignment ({unassigned.length})
             </h2>
-            <div style={S.sectionSub}>Engineers and managers who haven't been assigned to any project yet</div>
+            <div style={S.sectionSub}>Engineers and managers with no project assigned yet — assign at least one project</div>
             {unassigned.length === 0 ? (
-              <p style={{ color: COLORS.muted, textAlign: 'center', padding: 20 }}>✅ All users are assigned to projects.</p>
+              <p style={{ color: COLORS.muted, textAlign: 'center', padding: 20 }}>✅ All engineers and managers have at least one project assigned.</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={S.table}>
@@ -467,7 +463,11 @@ export default function AdminPanel() {
                           <div style={{ fontSize: 12, color: '#64748b' }}>{u.email}</div>
                         </td>
                         <td style={S.td}>
-                          <span style={{ fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4, color: COLORS.purple }}>
+                          <span style={{
+                            fontSize: 12, padding: '2px 8px', borderRadius: 4,
+                            background: u.role_id === 2 ? 'rgba(59,130,246,0.15)' : 'rgba(124,58,237,0.15)',
+                            color: u.role_id === 2 ? '#3b82f6' : COLORS.purple
+                          }}>
                             {u.role_name}
                           </span>
                         </td>
@@ -475,7 +475,7 @@ export default function AdminPanel() {
                           {new Date(u.created_at).toLocaleDateString()}
                         </td>
                         <td style={S.td}>
-                          <button onClick={() => { setSelectedUser(u); setShowAssignModal(true); }}
+                          <button onClick={() => { setSelectedUser(u); setAssignProjectId(''); setShowAssignModal(true); }}
                             style={{ padding: '5px 14px', background: COLORS.green, border: 'none',
                               borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
                             Assign Project
@@ -489,58 +489,94 @@ export default function AdminPanel() {
             )}
           </div>
 
-          {/* Assigned Users */}
+          {/* Assigned Users — grouped with + Add Project per user */}
           <div style={S.card}>
             <h2 style={{ ...S.sectionTitle, color: COLORS.green }}>
-              ✅ Assigned Users ({assigned.length})
+              ✅ Project Assignments ({assigned.length} assignment{assigned.length !== 1 ? 's' : ''})
             </h2>
-            <div style={S.sectionSub}>Users currently assigned to projects</div>
+            <div style={S.sectionSub}>Each row is one project assignment — a user can have multiple. Use "+ Add Project" to assign more.</div>
             {assigned.length === 0 ? (
               <p style={{ color: COLORS.muted, textAlign: 'center', padding: 20 }}>No assignments yet.</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={S.table}>
-                  <thead>
-                    <tr>
-                      <th style={S.th}>#</th>
-                      <th style={S.th}>USER</th>
-                      <th style={S.th}>SYSTEM ROLE</th>
-                      <th style={S.th}>PROJECT</th>
-                      <th style={S.th}>TEAM ROLE</th>
-                      <th style={S.th}>ACTION</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {assigned.map((u, i) => (
-                      <tr key={`${u.user_id}-${u.project_id}`}>
-                        <td style={{ ...S.td, color: '#475569', fontSize: 12 }}>{i + 1}</td>
-                        <td style={S.td}>
-                          <div style={{ fontWeight: 600, color: '#fff' }}>{u.name}</div>
-                          <div style={{ fontSize: 12, color: '#64748b' }}>{u.email}</div>
-                        </td>
-                        <td style={S.td}>
-                          <span style={{ fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4, color: COLORS.purple }}>
-                            {u.role_name}
-                          </span>
-                        </td>
-                        <td style={{ ...S.td, color: COLORS.purple, fontWeight: 500 }}>{u.project_name}</td>
-                        <td style={{ ...S.td, fontSize: 13, color: COLORS.muted }}>{u.team_role}</td>
-                        <td style={S.td}>
-                          <button onClick={() => handleUnassign(u.user_id, u.project_id)}
-                            style={{ padding: '5px 12px', background: 'transparent', border: `1px solid ${COLORS.red}`,
-                              borderRadius: 6, color: COLORS.red, cursor: 'pointer', fontSize: 12 }}>
-                            Remove
-                          </button>
-                        </td>
+            ) : (() => {
+              // Group assignments by user_id for "+ Add Project" per user
+              const grouped = {};
+              assigned.forEach(row => {
+                if (!grouped[row.user_id]) grouped[row.user_id] = { ...row, projects: [] };
+                grouped[row.user_id].projects.push(row);
+              });
+
+              return (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={S.table}>
+                    <thead>
+                      <tr>
+                        <th style={S.th}>#</th>
+                        <th style={S.th}>USER</th>
+                        <th style={S.th}>SYSTEM ROLE</th>
+                        <th style={S.th}>PROJECT</th>
+                        <th style={S.th}>TEAM ROLE</th>
+                        <th style={S.th}>ACTIONS</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody>
+                      {Object.values(grouped).map((userGroup, gi) =>
+                        userGroup.projects.map((row, pi) => (
+                          <tr key={`${row.user_id}-${row.project_id}`} style={{
+                            borderTop: pi === 0 && gi > 0 ? '2px solid #2a2a45' : undefined
+                          }}>
+                            {/* Only show user info on the first row of each user group */}
+                            {pi === 0 ? (
+                              <td style={{ ...S.td, color: '#475569', fontSize: 12 }}
+                                rowSpan={userGroup.projects.length}>{gi + 1}</td>
+                            ) : null}
+                            {pi === 0 ? (
+                              <td style={S.td} rowSpan={userGroup.projects.length}>
+                                <div style={{ fontWeight: 600, color: '#fff' }}>{row.name}</div>
+                                <div style={{ fontSize: 12, color: '#64748b' }}>{row.email}</div>
+                              </td>
+                            ) : null}
+                            {pi === 0 ? (
+                              <td style={S.td} rowSpan={userGroup.projects.length}>
+                                <span style={{
+                                  fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4,
+                                  color: row.role_name === 'manager' ? '#3b82f6' : COLORS.purple
+                                }}>
+                                  {row.role_name}
+                                </span>
+                              </td>
+                            ) : null}
+                            <td style={{ ...S.td, color: COLORS.purple, fontWeight: 500 }}>{row.project_name}</td>
+                            <td style={{ ...S.td, fontSize: 13, color: COLORS.muted }}>{row.team_role}</td>
+                            <td style={S.td}>
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <button onClick={() => handleUnassign(row.user_id, row.project_id)}
+                                  style={{ padding: '4px 10px', background: 'transparent', border: `1px solid ${COLORS.red}`,
+                                    borderRadius: 6, color: COLORS.red, cursor: 'pointer', fontSize: 12 }}>
+                                  Remove
+                                </button>
+                                {/* Show "+ Add Project" only on the last project row for this user */}
+                                {pi === userGroup.projects.length - 1 && (
+                                  <button onClick={() => { setSelectedUser(row); setAssignProjectId(''); setShowAssignModal(true); }}
+                                    style={{ padding: '4px 10px', background: COLORS.green, border: 'none',
+                                      borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                                      whiteSpace: 'nowrap' }}>
+                                    + Add Project
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
+
 
       {/* ══════════ TAB: ALL USERS ══════════ */}
       {activeTab === 'users' && (
