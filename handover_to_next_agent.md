@@ -1,42 +1,59 @@
 # Project Handover Document
 
-**Date:** June 3, 2026
+**Date:** June 6, 2026
 **Branch:** `sudharsan`
 **Project:** FundMonitor
 
-This document serves as a handover for the next AI assistant (or developer) picking up this project. It summarizes the recent bug fixes, layout changes, and architectural adjustments made to the `fundmonitor` repository.
+This document serves as a detailed handover for the next AI assistant (or developer) picking up this project. It summarizes the recent bug fixes, layout changes, architectural adjustments, and the most recent Finance Module validation overhaul made to the `fundmonitor` repository.
 
 ## 1. Recent Work Completed
 
-Over the last series of tasks, the following critical issues were resolved:
+### Finance Module — Form Validation & Formatting
+The finance modules underwent a comprehensive overhaul to ensure data integrity, robust validation, and a better user experience with live previews.
+
+- **Shared Validation Utility (`frontend/src/utils/validators.js`):** 
+  - Centralized master validators to enforce strict formats.
+  - Implemented `isValidPhone` (10 digits, starts with 6-9), `isValidPAN` (ABCDE1234F), `isValidGST` (15 chars), and `isValidAmount` (positive decimal).
+  - Added range enforcements: `isValidRate` (0-100%) and `isValidTenure` (1-600 months).
+
+- **Shared Form Component (`frontend/src/components/FormField.js`):**
+  - Built a reusable wrapper that provides unified styling (`inputStyle`) and dynamic inline error rendering for all form fields.
+
+- **Frontend Pages Refactor:**
+  - **`Investors.js` & `Financiers.js`**: Enforced formatting (Phone numbers strip non-digits, PAN/GST auto-uppercase). Display static prefixes like `+91`.
+  - **`Investments.js`**: Restricted amounts to positive decimals and integrated the `₹` prefix.
+  - **`Loans.js`**: Replaced standard fields with formatted fields. Built a **Live Preview** block that instantly calculates and displays Monthly Interest or EMI based on real-time inputs of Principal, Rate, and Tenure.
+  - **`InterestPayments.js`**: Added conditional visual feedback (amber warnings) to the `Due Date` field if the user selects a past date.
+
+- **Backend Validation Guardrails:**
+  - Implemented strict server-side validation to prevent bad data from hitting the MySQL database.
+  - **`backend/routes/investors.js`**: Validates regex formats for Phone, PAN, and GST.
+  - **`backend/routes/loans.js`**: Rejects negative principals, invalid interest rates (<0 or >100), and invalid tenures.
+  - **`backend/routes/interestPayments.js`**: Rejects non-positive payment amounts.
 
 ### Authentication & Backend Fixes
-- **Auth Failed Bugs Resolved:** Fixed the "Authentication Failed" errors during login.
-- **Backend Routes & Middleware:** Updated `backend/routes/auth.js` and `backend/middleware/auth.js` to ensure the correct handling of JWT tokens, checking user status, and aligning with the `.env` JWT_SECRET.
+- **Auth Failed Bugs Resolved:** Fixed "Authentication Failed" errors during login.
+- **Backend Routes & Middleware:** Updated `backend/routes/auth.js` and `backend/middleware/auth.js` to ensure the correct handling of JWT tokens, checking user status, and aligning with `.env`.
 - **Frontend API Config:** Updated `frontend/src/api.js` (Axios interceptors) to attach the token correctly and handle 401/403 responses by redirecting to the login page.
 - **CORS Setup for Deployment:** Updated `backend/server.js` to handle proper CORS headers, specifically configuring the Express 5 `OPTIONS` preflight handler for deployments on platforms like Vercel and Render.
 
 ### UI, Layout, & Overflow Fixes
-- **Global Overflow Fixes:** Resolved UI overflow issues across all pages by modifying `frontend/src/index.css` (adding `min-width: 0` and `overflow-x: hidden` to the main content wrapper).
-- **DataTable Restructuring:** Restructured `frontend/src/components/DataTable.js`. The header was moved outside the `overflow: hidden` container to prevent clipping. 
-- **Add Buttons Visibility:** Unified the "Add" buttons by passing them into the `DataTable` component via the `addButton` prop. This guaranteed visibility across all pages (`Expenses`, `ManpowerUsage`, `Investors`, `Materials`, `Machines`, etc.).
-- **Missing Buttons Fixed:** Restored the missing "Add Invoice" button on the Billing page (`frontend/src/pages/Billing.js`).
-
-### Modal Positioning
-- **React Portals for Modals:** Modified `frontend/src/components/Modal.js` to use React Portals (`ReactDOM.createPortal`).
-- **Centered Layout:** Changed modal styling to use `position: fixed` to ensure they are always centered on the screen, escaping any parent CSS transforms that were previously causing positioning bugs.
+- **Global Overflow Fixes:** Resolved UI overflow issues across all pages by modifying `frontend/src/index.css`.
+- **DataTable Restructuring:** Restructured `frontend/src/components/DataTable.js` to prevent header clipping.
+- **Add Buttons Visibility:** Unified the "Add" buttons across modules to ensure they are always visible.
+- **React Portals for Modals:** Modified `frontend/src/components/Modal.js` to use React Portals (`ReactDOM.createPortal`) and `position: fixed` for perfect centering.
 
 ## 2. Current State
-- The working tree is clean.
-- All code has been committed and is up-to-date with `origin/sudharsan`.
-- **Latest Commit:** `32fd55d fix: resolve authentication failing bugs and missing add invoice button`
+- The working tree is clean with all code changes implemented for the Finance validations.
+- Both the **Frontend (`react-scripts`)** and **Backend (`node server.js`)** servers run locally without startup errors.
+- Database connections (`MySQL`) and routing logic are confirmed operational.
 
 ## 3. How to Proceed
 For the next AI session:
-1. **Review this file** to understand the stabilized baseline.
-2. **Check the current branch** (should be `sudharsan`).
-3. The backend is Node/Express (`/backend`), and the frontend is React (`/frontend`).
-4. Ask the user for the next feature, bug, or deployment step they would like to tackle.
+1. **Review this file** to understand the stabilized baseline and recent validation patterns.
+2. The backend is Node/Express (`/backend`), and the frontend is React (`/frontend`).
+3. Check the prompt history or ask the user for the next feature, bug, or deployment step they would like to tackle.
+4. If modifying existing Finance forms, ensure you utilize the shared components (`FormField.js`) and centralized validators (`validators.js`) to maintain the established patterns.
 
 ---
 *Generated by Antigravity IDE*
