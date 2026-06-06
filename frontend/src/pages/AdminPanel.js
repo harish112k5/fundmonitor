@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 const PAGE_SIZE = 10;
 
 const COLORS = {
-  bg: '#0F0F1A', card: '#1A1A2E', border: '#2A2A45',
+  bg: 'var(--bg-primary)', card: 'var(--glass-bg)', border: 'var(--border-subtle)',
   purple: '#7C3AED', green: '#10B981', amber: '#F59E0B',
-  red: '#EF4444', text: '#F1F5F9', muted: '#94A3B8'
+  red: '#EF4444', text: 'var(--text-primary)', muted: 'var(--text-secondary)'
 };
 
 // ── Reusable Pagination Controls ──────────────────────────────────────────────
@@ -21,17 +21,18 @@ function Pagination({ page, totalPages, onPrev, onNext, total, pageSize }) {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       marginTop: 16, padding: '10px 4px',
     }}>
-      <span style={{ fontSize: 13, color: '#64748b' }}>
+      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
         {total === 0 ? 'No records' : `Showing ${from}–${to} of ${total}`}
       </span>
       <div style={{ display: 'flex', gap: 8 }}>
         <button
           onClick={onPrev} disabled={page === 1}
           style={{
-            padding: '6px 16px', borderRadius: 6, border: '1px solid #2a2a45',
-            background: page === 1 ? '#1a1a2e' : '#252545',
-            color: page === 1 ? '#3f4b5b' : '#94a3b8',
+            padding: '6px 16px', borderRadius: 6, border: '1px solid var(--border-subtle)',
+            background: 'var(--glass-bg)',
+            color: page === 1 ? 'var(--text-muted)' : 'var(--text-secondary)',
             cursor: page === 1 ? 'not-allowed' : 'pointer', fontSize: 13,
+            opacity: page === 1 ? 0.5 : 1,
           }}
         >← Prev</button>
         <span style={{
@@ -43,10 +44,11 @@ function Pagination({ page, totalPages, onPrev, onNext, total, pageSize }) {
         <button
           onClick={onNext} disabled={page >= totalPages}
           style={{
-            padding: '6px 16px', borderRadius: 6, border: '1px solid #2a2a45',
-            background: page >= totalPages ? '#1a1a2e' : '#252545',
-            color: page >= totalPages ? '#3f4b5b' : '#94a3b8',
+            padding: '6px 16px', borderRadius: 6, border: '1px solid var(--border-subtle)',
+            background: 'var(--glass-bg)',
+            color: page >= totalPages ? 'var(--text-muted)' : 'var(--text-secondary)',
             cursor: page >= totalPages ? 'not-allowed' : 'pointer', fontSize: 13,
+            opacity: page >= totalPages ? 0.5 : 1,
           }}
         >Next →</button>
       </div>
@@ -262,16 +264,16 @@ export default function AdminPanel() {
 
   // ── Styles ─────────────────────────────────────────────────────────────────
   const S = {
-    page:        { background: '#0f0f1a', minHeight: '100vh', padding: '24px 32px', color: '#f1f5f9' },
-    card:        { background: '#1a1a2e', border: '1px solid #2a2a45', borderRadius: 12, padding: '20px 24px' },
-    sectionTitle:{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 },
-    sectionSub:  { fontSize: 13, color: '#64748b', marginBottom: 16 },
+    page:        { minHeight: '100vh', padding: '24px 32px' },
+    card:        { background: 'var(--glass-bg)', border: 'var(--glass-border)', borderRadius: 12, padding: '20px 24px' },
+    sectionTitle:{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 },
+    sectionSub:  { fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 },
     table:       { width: '100%', borderCollapse: 'collapse' },
     th:          { textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-                   letterSpacing: '0.06em', color: '#64748b', padding: '10px 12px',
-                   borderBottom: '1px solid #2a2a45' },
-    td:          { padding: '11px 12px', fontSize: 14, color: '#cbd5e1',
-                   borderBottom: '1px solid #1e1e35', verticalAlign: 'middle' },
+                   letterSpacing: '0.06em', color: 'var(--text-muted)', padding: '10px 12px',
+                   borderBottom: '1px solid var(--border-subtle)' },
+    td:          { padding: '11px 12px', fontSize: 14, color: 'var(--text-secondary)',
+                   borderBottom: '1px solid var(--border-subtle)', verticalAlign: 'middle' },
     blockBtn:    { padding: '5px 14px', background: 'transparent', border: '1px solid #ef4444',
                    borderRadius: 6, color: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 500 },
     unblockBtn:  { padding: '5px 14px', background: 'transparent', border: '1px solid #10b981',
@@ -308,10 +310,10 @@ export default function AdminPanel() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => navigate(-1)} style={{
             display: 'flex', alignItems: 'center', gap: 6, background: 'transparent',
-            border: '1px solid #2a2a45', borderRadius: 8, color: '#94a3b8',
+            border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-secondary)',
             padding: '6px 14px', cursor: 'pointer', fontSize: 14,
           }}>← Back</button>
-          <h1 style={{ margin: 0, fontSize: 24, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <h1 style={{ margin: 0, fontSize: 24, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
             🛡 Admin Control Panel
           </h1>
         </div>
@@ -321,8 +323,8 @@ export default function AdminPanel() {
             borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500,
           }}>+ Create Admin</button>
           <button onClick={fetchAll} style={{
-            padding: '8px 16px', background: 'transparent', border: '1px solid #2a2a45',
-            borderRadius: 8, color: '#94a3b8', cursor: 'pointer', fontSize: 13,
+            padding: '8px 16px', background: 'transparent', border: '1px solid var(--border-subtle)',
+            borderRadius: 8, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13,
           }}>↺ Refresh</button>
         </div>
       </div>
@@ -339,7 +341,7 @@ export default function AdminPanel() {
             { label: 'Unassigned',      value: unassigned.length, color: unassigned.length > 0 ? '#f59e0b' : '#10b981' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ ...S.card, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ fontSize: 13, color: '#94a3b8' }}>{label}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{label}</div>
               <div style={{ fontSize: 28, fontWeight: 700, color }}>{value}</div>
             </div>
           ))}
@@ -460,8 +462,8 @@ export default function AdminPanel() {
                       <tr key={u.user_id}>
                         <td style={{ ...S.td, color: '#475569', fontSize: 12 }}>{i + 1}</td>
                         <td style={S.td}>
-                          <div style={{ fontWeight: 600, color: '#fff' }}>{u.name}</div>
-                          <div style={{ fontSize: 12, color: '#64748b' }}>{u.email}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.email}</div>
                         </td>
                         <td style={S.td}>
                           <span style={{
@@ -523,7 +525,7 @@ export default function AdminPanel() {
                       {Object.values(grouped).map((userGroup, gi) =>
                         userGroup.projects.map((row, pi) => (
                           <tr key={`${row.user_id}-${row.project_id}`} style={{
-                            borderTop: pi === 0 && gi > 0 ? '2px solid #2a2a45' : undefined
+                            borderTop: pi === 0 && gi > 0 ? '2px solid var(--border-subtle)' : undefined
                           }}>
                             {/* Only show user info on the first row of each user group */}
                             {pi === 0 ? (
@@ -532,8 +534,8 @@ export default function AdminPanel() {
                             ) : null}
                             {pi === 0 ? (
                               <td style={S.td} rowSpan={userGroup.projects.length}>
-                                <div style={{ fontWeight: 600, color: '#fff' }}>{row.name}</div>
-                                <div style={{ fontSize: 12, color: '#64748b' }}>{row.email}</div>
+                                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.name}</div>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{row.email}</div>
                               </td>
                             ) : null}
                             {pi === 0 ? (
@@ -612,8 +614,8 @@ export default function AdminPanel() {
                           {(userPage - 1) * PAGE_SIZE + i + 1}
                         </td>
                         <td style={S.td}>
-                          <div style={{ fontWeight: 600, color: '#fff' }}>{u.name}</div>
-                          <div style={{ fontSize: 12, color: '#64748b' }}>{u.email}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.email}</div>
                         </td>
                         <td style={S.td}>
                           <span style={{ fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4, color: '#94a3b8' }}>
@@ -700,8 +702,8 @@ export default function AdminPanel() {
                           {(sessionPage - 1) * PAGE_SIZE + i + 1}
                         </td>
                         <td style={S.td}>
-                          <div style={{ fontWeight: 600, color: '#fff' }}>{s.user_name}</div>
-                          <div style={{ fontSize: 12, color: '#64748b' }}>{s.user_email}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{s.user_name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.user_email}</div>
                         </td>
                         <td style={S.td}>
                           <span style={{ fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4, color: '#94a3b8' }}>
@@ -766,7 +768,7 @@ export default function AdminPanel() {
           alignItems: 'center', justifyContent: 'center', zIndex: 9999,
         }}>
           <div style={{ ...S.card, width: 440, maxWidth: '90vw' }}>
-            <h3 style={{ color: '#f1f5f9', marginBottom: 6, fontSize: 18 }}>Assign Project</h3>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: 6, fontSize: 18 }}>Assign Project</h3>
             <p style={{ margin: '0 0 20px', color: COLORS.muted, fontSize: 14 }}>
               Assigning to: <strong style={{ color: COLORS.purple }}>{selectedUser.name}</strong> ({selectedUser.role_name})
             </p>
@@ -788,8 +790,8 @@ export default function AdminPanel() {
               <label style={{ display: 'block', marginBottom: 6, color: COLORS.muted, fontSize: 14 }}>Team Role</label>
               <select value={assignRole} onChange={e => setAssignRole(e.target.value)}
                 style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
-                  background: '#0F0F1A', border: `1px solid ${COLORS.border}`,
-                  color: COLORS.text, fontSize: 14 }}>
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)', fontSize: 14 }}>
                 <option value="engineer">Engineer</option>
                 <option value="manager">Manager</option>
                 <option value="supervisor">Supervisor</option>
@@ -821,12 +823,12 @@ export default function AdminPanel() {
           background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
         }}>
           <div style={{ ...S.card, width: 420, maxWidth: '90vw' }}>
-            <h3 style={{ color: '#f1f5f9', marginBottom: 16, fontSize: 18 }}>🛡 Create Admin Account</h3>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: 16, fontSize: 18 }}>🛡 Create Admin Account</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input
                 placeholder="Full Name" value={adminForm.name}
                 onChange={e => setAdminForm({ ...adminForm, name: e.target.value })}
-                style={{ padding: '10px 14px', background: '#0f0f1a', border: '1px solid #2a2a45', borderRadius: 8, color: '#f1f5f9', fontSize: 14 }}
+                style={{ padding: '10px 14px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 14 }}
               />
               <input
                 placeholder="Email" type="email" value={adminForm.email}
@@ -840,7 +842,7 @@ export default function AdminPanel() {
               />
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
                 <button onClick={() => { setShowCreateAdmin(false); setAdminForm({ name: '', email: '', password: '' }); }}
-                  style={{ padding: '8px 18px', background: 'transparent', border: '1px solid #2a2a45', borderRadius: 8, color: '#94a3b8', cursor: 'pointer', fontSize: 13 }}
+                  style={{ padding: '8px 18px', background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13 }}
                 >Cancel</button>
                 <button onClick={handleCreateAdmin}
                   style={{ padding: '8px 18px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}

@@ -6,7 +6,6 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
-import { HiOutlineTrendingUp, HiOutlineChartPie } from 'react-icons/hi';
 
 const COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6'];
 
@@ -42,76 +41,90 @@ export default function FinancialDashboard() {
     return <div className="loading-spinner"><div className="spinner" /></div>;
   }
 
+  const kpiCards = data ? [
+    { label: 'Total Revenue (Paid)', value: formatCurrency(data.metrics.totalRevenue), sub: `Pending: ${formatCurrency(data.metrics.pendingRevenue)}`, color: '#10B981', icon: '💰' },
+    { label: 'Total Costs', value: formatCurrency(data.metrics.totalCosts), sub: 'All expenses & usage', color: '#EF4444', icon: '📊' },
+    { label: 'Net Profit', value: formatCurrency(data.metrics.netProfit), sub: 'Revenue − Costs', color: data.metrics.netProfit >= 0 ? '#10B981' : '#EF4444', icon: '📈' },
+    { label: 'ROI', value: `${data.metrics.roi}%`, sub: `Total Funding: ${formatCurrency(data.metrics.totalFunding)}`, color: '#7C3AED', icon: '🎯' },
+    { label: 'IRR', value: `${data.metrics.irr}%`, sub: 'Est. over project lifetime', color: '#F59E0B', icon: '📉' },
+  ] : [];
+
   return (
-    <div className="animate-in">
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1>Financial Dashboard</h1>
-          <p>Key financial metrics and profitability</p>
-        </div>
+    <div style={{ backgroundColor: 'var(--bg-page)', minHeight: '100vh', padding: '24px', color: 'var(--text-primary)' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'nowrap' }}>
         <div>
-          <select 
-            className="form-select" 
-            value={selectedProject} 
-            onChange={(e) => setSelectedProject(e.target.value)}
-            style={{ minWidth: '250px', background: 'var(--bg-input)' }}
-          >
-            {projects.map(p => (
-              <option key={p.project_id} value={p.project_id}>{p.project_name}</option>
-            ))}
-          </select>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)' }}>Financial Dashboard</h1>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>Key financial metrics and profitability</p>
         </div>
+        <select
+          value={selectedProject}
+          onChange={e => setSelectedProject(e.target.value)}
+          style={{
+            padding: '9px 14px', borderRadius: '8px', minWidth: '200px',
+            backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-input)',
+            color: 'var(--text-primary)', fontSize: '14px', flexShrink: 0
+          }}>
+          <option value="">All Projects</option>
+          {projects.map(p => <option key={p.project_id} value={p.project_id}>{p.project_name}</option>)}
+        </select>
       </div>
 
       {data && (
         <>
-          <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', display: 'grid', gap: '20px', marginBottom: '24px' }}>
-            <div className="redesign-card" style={{ borderLeft: '4px solid #10b981' }}>
-              <h3>Total Revenue (Paid)</h3>
-              <div className="card-value-text">{formatCurrency(data.metrics.totalRevenue)}</div>
-              <p className="card-sub-text">Pending: {formatCurrency(data.metrics.pendingRevenue)}</p>
-            </div>
-            
-            <div className="redesign-card" style={{ borderLeft: '4px solid #ef4444' }}>
-              <h3>Total Costs</h3>
-              <div className="card-value-text">{formatCurrency(data.metrics.totalCosts)}</div>
-              <p className="card-sub-text">All expenses & usage</p>
-            </div>
-
-            <div className="redesign-card" style={{ borderLeft: '4px solid #3b82f6' }}>
-              <h3>Net Profit</h3>
-              <div className="card-value-text" style={{ color: data.metrics.netProfit >= 0 ? '#10b981' : '#ef4444' }}>
-                {formatCurrency(data.metrics.netProfit)}
+          {/* KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+            {kpiCards.map((card, i) => (
+              <div key={i} style={{
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderLeft: `4px solid ${card.color}`,
+                borderRadius: '12px',
+                padding: '20px',
+                boxShadow: 'var(--shadow)',
+                transition: 'transform 0.15s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    {card.label}
+                  </span>
+                  <span style={{ fontSize: '20px' }}>{card.icon}</span>
+                </div>
+                <div style={{ fontSize: '26px', fontWeight: '700', color: card.color, marginBottom: '4px' }}>
+                  {card.value}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{card.sub}</div>
               </div>
-              <p className="card-sub-text">Revenue - Costs</p>
-            </div>
-
-            <div className="redesign-card" style={{ borderLeft: '4px solid #f59e0b' }}>
-              <h3>IRR (Internal Rate of Return)</h3>
-              <div className="card-value-text">{data.metrics.irr}%</div>
-              <p className="card-sub-text">Estimated over project lifetime</p>
-            </div>
-            
-            <div className="redesign-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
-              <h3>ROI (Return on Investment)</h3>
-              <div className="card-value-text">{data.metrics.roi}%</div>
-              <p className="card-sub-text">Total Funding: {formatCurrency(data.metrics.totalFunding)}</p>
-            </div>
+            ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }}>
+          {/* Charts Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
             
             {/* Trend Chart */}
-            <div className="redesign-card">
-              <h3 style={{ marginBottom: '16px' }}><HiOutlineTrendingUp /> Monthly Revenue vs Costs</h3>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px', padding: '20px'
+            }}>
+              <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>
+                📈 Monthly Revenue vs Costs
+              </h3>
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer>
                   <BarChart data={data.trends} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                    <XAxis dataKey="month" stroke="var(--text-secondary)" />
-                    <YAxis stroke="var(--text-secondary)" tickFormatter={(value) => '₹' + (value/100000).toFixed(1) + 'L'} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: 'none', borderRadius: '8px', color: '#fff' }} />
-                    <Legend />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="month" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} />
+                    <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickFormatter={(value) => '₹' + (value/100000).toFixed(1) + 'L'} />
+                    <Tooltip 
+                      formatter={(value) => formatCurrency(value)} 
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }} 
+                      labelStyle={{ color: 'var(--text-primary)' }}
+                    />
+                    <Legend wrapperStyle={{ color: 'var(--text-secondary)', fontSize: '13px' }} />
                     <Bar dataKey="revenue" fill="#10b981" name="Revenue" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="cost" fill="#ef4444" name="Costs" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -120,8 +133,14 @@ export default function FinancialDashboard() {
             </div>
 
             {/* Cost Breakdown Pie */}
-            <div className="redesign-card">
-              <h3 style={{ marginBottom: '16px' }}><HiOutlineChartPie /> Cost Breakdown</h3>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px', padding: '20px'
+            }}>
+              <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>
+                🍩 Cost Breakdown
+              </h3>
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer>
                   <PieChart>
@@ -138,8 +157,11 @@ export default function FinancialDashboard() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: 'none', borderRadius: '8px' }} />
-                    <Legend />
+                    <Tooltip 
+                      formatter={(value) => formatCurrency(value)} 
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }} 
+                    />
+                    <Legend wrapperStyle={{ color: 'var(--text-secondary)', fontSize: '13px' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -151,4 +173,3 @@ export default function FinancialDashboard() {
     </div>
   );
 }
-
