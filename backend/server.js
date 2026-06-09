@@ -703,6 +703,7 @@ app.use('/api/recycle-bin',       require('./routes/recycleBin'));
 app.use('/api/admin',             require('./routes/admin'));
 app.use('/api/finance',           require('./routes/finance'));
 app.use('/api/import',            require('./routes/import'));
+app.use('/api/template',          require('./routes/template'));
 
 // ─────────────────────── Error handler ───────────────────────────────
 app.use((err, req, res, next) => {
