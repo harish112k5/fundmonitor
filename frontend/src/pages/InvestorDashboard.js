@@ -3,16 +3,19 @@ import API from '../api';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
+const fmt = (v) => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
 export default function InvestorDashboard() {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
 
-  // If no ID is provided, assume we want to view investor 1 for demo purposes
+  // Default to investor 1 for demo purposes if no ID
   const investorId = id || 1;
 
   const loadData = () => {
+    setLoading(true);
     API.get(`/investors/${investorId}/dashboard`)
       .then(res => setData(res.data))
       .catch(() => toast.error('Failed to load dashboard data'))
@@ -21,12 +24,12 @@ export default function InvestorDashboard() {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [investorId]);
 
   const handleMarkReceived = async (schedule) => {
     const receivedDate = window.prompt('Enter the date the amount was received (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
-    if (!receivedDate) return; // User cancelled
+    if (!receivedDate) return;
     
     setProcessingId(schedule.schedule_id);
     
@@ -49,145 +52,116 @@ export default function InvestorDashboard() {
     }
   };
 
-  const handleReturnFunds = async () => {
-    const amountStr = window.prompt('Enter amount to return to investor (₹):');
-    if (!amountStr) return;
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) return toast.error('Invalid amount');
+  if (loading && !data) {
+    return <div style={{ backgroundColor: 'var(--bg-page)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>Loading...</div>;
+  }
 
-    const returnDate = window.prompt('Enter return date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
-    if (!returnDate) return;
-
-    try {
-      // Return from the first project for demo, or a specific one if needed.
-      const projectId = data.projects.length > 0 ? data.projects[0].project_id : 1;
-      await API.post('/investors/returns/record', {
-        investor_id: investorId,
-        project_id: projectId,
-        amount,
-        return_date: returnDate,
-        notes: 'Manual return'
-      });
-      toast.success('Funds returned successfully!');
-      loadData();
-    } catch (err) {
-      toast.error('Failed to record return');
-    }
-  };
-
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
-  if (!data) return <div>No data available</div>;
+  if (!data) return <div style={{ padding: '40px', color: 'var(--text-primary)' }}>No data available</div>;
 
   return (
-    <div className="animate-in">
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1>Investor Portfolio Dashboard</h1>
-          <p>Overview of your investments and funding progress</p>
+    <div style={{ backgroundColor: 'var(--bg-page)', minHeight: '100vh', padding: '24px', color: 'var(--text-primary)' }}>
+
+      {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)' }}>Investor Portfolio</h1>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
+            Investor #{investorId} • Performance & Funding Overview
+          </p>
+        </div>
+        <div style={{ padding: '8px 16px', backgroundColor: '#3B82F622', color: '#3B82F6', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>
+          PLATINUM TIER
         </div>
       </div>
 
-      {/* Portfolio Overview */}
-      <h2 style={{ marginBottom: '1rem' }}>Portfolio Overview</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        <div className="card">
-          <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Total Committed</h3>
-          <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{data.overview.total_committed.toLocaleString('en-IN')}</p>
+      {/* ROW 1: KPI CARDS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '4px solid #3B82F6', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>Total Committed</div>
+          <div style={{ fontSize: '26px', fontWeight: '700', color: '#3B82F6' }}>{fmt(data.overview.total_committed)}</div>
         </div>
-        <div className="card">
-          <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Total Funded</h3>
-          <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>₹{data.overview.total_received.toLocaleString('en-IN')}</p>
+        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '4px solid #10B981', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>Total Funded</div>
+          <div style={{ fontSize: '26px', fontWeight: '700', color: '#10B981' }}>{fmt(data.overview.total_received)}</div>
         </div>
-        <div className="card">
-          <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Total Returned</h3>
-          <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>₹{data.overview.total_returned.toLocaleString('en-IN')}</p>
+        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '4px solid #EF4444', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>Outstanding Balance</div>
+          <div style={{ fontSize: '26px', fontWeight: '700', color: '#EF4444' }}>{fmt(data.overview.outstanding_balance)}</div>
         </div>
-        <div className="card">
-          <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Outstanding Balance</h3>
-          <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>₹{data.overview.outstanding_balance.toLocaleString('en-IN')}</p>
+        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '4px solid #7C3AED', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px' }}>Total Returned</div>
+          <div style={{ fontSize: '26px', fontWeight: '700', color: '#7C3AED' }}>{fmt(data.overview.total_returned)}</div>
         </div>
-        <div className="card">
-          <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Funding Progress</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <div style={{ flex: 1, background: 'var(--border-color)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(data.overview.funding_progress, 100)}%`, background: 'var(--primary)', height: '100%' }} />
-            </div>
-            <span style={{ fontWeight: 'bold' }}>{data.overview.funding_progress.toFixed(1)}%</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+        
+        {/* ROW 2: ACTIVE INVESTMENTS TABLE */}
+        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+          <h3 style={{ margin: '0 0 20px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: '600' }}>Active Investments</h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Project</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Committed</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Funded</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Funding Progress</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.projects.map((p, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '16px 10px', color: 'var(--text-primary)', fontWeight: '600' }}>{p.project_name}</td>
+                    <td style={{ padding: '16px 10px', color: 'var(--text-primary)' }}>{fmt(p.total_committed_amount)}</td>
+                    <td style={{ padding: '16px 10px', color: '#10B981', fontWeight: '600' }}>{fmt(p.project_received)}</td>
+                    <td style={{ padding: '16px 10px', minWidth: '150px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ flex: 1, height: '6px', backgroundColor: 'var(--bg-input)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${Math.min(p.progress, 100)}%`, backgroundColor: p.progress >= 100 ? '#10B981' : '#3B82F6', borderRadius: '3px' }} />
+                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: '600' }}>{p.progress.toFixed(0)}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {data.projects.length === 0 && (
+                  <tr><td colSpan="4" style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>No active investments</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
 
-      {/* Project Specific View */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2>Project Investments</h2>
-        <button className="btn btn-primary" onClick={handleReturnFunds}>Return Funds to Investor</button>
-      </div>
-      <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
-        {data.projects.map((p, idx) => (
-          <div key={idx} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h3>{p.project_name}</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Project ID: {p.project_id}</p>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <p><strong>Committed:</strong> ₹{p.total_committed_amount.toLocaleString('en-IN')}</p>
-              <p><strong>Funded:</strong> <span style={{ color: 'var(--success)' }}>₹{p.project_received.toLocaleString('en-IN')}</span></p>
-              <div style={{ width: '150px', background: 'var(--border-color)', height: '6px', borderRadius: '3px', marginTop: '0.5rem', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.min(p.progress, 100)}%`, background: p.progress >= 100 ? 'var(--success)' : 'var(--primary)', height: '100%' }} />
-              </div>
-            </div>
-          </div>
-        ))}
-        {data.projects.length === 0 && <p>No project investments found.</p>}
-      </div>
-
-      {/* Upcoming Obligations */}
-      <h2 style={{ marginBottom: '1rem' }}>Upcoming Installments</h2>
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.02)', textAlign: 'left' }}>
-              <th style={{ padding: '1rem' }}>Project</th>
-              <th style={{ padding: '1rem' }}>Installment #</th>
-              <th style={{ padding: '1rem' }}>Due Date</th>
-              <th style={{ padding: '1rem' }}>Amount</th>
-              <th style={{ padding: '1rem' }}>Status</th>
-              <th style={{ padding: '1rem' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
+        {/* ROW 3: UPCOMING OBLIGATIONS */}
+        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+          <h3 style={{ margin: '0 0 20px', color: 'var(--text-primary)', fontSize: '16px', fontWeight: '600' }}>Upcoming Obligations</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {data.upcoming_obligations.map((obl, idx) => (
-              <tr key={idx} style={{ borderTop: '1px solid var(--border-color)' }}>
-                <td style={{ padding: '1rem' }}>{obl.project_name}</td>
-                <td style={{ padding: '1rem' }}>{obl.installment_number}</td>
-                <td style={{ padding: '1rem' }}>{new Date(obl.scheduled_due_date).toLocaleDateString('en-IN')}</td>
-                <td style={{ padding: '1rem', fontWeight: 'bold' }}>₹{parseFloat(obl.scheduled_amount).toLocaleString('en-IN')}</td>
-                <td style={{ padding: '1rem' }}>
-                  <span style={{ 
-                    padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem',
-                    background: obl.status === 'Partially Received' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    color: obl.status === 'Partially Received' ? '#eab308' : '#ef4444'
-                  }}>
-                    {obl.status}
-                  </span>
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  <button 
-                    className="btn btn-primary" 
-                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                    onClick={() => handleMarkReceived(obl)}
-                    disabled={processingId === obl.schedule_id}
-                  >
-                    {processingId === obl.schedule_id ? 'Processing...' : '✔ Mark Received'}
-                  </button>
-                </td>
-              </tr>
+              <div key={idx} style={{ padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-input)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div>
+                    <div style={{ fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>{obl.project_name}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Inst. #{obl.installment_number} • Due: {new Date(obl.scheduled_due_date).toLocaleDateString()}</div>
+                  </div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#EF4444' }}>{fmt(obl.scheduled_amount)}</div>
+                </div>
+                
+                <button 
+                  onClick={() => handleMarkReceived(obl)}
+                  disabled={processingId === obl.schedule_id}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: 'none', backgroundColor: '#3B82F6', color: '#FFF', fontWeight: '600', cursor: processingId === obl.schedule_id ? 'not-allowed' : 'pointer' }}
+                >
+                  {processingId === obl.schedule_id ? 'Processing...' : 'Mark Received'}
+                </button>
+              </div>
             ))}
             {data.upcoming_obligations.length === 0 && (
-              <tr><td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No upcoming obligations</td></tr>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>No upcoming obligations</div>
             )}
-          </tbody>
-        </table>
+          </div>
+        </div>
+
       </div>
     </div>
   );

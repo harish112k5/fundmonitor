@@ -331,4 +331,72 @@ router.get('/recent', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/financial-summary?project_id=
+router.get('/financial-summary', authMiddleware, async (req, res) => {
+  try {
+    const { project_id } = req.query;
+    const userId = req.user.user_id;
+    const roleId = req.user.role_id;
+
+    // Get allowed project IDs (same scoping logic as other routes)
+    const allowedProjects = await getAllowedProjectIds(userId, roleId);
+    let projectIds = allowedProjects;
+
+    const ids = project_id ? [project_id] : projectIds;
+    // Filter to ensure requested project_id is within allowed ones
+    const finalIds = ids.filter(id => allowedProjects.includes(parseInt(id) || id));
+
+    if (finalIds.length === 0) return res.json({});
+
+    const ph = finalIds.map(() => '?').join(',');
+
+    const [[mat]]  = await db.query(`SELECT COALESCE(SUM(quantity * unit_price),0) as v FROM material_usage WHERE project_id IN (${ph})`, finalIds);
+    const [[man]]  = await db.query(`SELECT COALESCE(SUM(work_days * daily_rate),0) as v FROM manpower_usage WHERE project_id IN (${ph})`, finalIds);
+    const [[mach]] = await db.query(`SELECT COALESCE(SUM(usage_hours * hourly_rate),0) as v FROM machine_usage WHERE project_id IN (${ph})`, finalIds);
+    const [[exp]]  = await db.query(`SELECT COALESCE(SUM(amount),0) as v FROM expenses WHERE project_id IN (${ph})`, finalIds);
+    
+    // Note: in billing, 'amount' is billed amount, and we assume it's fully received if status is 'paid' based on previous queries,
+    // or maybe the schema has billed_amount / received_amount. Let's check previous queries.
+    // Previous queries used: SUM(amount) AS total_billed, SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS total_paid
+    const [[bil]]  = await db.query(`SELECT COALESCE(SUM(amount),0) as billed, COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END),0) as received FROM billing WHERE project_id IN (${ph})`, finalIds);
+    
+    const [[inv]]  = await db.query(`SELECT COALESCE(SUM(amount),0) as total, COALESCE(SUM(repaid_amount),0) as repaid FROM project_investments WHERE project_id IN (${ph})`, finalIds);
+    const [[loan]] = await db.query(`SELECT COALESCE(SUM(principal),0) as total, COALESCE(SUM(repaid_amount),0) as repaid FROM project_loans WHERE project_id IN (${ph})`, finalIds);
+    const [[ip]]   = await db.query(`SELECT COALESCE(SUM(ip.amount),0) as paid FROM interest_payments ip JOIN project_loans pl ON pl.id = ip.loan_id WHERE ip.status='paid' AND pl.project_id IN (${ph})`, finalIds);
+    const [[budget]] = await db.query(`SELECT COALESCE(SUM(estimated_budget),0) as v FROM projects WHERE project_id IN (${ph})`, finalIds);
+
+    const totalCost = parseFloat(mat.v) + parseFloat(man.v) + parseFloat(mach.v) + parseFloat(exp.v);
+    const totalFunding = parseFloat(inv.total) + parseFloat(loan.total);
+    const netProfit = parseFloat(bil.received) - totalCost;
+    const roi = totalFunding > 0 ? (netProfit / totalFunding) * 100 : 0;
+
+    res.json({
+      material_cost: parseFloat(mat.v),
+      manpower_cost: parseFloat(man.v),
+      machine_cost: parseFloat(mach.v),
+      expense_cost: parseFloat(exp.v),
+      total_cost: totalCost,
+      billed: parseFloat(bil.billed),
+      received: parseFloat(bil.received),
+      pending_billing: parseFloat(bil.billed) - parseFloat(bil.received),
+      total_investments: parseFloat(inv.total),
+      investments_repaid: parseFloat(inv.repaid),
+      investments_pending: parseFloat(inv.total) - parseFloat(inv.repaid),
+      total_loans: parseFloat(loan.total),
+      loans_repaid: parseFloat(loan.repaid),
+      loans_outstanding: parseFloat(loan.total) - parseFloat(loan.repaid),
+      interest_paid: parseFloat(ip.paid),
+      total_funding: totalFunding,
+      net_profit: netProfit,
+      roi: roi,
+      budget: parseFloat(budget.v),
+      budget_remaining: parseFloat(budget.v) - totalCost,
+      budget_used_pct: parseFloat(budget.v) > 0 ? (totalCost / parseFloat(budget.v)) * 100 : 0
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

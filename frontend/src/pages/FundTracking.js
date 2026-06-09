@@ -28,6 +28,9 @@ export default function FundTracking() {
         setProjects(res.data);
         if (res.data.length === 1) setFormData(f => ({ ...f, project_id: res.data[0].project_id }));
       }).catch(console.error);
+    } else {
+      setProjects([]);
+      setFormData(f => ({ ...f, project_id: '' }));
     }
   }, [formData.investor_id]);
 
@@ -57,81 +60,83 @@ export default function FundTracking() {
   };
 
   return (
-    <div className="animate-in">
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1>Record Fund Receipt</h1>
-          <p>Record incoming funds and trigger allocation logic (FIFO, Manual, Priority)</p>
+    <div style={{ backgroundColor: 'var(--bg-page)', minHeight: '100vh', padding: '24px', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+      <div style={{ width: '100%', maxWidth: '700px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)' }}>Record Fund Receipt</h1>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>Log incoming funds and trigger allocation logic</p>
         </div>
-        <button className="btn btn-secondary" onClick={() => window.location.href='/investors'}>
-          Back to Investors
+        <button onClick={() => window.location.href='/finance/investor-dashboard'} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: '600', cursor: 'pointer' }}>
+          Back to Dashboard
         </button>
       </div>
 
-      <div className="card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Investor *</label>
-            <select className="form-input" name="investor_id" value={formData.investor_id} onChange={handleChange} required>
+      <div style={{ width: '100%', maxWidth: '700px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '32px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>Investor *</label>
+            <select name="investor_id" value={formData.investor_id} onChange={handleChange} required style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}>
               <option value="">-- Select Investor --</option>
               {investors.map(i => <option key={i.investor_id} value={i.investor_id}>{i.name}</option>)}
             </select>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Project *</label>
-            <select className="form-input" name="project_id" value={formData.project_id} onChange={handleChange} required disabled={!formData.investor_id}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>Project *</label>
+            <select name="project_id" value={formData.project_id} onChange={handleChange} required disabled={!formData.investor_id} style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-input)', color: formData.investor_id ? 'var(--text-primary)' : 'var(--text-muted)' }}>
               <option value="">-- Select Project --</option>
               {projects.map(p => <option key={p.project_id} value={p.project_id}>{p.project_name}</option>)}
             </select>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Received Amount (₹) *</label>
-              <input className="form-input" type="number" step="0.01" name="received_amount" value={formData.received_amount} onChange={handleChange} required />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>Received Amount (₹) *</label>
+              <input type="number" step="0.01" name="received_amount" value={formData.received_amount} onChange={handleChange} required style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }} />
             </div>
-            <div className="form-group">
-              <label className="form-label">Date Received *</label>
-              <input className="form-input" type="date" name="received_date" value={formData.received_date} onChange={handleChange} required />
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>Date Received *</label>
+              <input type="date" name="received_date" value={formData.received_date} onChange={handleChange} required style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }} />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Payment Method</label>
-              <select className="form-input" name="payment_method" value={formData.payment_method} onChange={handleChange}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>Payment Method</label>
+              <select name="payment_method" value={formData.payment_method} onChange={handleChange} style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}>
                 <option>Bank Transfer</option>
                 <option>Cheque</option>
                 <option>Online</option>
                 <option>Other</option>
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">Transaction Reference</label>
-              <input className="form-input" name="transaction_reference" value={formData.transaction_reference} onChange={handleChange} placeholder="e.g. TXN-12345" />
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>Transaction Reference</label>
+              <input name="transaction_reference" value={formData.transaction_reference} onChange={handleChange} placeholder="e.g. TXN-12345" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }} />
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Allocation Method *</label>
-            <select className="form-input" name="allocation_method" value={formData.allocation_method} onChange={handleChange}>
+          <div style={{ backgroundColor: '#3B82F611', border: '1px solid #3B82F644', borderRadius: '8px', padding: '16px', marginTop: '8px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#3B82F6', fontWeight: '600' }}>Allocation Method *</label>
+            <select name="allocation_method" value={formData.allocation_method} onChange={handleChange} style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #3B82F644', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', marginBottom: '8px' }}>
               <option value="FIFO">FIFO (First In, First Out)</option>
-              <option value="Manual">Manual Allocation (Requires specific IDs in API)</option>
+              <option value="Manual">Manual Allocation</option>
               <option value="Priority">Priority-Based Allocation</option>
             </select>
-            <small style={{ color: 'var(--text-secondary)' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>
               Note: FIFO will automatically apply funds to the oldest pending installments first.
-            </small>
+            </p>
           </div>
 
-          <div style={{ marginTop: '2rem', textAlign: 'right' }}>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Processing...' : 'Record Receipt & Allocate'}
-            </button>
-          </div>
+          <button type="submit" disabled={loading} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: '#FFF', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '15px', marginTop: '16px', transition: 'background-color 0.2s' }}>
+            {loading ? 'Processing...' : 'Record Receipt & Allocate'}
+          </button>
+
         </form>
       </div>
+
     </div>
   );
 }

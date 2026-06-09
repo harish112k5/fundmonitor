@@ -2,37 +2,47 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// GET all investments
+// GET /api/investments — all with enriched data
 router.get('/', async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT pi.*, p.project_name, i.name AS investor_name, u.name AS created_by_name
+      SELECT
+        pi.*,
+        p.project_name,
+        p.status AS project_status,
+        i.name AS investor_name,
+        i.type AS investor_type,
+        (pi.amount - COALESCE(pi.repaid_amount, 0)) AS pending_amount,
+        CASE
+          WHEN COALESCE(pi.repaid_amount, 0) >= pi.amount THEN 'Closed'
+          WHEN pi.status = 'Active' THEN 'Active'
+          ELSE COALESCE(pi.status, 'Active')
+        END AS derived_status
       FROM project_investments pi
-      JOIN projects p ON pi.project_id = p.project_id AND p.is_deleted = 0
-      JOIN investors i ON pi.investor_id = i.investor_id
-      LEFT JOIN users u ON pi.created_by = u.user_id
+      JOIN projects p ON p.project_id = pi.project_id AND p.is_deleted = 0
+      JOIN investors i ON i.investor_id = pi.investor_id
       ORDER BY pi.investment_date DESC
     `);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// GET by project
-router.get('/project/:projectId', async (req, res) => {
+// GET /api/investments/project/:id
+router.get('/project/:id', async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT pi.*, i.name AS investor_name, u.name AS created_by_name
+      SELECT pi.*, i.name AS investor_name
       FROM project_investments pi
-      JOIN investors i ON pi.investor_id = i.investor_id
-      LEFT JOIN users u ON pi.created_by = u.user_id
+      JOIN investors i ON i.investor_id = pi.investor_id
       WHERE pi.project_id = ?
       ORDER BY pi.investment_date DESC
-    `, [req.params.projectId]);
+    `, [req.params.id]);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -43,47 +53,62 @@ router.get('/:id', async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ error: 'Investment not found' });
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// POST create
+// POST /api/investments
 router.post('/', async (req, res) => {
   try {
-    const { project_id, investor_id, amount, investment_date, notes, created_by } = req.body;
+    const { project_id, investor_id, amount, investment_date, return_type, expected_return, lock_in_months, notes, created_by } = req.body;
+    if (!project_id || !investor_id || !amount) {
+      return res.status(400).json({ error: 'project_id, investor_id, amount required' });
+    }
     const [result] = await db.query(
-      `INSERT INTO project_investments (project_id, investor_id, amount, investment_date, notes, created_by)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [project_id, investor_id, amount, investment_date, notes || null, created_by || null]
+      `INSERT INTO project_investments
+        (project_id, investor_id, amount, investment_date, return_type, expected_return, lock_in_months, repaid_amount, status, notes, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'Active', ?, ?)`,
+      [project_id, investor_id, amount, investment_date || new Date().toISOString().split('T')[0],
+       return_type || 'Fixed', expected_return || 0, lock_in_months || 0, notes || null, created_by || null]
     );
-    res.status(201).json({ id: result.insertId });
+    res.status(201).json({ id: result.insertId, message: 'Investment recorded' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// PUT update
+// PUT /api/investments/:id — update repayment
 router.put('/:id', async (req, res) => {
   try {
-    const { project_id, investor_id, amount, investment_date, notes } = req.body;
-    await db.query(
-      `UPDATE project_investments SET project_id = ?, investor_id = ?, amount = ?,
-       investment_date = ?, notes = ? WHERE id = ?`,
-      [project_id, investor_id, amount, investment_date, notes || null, req.params.id]
-    );
-    res.json({ message: 'Investment updated' });
+    const { repaid_amount, status, notes, project_id, investor_id, amount, investment_date } = req.body;
+    // If full edit fields provided
+    if (project_id && investor_id && amount) {
+      await db.query(
+        `UPDATE project_investments SET project_id=?, investor_id=?, amount=?,
+         investment_date=?, repaid_amount=?, status=?, notes=? WHERE id=?`,
+        [project_id, investor_id, amount, investment_date, repaid_amount || 0, status || 'Active', notes, req.params.id]
+      );
+    } else {
+      // Partial update (repayment only)
+      await db.query(
+        'UPDATE project_investments SET repaid_amount=?, status=?, notes=? WHERE id=?',
+        [repaid_amount, status, notes, req.params.id]
+      );
+    }
+    res.json({ message: 'Updated' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// DELETE
+// DELETE /api/investments/:id
 router.delete('/:id', async (req, res) => {
   try {
     await db.query('DELETE FROM project_investments WHERE id = ?', [req.params.id]);
-    res.json({ message: 'Investment deleted' });
+    res.json({ message: 'Deleted' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

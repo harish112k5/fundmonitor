@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import API from '../api';
-import { formatCurrency } from '../utils/currencyFormat';
 import toast from 'react-hot-toast';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
-import { HiOutlineTrendingUp, HiOutlineChartPie } from 'react-icons/hi';
 
-const COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6'];
+const fmt = (v) => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+const PIE_COLORS = ['#7C3AED', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
 
 export default function FinancialDashboard() {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [recentTransactions, setRecentTransactions] = useState([]);
 
   useEffect(() => {
     API.get('/projects')
@@ -31,97 +31,132 @@ export default function FinancialDashboard() {
   useEffect(() => {
     if (selectedProject) {
       setLoading(true);
-      API.get(`/finance/dashboard/${selectedProject}`)
-        .then(res => setData(res.data))
-        .catch(() => toast.error('Failed to load financial data'))
-        .finally(() => setLoading(false));
+      Promise.all([
+        API.get(`/finance/dashboard/${selectedProject}`),
+        API.get('/dashboard/recent') // We will use this to get recent transactions
+      ])
+      .then(([dashboardRes, recentRes]) => {
+        setData(dashboardRes.data);
+        if (recentRes.data && recentRes.data.recentExpenses) {
+          // Filter for selected project if possible, though /recent might return overall
+          setRecentTransactions(recentRes.data.recentExpenses.filter(e => e.project_id === parseInt(selectedProject)).slice(0, 10));
+        }
+      })
+      .catch(() => toast.error('Failed to load financial data'))
+      .finally(() => setLoading(false));
     }
   }, [selectedProject]);
 
   if (loading && !data) {
-    return <div className="loading-spinner"><div className="spinner" /></div>;
+    return <div style={{ backgroundColor: 'var(--bg-page)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>Loading...</div>;
   }
 
+  const kpiCards = data ? [
+    { label: 'Total Revenue (Paid)', value: fmt(data.metrics.totalRevenue), sub: `Pending: ${fmt(data.metrics.pendingRevenue)}`, color: '#10B981', icon: '💰' },
+    { label: 'Total Costs', value: fmt(data.metrics.totalCosts), sub: 'All expenses & usage', color: '#EF4444', icon: '📊' },
+    { label: 'Net Profit', value: fmt(data.metrics.netProfit), sub: 'Revenue − Costs', color: data.metrics.netProfit >= 0 ? '#10B981' : '#EF4444', icon: '📈' },
+    { label: 'ROI', value: `${data.metrics.roi}%`, sub: `Total Funding: ${fmt(data.metrics.totalFunding)}`, color: '#7C3AED', icon: '🎯' },
+    { label: 'IRR', value: `${data.metrics.irr}%`, sub: 'Est. over project lifetime', color: '#F59E0B', icon: '📉' },
+  ] : [];
+
   return (
-    <div className="animate-in">
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1>Financial Dashboard</h1>
-          <p>Key financial metrics and profitability</p>
-        </div>
+    <div style={{
+      backgroundColor: 'var(--bg-page)',
+      minHeight: '100vh',
+      padding: '24px',
+      color: 'var(--text-primary)'
+    }}>
+
+      {/* PAGE HEADER */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        flexWrap: 'nowrap'
+      }}>
         <div>
-          <select 
-            className="form-select" 
-            value={selectedProject} 
-            onChange={(e) => setSelectedProject(e.target.value)}
-            style={{ minWidth: '250px', background: 'var(--bg-input)' }}
-          >
-            {projects.map(p => (
-              <option key={p.project_id} value={p.project_id}>{p.project_name}</option>
-            ))}
-          </select>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)' }}>
+            Financial Dashboard
+          </h1>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
+            Financial health and profitability metrics
+          </p>
         </div>
+        <select
+          value={selectedProject}
+          onChange={e => setSelectedProject(e.target.value)}
+          style={{
+            padding: '9px 14px',
+            borderRadius: '8px',
+            backgroundColor: 'var(--bg-input)',
+            border: '1px solid var(--border-input)',
+            color: 'var(--text-primary)',
+            fontSize: '14px',
+            minWidth: '200px',
+            flexShrink: 0
+          }}
+        >
+          <option value="">All Projects</option>
+          {projects.map(p => <option key={p.project_id || p.id} value={p.project_id || p.id}>{p.project_name || p.name}</option>)}
+        </select>
       </div>
 
       {data && (
         <>
-          <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', display: 'grid', gap: '20px', marginBottom: '24px' }}>
-            <div className="redesign-card" style={{ borderLeft: '4px solid #10b981' }}>
-              <h3>Total Revenue (Paid)</h3>
-              <div className="card-value-text">{formatCurrency(data.metrics.totalRevenue)}</div>
-              <p className="card-sub-text">Pending: {formatCurrency(data.metrics.pendingRevenue)}</p>
-            </div>
-            
-            <div className="redesign-card" style={{ borderLeft: '4px solid #ef4444' }}>
-              <h3>Total Costs</h3>
-              <div className="card-value-text">{formatCurrency(data.metrics.totalCosts)}</div>
-              <p className="card-sub-text">All expenses & usage</p>
-            </div>
-
-            <div className="redesign-card" style={{ borderLeft: '4px solid #3b82f6' }}>
-              <h3>Net Profit</h3>
-              <div className="card-value-text" style={{ color: data.metrics.netProfit >= 0 ? '#10b981' : '#ef4444' }}>
-                {formatCurrency(data.metrics.netProfit)}
+          {/* ROW 1: KPI CARDS */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+            {kpiCards.map((card, i) => (
+              <div key={i} style={{
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderLeft: `4px solid ${card.color}`,
+                borderRadius: '12px',
+                padding: '20px',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+                transition: 'transform 0.15s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    {card.label}
+                  </span>
+                  <span style={{ fontSize: '20px' }}>{card.icon}</span>
+                </div>
+                <div style={{ fontSize: '26px', fontWeight: '700', color: card.color }}>{card.value}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{card.sub}</div>
               </div>
-              <p className="card-sub-text">Revenue - Costs</p>
-            </div>
-
-            <div className="redesign-card" style={{ borderLeft: '4px solid #f59e0b' }}>
-              <h3>IRR (Internal Rate of Return)</h3>
-              <div className="card-value-text">{data.metrics.irr}%</div>
-              <p className="card-sub-text">Estimated over project lifetime</p>
-            </div>
-            
-            <div className="redesign-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
-              <h3>ROI (Return on Investment)</h3>
-              <div className="card-value-text">{data.metrics.roi}%</div>
-              <p className="card-sub-text">Total Funding: {formatCurrency(data.metrics.totalFunding)}</p>
-            </div>
+            ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }}>
+          {/* ROW 2: CHARTS */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
             
             {/* Trend Chart */}
-            <div className="redesign-card">
-              <h3 style={{ marginBottom: '16px' }}><HiOutlineTrendingUp /> Monthly Revenue vs Costs</h3>
+            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+              <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>Monthly Revenue vs Costs</h3>
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer>
                   <BarChart data={data.trends} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                    <XAxis dataKey="month" stroke="var(--text-secondary)" />
-                    <YAxis stroke="var(--text-secondary)" tickFormatter={(value) => '₹' + (value/100000).toFixed(1) + 'L'} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: 'none', borderRadius: '8px', color: '#fff' }} />
-                    <Legend />
-                    <Bar dataKey="revenue" fill="#10b981" name="Revenue" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="cost" fill="#ef4444" name="Costs" radius={[4, 4, 0, 0]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="month" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} axisLine={{ stroke: 'var(--border)' }} />
+                    <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} axisLine={{ stroke: 'var(--border)' }} tickFormatter={(value) => '₹' + (value/100000).toFixed(1) + 'L'} />
+                    <Tooltip 
+                      formatter={(value) => fmt(value)} 
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }} 
+                    />
+                    <Legend wrapperStyle={{ color: 'var(--text-secondary)', fontSize: '13px' }} />
+                    <Bar dataKey="cost" fill="#EF4444" name="Costs" radius={[4,4,0,0]} />
+                    <Bar dataKey="revenue" fill="#10B981" name="Revenue" radius={[4,4,0,0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Cost Breakdown Pie */}
-            <div className="redesign-card">
-              <h3 style={{ marginBottom: '16px' }}><HiOutlineChartPie /> Cost Breakdown</h3>
+            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+              <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>Cost Breakdown</h3>
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer>
                   <PieChart>
@@ -135,20 +170,56 @@ export default function FinancialDashboard() {
                       dataKey="value"
                     >
                       {data.costBreakdown.filter(d => d.value > 0).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: 'none', borderRadius: '8px' }} />
-                    <Legend />
+                    <Tooltip 
+                      formatter={(value) => fmt(value)} 
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }} 
+                    />
+                    <Legend wrapperStyle={{ color: 'var(--text-secondary)', fontSize: '13px' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
             
           </div>
+
+          {/* ROW 3: RECENT TRANSACTIONS TABLE */}
+          <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+            <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>Recent Transactions</h3>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Date</th>
+                    <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Category</th>
+                    <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Type</th>
+                    <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentTransactions.length > 0 ? recentTransactions.map((tx, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '12px 10px', color: 'var(--text-primary)' }}>{new Date(tx.expense_date || tx.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: '12px 10px', color: 'var(--text-primary)' }}>{tx.category_name || 'Expense'}</td>
+                      <td style={{ padding: '12px 10px' }}>
+                        <span style={{ backgroundColor: '#EF444422', color: '#EF4444', borderRadius: '20px', padding: '4px 12px', fontSize: '12px', fontWeight: '600' }}>Expense</span>
+                      </td>
+                      <td style={{ padding: '12px 10px', color: '#EF4444', fontWeight: '600' }}>- {fmt(tx.amount)}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="4" style={{ padding: '12px 10px', textAlign: 'center', color: 'var(--text-muted)' }}>No recent transactions found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </>
       )}
     </div>
   );
 }
-

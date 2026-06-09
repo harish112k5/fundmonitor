@@ -1,225 +1,207 @@
 import React, { useEffect, useState } from 'react';
 import API from '../api';
-import { formatCurrency } from '../utils/currencyFormat';
 import toast from 'react-hot-toast';
-import { HiOutlinePlus, HiOutlineCash } from 'react-icons/hi';
-import Modal from '../components/Modal';
+import { 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  BarChart, Bar
+} from 'recharts';
+
+const fmt = (v) => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
 export default function Budgeting() {
-  const [projects, setProjects] = useState([]);
+  const [projectsList, setProjectsList] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [loading, setLoading] = useState(true);
-  const [budgetData, setBudgetData] = useState({ master: null, details: [], analysis: [] });
-  
-  const [showModal, setShowModal] = useState(false);
-  const [newBudget, setNewBudget] = useState({ budget_name: '', total_amount: '' });
-  const [details, setDetails] = useState([
-    { category: 'Materials', allocated_amount: '' },
-    { category: 'Labor', allocated_amount: '' },
-    { category: 'Equipment', allocated_amount: '' },
-    { category: 'Other Expenses', allocated_amount: '' }
-  ]);
+  const [projectsData, setProjectsData] = useState([]);
 
   useEffect(() => {
     API.get('/projects')
       .then(res => {
-        setProjects(res.data);
-        if (res.data.length > 0) {
-          setSelectedProject(res.data[0].project_id);
-        }
+        setProjectsList(res.data);
       })
-      .catch(() => toast.error('Failed to load projects'))
+      .catch(() => toast.error('Failed to load projects'));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    API.get('/dashboard/budget-comparison')
+      .then(res => setProjectsData(res.data))
+      .catch(() => toast.error('Failed to load budget data'))
       .finally(() => setLoading(false));
   }, []);
 
-  const loadBudget = () => {
-    if (selectedProject) {
-      setLoading(true);
-      API.get(`/finance/budget/${selectedProject}`)
-        .then(res => setBudgetData(res.data))
-        .catch(() => toast.error('Failed to load budget'))
-        .finally(() => setLoading(false));
-    }
-  };
-
-  useEffect(() => {
-    loadBudget();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProject]);
-
-  const handleCreateBudget = async () => {
-    try {
-      const payload = {
-        ...newBudget,
-        details: details.filter(d => d.allocated_amount > 0)
-      };
-      await API.post(`/finance/budget/${selectedProject}`, payload);
-      toast.success('Budget created successfully');
-      setShowModal(false);
-      loadBudget();
-    } catch (err) {
-      toast.error('Failed to create budget');
-    }
-  };
-
-  if (loading && !budgetData.master) {
-    return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading && projectsData.length === 0) {
+    return <div style={{ backgroundColor: 'var(--bg-page)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>Loading...</div>;
   }
 
+  // Filter projects if one is selected
+  const displayProjects = selectedProject 
+    ? projectsData.filter(p => p.project_id === parseInt(selectedProject) || p.project_id === selectedProject)
+    : projectsData;
+
+  const totalBudget = displayProjects.reduce((sum, p) => sum + (p.billable || 0), 0);
+  const totalActual = displayProjects.reduce((sum, p) => sum + (p.actual || 0), 0);
+  const totalVariance = totalBudget - totalActual;
+
   return (
-    <div className="animate-in">
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1>Budget vs Actual</h1>
-          <p>Monitor project spending against planned budgets</p>
+    <div style={{
+      backgroundColor: 'var(--bg-page)',
+      minHeight: '100vh',
+      padding: '24px',
+      color: 'var(--text-primary)'
+    }}>
+
+      {/* PAGE HEADER */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        flexWrap: 'nowrap'
+      }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)' }}>
+            Budgeting & Analysis
+          </h1>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
+            Budget vs Actual cost comparison
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <select 
-            className="form-select" 
-            value={selectedProject} 
-            onChange={(e) => setSelectedProject(e.target.value)}
-            style={{ minWidth: '250px', background: 'var(--bg-input)' }}
-          >
-            {projects.map(p => (
-              <option key={p.project_id} value={p.project_id}>{p.project_name}</option>
-            ))}
-          </select>
-          
-          {!budgetData.master && (
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-              <HiOutlinePlus /> Create Master Budget
-            </button>
-          )}
+        <select
+          value={selectedProject}
+          onChange={e => setSelectedProject(e.target.value)}
+          style={{
+            padding: '9px 14px',
+            borderRadius: '8px',
+            backgroundColor: 'var(--bg-input)',
+            border: '1px solid var(--border-input)',
+            color: 'var(--text-primary)',
+            fontSize: '14px',
+            minWidth: '200px',
+            flexShrink: 0
+          }}
+        >
+          <option value="">All Projects</option>
+          {projectsList.map(p => <option key={p.project_id || p.id} value={p.project_id || p.id}>{p.project_name || p.name}</option>)}
+        </select>
+      </div>
+
+      {/* ROW 1: KPI CARDS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <div style={{
+          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '4px solid #3B82F6',
+          borderRadius: '12px', padding: '20px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>Total Budget</span>
+            <span style={{ fontSize: '20px' }}>💼</span>
+          </div>
+          <div style={{ fontSize: '26px', fontWeight: '700', color: '#3B82F6' }}>{fmt(totalBudget)}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Estimated budget allocated</div>
+        </div>
+        
+        <div style={{
+          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '4px solid #EF4444',
+          borderRadius: '12px', padding: '20px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>Total Actual Spent</span>
+            <span style={{ fontSize: '20px' }}>📉</span>
+          </div>
+          <div style={{ fontSize: '26px', fontWeight: '700', color: '#EF4444' }}>{fmt(totalActual)}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Total cost incurred</div>
+        </div>
+
+        <div style={{
+          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: `4px solid ${totalVariance >= 0 ? '#10B981' : '#EF4444'}`,
+          borderRadius: '12px', padding: '20px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase' }}>Total Variance</span>
+            <span style={{ fontSize: '20px' }}>⚖️</span>
+          </div>
+          <div style={{ fontSize: '26px', fontWeight: '700', color: totalVariance >= 0 ? '#10B981' : '#EF4444' }}>
+            {totalVariance >= 0 ? '+' : ''}{fmt(totalVariance)}
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Budget minus Actual</div>
         </div>
       </div>
 
-      {!budgetData.master ? (
-        <div className="empty-state" style={{ marginTop: '40px', padding: '60px 20px', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '12px' }}>
-          <HiOutlineCash size={48} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
-          <h3>No Budget Defined</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>Create a master budget to track expenses against allocations.</p>
-          <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={() => setShowModal(true)}>
-            Create Budget Now
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', display: 'grid', gap: '20px', marginBottom: '24px' }}>
-            <div className="redesign-card" style={{ borderLeft: '4px solid #3b82f6' }}>
-              <h3>Total Master Budget</h3>
-              <div className="card-value-text">{formatCurrency(budgetData.master.total_amount)}</div>
-              <p className="card-sub-text">Status: {budgetData.master.status.toUpperCase()}</p>
-            </div>
-            
-            <div className="redesign-card" style={{ borderLeft: '4px solid #f59e0b' }}>
-              <h3>Total Actual Spent</h3>
-              <div className="card-value-text">
-                {formatCurrency(budgetData.analysis.reduce((sum, item) => sum + item.actual, 0))}
-              </div>
-              <p className="card-sub-text">Across all monitored categories</p>
-            </div>
-            
-            <div className="redesign-card" style={{ borderLeft: '4px solid #10b981' }}>
-              <h3>Remaining Budget</h3>
-              <div className="card-value-text">
-                {formatCurrency(budgetData.master.total_amount - budgetData.analysis.reduce((sum, item) => sum + item.actual, 0))}
-              </div>
-              <p className="card-sub-text">Available for future use</p>
-            </div>
-          </div>
+      {/* ROW 2: PROJECT BUDGET TABLE */}
+      <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
+        <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>Project Budget Analysis</h3>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Project Name</th>
+                <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Budget</th>
+                <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Actual</th>
+                <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Variance</th>
+                <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>% Used</th>
+                <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayProjects.map(p => {
+                const actual = p.actual || 0;
+                const budget = p.billable || 0;
+                const variance = budget - actual;
+                const pct = budget > 0 ? Math.min(100, (actual / budget) * 100) : (actual > 0 ? 100 : 0);
+                const status = actual > budget ? 'Over Budget' : actual > budget * 0.85 ? 'At Risk' : 'On Track';
+                const statusColor = actual > budget ? '#EF4444' : actual > budget * 0.85 ? '#F59E0B' : '#10B981';
 
-          <div className="redesign-card">
-            <h3 style={{ marginBottom: '20px' }}>Budget Variance Analysis</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <th style={{ padding: '12px', color: 'var(--text-muted)' }}>CATEGORY</th>
-                    <th style={{ padding: '12px', color: 'var(--text-muted)' }}>ALLOCATED BUDGET</th>
-                    <th style={{ padding: '12px', color: 'var(--text-muted)' }}>ACTUAL SPENT</th>
-                    <th style={{ padding: '12px', color: 'var(--text-muted)' }}>VARIANCE</th>
-                    <th style={{ padding: '12px', color: 'var(--text-muted)' }}>UTILIZATION</th>
+                return (
+                  <tr key={p.project_id} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '12px 10px', color: 'var(--text-primary)', fontWeight: '600' }}>{p.project_name}</td>
+                    <td style={{ padding: '12px 10px', color: 'var(--text-primary)' }}>{fmt(budget)}</td>
+                    <td style={{ padding: '12px 10px', color: '#EF4444', fontWeight: '600' }}>{fmt(actual)}</td>
+                    <td style={{ padding: '12px 10px', color: variance >= 0 ? '#10B981' : '#EF4444', fontWeight: '600' }}>
+                      {variance >= 0 ? '+' : ''}{fmt(variance)}
+                    </td>
+                    <td style={{ padding: '12px 10px', minWidth: '140px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>{pct.toFixed(1)}%</div>
+                      <div style={{ height: '6px', borderRadius: '3px', backgroundColor: 'var(--border)', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, backgroundColor: statusColor, borderRadius: '3px', transition: 'width 0.5s' }} />
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 10px' }}>
+                      <span style={{ backgroundColor: statusColor + '22', color: statusColor, borderRadius: '20px', padding: '4px 12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                        {status}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {budgetData.analysis.map((row, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      <td style={{ padding: '12px', fontWeight: 600 }}>{row.category}</td>
-                      <td style={{ padding: '12px' }}>{formatCurrency(row.budgeted)}</td>
-                      <td style={{ padding: '12px' }}>{formatCurrency(row.actual)}</td>
-                      <td style={{ padding: '12px', color: row.variance < 0 ? '#ef4444' : '#10b981', fontWeight: 600 }}>
-                        {row.variance < 0 ? '-' : '+'}{formatCurrency(Math.abs(row.variance))}
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ flex: 1, height: '8px', background: 'var(--bg-input)', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div 
-                              style={{ 
-                                height: '100%', 
-                                width: `${Math.min(row.usedPercentage, 100)}%`,
-                                background: row.usedPercentage > 100 ? '#ef4444' : row.usedPercentage > 85 ? '#f59e0b' : '#10b981'
-                              }}
-                            />
-                          </div>
-                          <span style={{ fontSize: '12px' }}>{row.usedPercentage.toFixed(1)}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create Master Budget" style={{ maxWidth: '600px', width: '100%' }}>
-        <div style={{ padding: '0 24px 24px' }}>
-          <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label">Budget Name</label>
-            <input 
-              className="form-input" 
-              value={newBudget.budget_name} 
-              onChange={e => setNewBudget({...newBudget, budget_name: e.target.value})} 
-              placeholder="e.g. FY 2025 Phase 1 Budget"
-            />
-          </div>
-          <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label className="form-label">Total Amount (₹)</label>
-            <input 
-              type="number"
-              className="form-input" 
-              value={newBudget.total_amount} 
-              onChange={e => setNewBudget({...newBudget, total_amount: e.target.value})} 
-              placeholder="Total Budget Allocation"
-            />
-          </div>
-
-          <h4 style={{ marginBottom: '12px', color: 'var(--text-primary)' }}>Department Allocations</h4>
-          {details.map((d, index) => (
-            <div key={index} style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
-              <input className="form-input" value={d.category} readOnly style={{ flex: 1, background: 'var(--bg-input)' }} />
-              <input 
-                type="number"
-                className="form-input" 
-                placeholder="Amount (₹)"
-                value={d.allocated_amount} 
-                onChange={e => {
-                  const newDetails = [...details];
-                  newDetails[index].allocated_amount = e.target.value;
-                  setDetails(newDetails);
-                }} 
-                style={{ flex: 1 }} 
-              />
-            </div>
-          ))}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
-            <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleCreateBudget}>Save Budget</button>
-          </div>
+                );
+              })}
+              {displayProjects.length === 0 && (
+                <tr><td colSpan="6" style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)' }}>No budget data available</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      </Modal>
+      </div>
+
+      {/* ROW 3: BAR CHART */}
+      <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+        <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>Budget vs Actual Spend</h3>
+        <div style={{ width: '100%', height: 350 }}>
+          <ResponsiveContainer>
+            <BarChart data={displayProjects} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="project_name" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} axisLine={{ stroke: 'var(--border)' }} />
+              <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} axisLine={{ stroke: 'var(--border)' }} tickFormatter={(value) => '₹' + (value/100000).toFixed(1) + 'L'} />
+              <Tooltip 
+                formatter={(value) => fmt(value)} 
+                contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }} 
+              />
+              <Legend wrapperStyle={{ color: 'var(--text-secondary)', fontSize: '13px' }} />
+              <Bar dataKey="billable" fill="#3B82F6" name="Budget" radius={[4,4,0,0]} />
+              <Bar dataKey="actual" fill="#EF4444" name="Actual Spend" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
     </div>
   );
 }

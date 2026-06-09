@@ -5,8 +5,14 @@ import Modal from '../components/Modal';
 import DeleteConfirm from '../components/DeleteConfirm';
 import toast from 'react-hot-toast';
 import { HiOutlinePlus } from 'react-icons/hi';
+import {
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
 
 const initialForm = { project_id: '', category_id: '', amount: '', description: '', expense_date: '', recorded_by: '' };
+
+const COLORS = ['#7c3aed', '#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
 
 export default function Expenses() {
   const [data, setData] = useState([]);
@@ -56,6 +62,29 @@ export default function Expenses() {
 
   const fmt = (n) => n ? `₹${Number(n).toLocaleString('en-IN')}` : '—';
 
+  // --- DATA PREP for Charts ---
+  const categoryTotals = data.reduce((acc, exp) => {
+    const catName = exp.category_name || 'Uncategorized';
+    acc[catName] = (acc[catName] || 0) + parseFloat(exp.amount || 0);
+    return acc;
+  }, {});
+  const pieData = Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
+
+  const monthlyTotals = data.reduce((acc, exp) => {
+    const month = exp.expense_date?.slice(0, 7); // YYYY-MM
+    if (month) {
+      acc[month] = (acc[month] || 0) + parseFloat(exp.amount || 0);
+    }
+    return acc;
+  }, {});
+  const barData = Object.entries(monthlyTotals)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6)
+    .map(([month, total]) => ({ month, total }));
+
+  const totalExpenses = data.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
   const columns = [
     { header: 'ID', accessor: 'expense_id', style: { width: 60 } },
     { header: 'Project', accessor: 'project_name', render: r => <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.project_name}</span> },
@@ -73,6 +102,121 @@ export default function Expenses() {
       <div className="page-header">
         <div className="page-header-left"><h1>Expenses</h1><p>Track project expenses</p></div>
       </div>
+
+      {/* ========== CHARTS SECTION ========== */}
+      <div style={{ marginBottom: 24 }}>
+
+        {/* Summary Cards Row */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 14,
+          marginBottom: 20,
+        }}>
+          {[
+            { label: 'Total Expenses', value: `₹${totalExpenses.toLocaleString('en-IN')}`, color: '#ef4444', icon: '💰' },
+            { label: 'This Month', value: `₹${(monthlyTotals[currentMonth] || 0).toLocaleString('en-IN')}`, color: '#f59e0b', icon: '📅' },
+            { label: 'Categories', value: Object.keys(categoryTotals).length, color: '#7c3aed', icon: '📊' },
+            { label: 'Total Records', value: data.length, color: '#3b82f6', icon: '📋' },
+          ].map(card => (
+            <div key={card.label} style={{
+              background: 'var(--glass-bg)',
+              border: 'var(--glass-border)',
+              borderLeft: `3px solid ${card.color}`,
+              borderRadius: 10,
+              padding: '14px 18px',
+              backdropFilter: 'blur(20px)',
+              transition: 'all 0.2s',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 14 }}>{card.icon}</span>
+                <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{card.label}</p>
+              </div>
+              <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{card.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts Row */}
+        {data.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+            {/* Pie Chart */}
+            <div style={{
+              background: 'var(--glass-bg)',
+              border: 'var(--glass-border)',
+              borderRadius: 12,
+              padding: '20px',
+              backdropFilter: 'blur(20px)',
+            }}>
+              <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                📈 Category Breakdown
+              </h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v) => `₹${Number(v).toLocaleString('en-IN')}`}
+                    contentStyle={{
+                      background: 'var(--bg-secondary)',
+                      border: 'var(--glass-border)',
+                      borderRadius: 8,
+                      color: 'var(--text-primary)',
+                      fontSize: 12,
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Bar Chart */}
+            <div style={{
+              background: 'var(--glass-bg)',
+              border: 'var(--glass-border)',
+              borderRadius: 12,
+              padding: '20px',
+              backdropFilter: 'blur(20px)',
+            }}>
+              <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                📊 Monthly Trend (Last 6 Months)
+              </h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={barData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                    tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    formatter={(v) => `₹${Number(v).toLocaleString('en-IN')}`}
+                    contentStyle={{
+                      background: 'var(--bg-secondary)',
+                      border: 'var(--glass-border)',
+                      borderRadius: 8,
+                      color: 'var(--text-primary)',
+                      fontSize: 12,
+                    }}
+                  />
+                  <Bar dataKey="total" fill="#7c3aed" radius={[4, 4, 0, 0]} name="Expenses" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+          </div>
+        )}
+      </div>
+      {/* ========== END CHARTS SECTION ========== */}
+
       <DataTable columns={columns} data={data} onEdit={handleEdit}
         onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}
         searchPlaceholder="Search expenses..." emptyIcon="💸" emptyTitle="No expenses"

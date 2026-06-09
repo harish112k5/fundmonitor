@@ -67,6 +67,119 @@
 }
 
 /* ============================================
+   LIGHT MODE THEME
+   ============================================ */
+
+[data-theme="light"] {
+  /* Core Colors */
+  --bg-primary: #f4f6fb;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-card-hover: rgba(240, 242, 255, 0.95);
+  --bg-input: rgba(0, 0, 0, 0.03);
+  --bg-input-focus: rgba(0, 0, 0, 0.05);
+
+  /* Accent (keep consistent) */
+  --accent-glow: rgba(99, 102, 241, 0.10);
+
+  /* Status Colors */
+  --success-bg: rgba(16, 185, 129, 0.08);
+  --warning-bg: rgba(245, 158, 11, 0.08);
+  --danger-bg: rgba(239, 68, 68, 0.08);
+  --info-bg: rgba(59, 130, 246, 0.08);
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-accent: #6366f1;
+
+  /* Borders */
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.12);
+  --border-accent: rgba(99, 102, 241, 0.25);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: 1px solid rgba(0, 0, 0, 0.08);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
+  --shadow-accent: 0 4px 20px rgba(99, 102, 241, 0.12);
+}
+
+/* Hide ambient glow orbs in light mode */
+[data-theme="light"] body::before,
+[data-theme="light"] body::after {
+  display: none;
+}
+
+/* Light mode scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Light mode sidebar specific overrides */
+[data-theme="light"] .sidebar {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .sidebar-link:hover {
+  background: rgba(99, 102, 241, 0.06);
+}
+
+[data-theme="light"] .data-table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+[data-theme="light"] .data-table tbody tr {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .data-table thead th {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Light mode login */
+[data-theme="light"] .login-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+/* Light mode form selects */
+[data-theme="light"] .form-select option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* Light mode modal */
+[data-theme="light"] .modal {
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Light mode stat card hover */
+[data-theme="light"] .stat-card {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
    RESET & BASE
    ============================================ */
 

@@ -691,6 +691,7 @@ app.use('/api/financiers',        require('./routes/financiers'));
 app.use('/api/investments',       require('./routes/investments'));
 app.use('/api/loans',             require('./routes/loans'));
 app.use('/api/interest-payments', require('./routes/interestPayments'));
+app.use('/api/interestPayments', require('./routes/interestPayments'));
 app.use('/api/expense-categories',require('./routes/expenseCategories'));
 app.use('/api/expenses',          require('./routes/expenses'));
 app.use('/api/billing',           require('./routes/billing'));
