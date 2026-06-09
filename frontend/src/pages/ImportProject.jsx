@@ -127,7 +127,7 @@ export default function ImportProject() {
               <p style={{ fontSize:15, fontWeight:600, margin:'0 0 8px' }}>Drop your Excel file here</p>
               <p style={{ fontSize:12, color:'#64748b', margin:'0 0 12px' }}>or click to browse — .xlsx only, max 10MB</p>
               <a
-                href="http://localhost:5000/api/template/download"
+                href={`${axios.defaults.baseURL}/template/download`}
                 download="BuildManager_Import_Template.xlsx"
                 onClick={e => e.stopPropagation()}
                 style={{ fontSize:12, color:'#8b5cf6', textDecoration:'underline' }}
