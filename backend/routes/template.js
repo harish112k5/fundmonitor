@@ -88,8 +88,15 @@ router.get('/download', async (req, res) => {
 
     // ── HELPER: add dropdown validation ─────────────────────────────
     function addDropdown(ws, col, startRow, endRow, options) {
+      if (!options || options.length === 0) return;
       const safeOptions = options.map(o => String(o).replace(/,/g, ' '));
-      const formula = '"' + safeOptions.join(',') + '"';
+      const formulaStr = safeOptions.join(',');
+      
+      // Excel limits data validation lists to 255 characters.
+      // If it exceeds this, it corrupts the workbook. So we skip dropdowns for huge lists.
+      if (formulaStr.length > 250) return;
+
+      const formula = '"' + formulaStr + '"';
       for (let r = startRow; r <= endRow; r++) {
         ws.getCell(r, col).dataValidation = {
           type: 'list',
