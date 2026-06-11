@@ -24,17 +24,9 @@ import {
 import AccountantDashboard from './AccountantDashboard';
 import SupervisorDashboard from './SupervisorDashboard';
 
-export default function Dashboard() {
+function DashboardContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  if (user?.role_id === 4) {
-    return <AccountantDashboard />;
-  }
-
-  if (user?.role_id === 5) {
-    return <SupervisorDashboard />;
-  }
 
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -383,4 +375,11 @@ export default function Dashboard() {
       )}
     </PageWrapper>
   );
+}
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  if (user?.role_id === 4) return <AccountantDashboard />;
+  if (user?.role_id === 5) return <SupervisorDashboard />;
+  return <DashboardContent />;
 }

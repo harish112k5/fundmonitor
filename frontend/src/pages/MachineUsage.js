@@ -40,7 +40,7 @@ const colHeaderStyle = {
 };
 
 export default function MachineUsage() {
-  const { user } = useAuth();
+  const { user, canEdit, canDeleteResources } = useAuth();
   const currentUserId = user?.user_id;
 
   const [data, setData] = useState([]);
@@ -260,19 +260,22 @@ export default function MachineUsage() {
         </div>
       </div>
 
-      <DataTable columns={columns} data={data} onEdit={handleEdit}
-        onDelete={r => { setDeleteTarget(r); setShowDelete(true); }}
+      <DataTable columns={columns} data={data} 
+        onEdit={canEdit ? handleEdit : null}
+        onDelete={canDeleteResources ? r => { setDeleteTarget(r); setShowDelete(true); } : null}
         searchPlaceholder="Search..." emptyIcon="🚜" emptyTitle="No machine usage logged"
         addButton={
-          <button className="btn btn-primary" onClick={() => {
-            setEditing(null);
-            setRows([emptyRow()]);
-            setSharedProject('');
-            setSharedDate('');
-            setShowModal(true);
-          }}>
-            <HiOutlinePlus /> Log Usage
-          </button>
+          canEdit && (
+            <button className="btn btn-primary" onClick={() => {
+              setEditing(null);
+              setRows([emptyRow()]);
+              setSharedProject('');
+              setSharedDate('');
+              setShowModal(true);
+            }}>
+              <HiOutlinePlus /> Log Usage
+            </button>
+          )
         }
       />
 

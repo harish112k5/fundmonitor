@@ -40,7 +40,7 @@ const colHeaderStyle = {
 };
 
 export default function MaterialUsage() {
-  const { user } = useAuth();
+  const { user, canEdit, canDeleteResources } = useAuth();
   const currentUserId = user?.user_id;
 
   const [data, setData] = useState([]);
