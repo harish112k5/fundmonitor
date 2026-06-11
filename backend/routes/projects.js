@@ -19,19 +19,26 @@ router.get('/', authMiddleware, async (req, res) => {
         WHERE p.is_deleted = 0
         ORDER BY p.project_id DESC
       `;
-    } else if (role_id === 3) {
-      // Engineer: ONLY assigned projects
+    } else if (role_id === 3 || role_id === 4) {
+      // Engineer & Viewer: ONLY assigned projects
+      const { getAllowedProjectIds } = require('../utils/projectAccess');
+      const allowedIds = await getAllowedProjectIds(user_id, role_id);
+      
+      if (allowedIds.length === 0) {
+        return res.json([]);
+      }
+      
+      const placeholders = allowedIds.map(() => '?').join(',');
       query = `
         SELECT p.*, u.name AS created_by_name
         FROM projects p
-        INNER JOIN project_team pt ON pt.project_id = p.project_id
         LEFT JOIN users u ON p.created_by = u.user_id
-        WHERE pt.user_id = ? AND p.is_deleted = 0
+        WHERE p.project_id IN (${placeholders}) AND p.is_deleted = 0
         ORDER BY p.project_id DESC
       `;
-      params = [user_id];
+      params = allowedIds;
     } else {
-      // Viewer / Other roles: all projects (read-only)
+      // Other roles: all projects
       query = `
         SELECT p.*, u.name AS created_by_name
         FROM projects p

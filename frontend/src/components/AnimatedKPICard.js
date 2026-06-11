@@ -19,8 +19,8 @@ export default function AnimatedKPICard({
     <div
       onClick={onClick}
       style={{
-        background: '#1E1E1E',
-        border: '1px solid #2D2D2D',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-subtle)',
         borderRadius: '8px',
         padding: '18px 20px',
         position: 'relative',
@@ -34,7 +34,7 @@ export default function AnimatedKPICard({
           repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.02) 19px, rgba(255,255,255,0.02) 20px),
           repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.02) 19px, rgba(255,255,255,0.02) 20px)
         `,
-        backgroundColor: '#1E1E1E'
+        backgroundColor: 'var(--bg-card)'
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.4)';
@@ -42,7 +42,7 @@ export default function AnimatedKPICard({
         e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '#2D2D2D';
+        e.currentTarget.style.borderColor = 'var(--border-subtle)';
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = 'none';
       }}
@@ -80,7 +80,7 @@ export default function AnimatedKPICard({
         fontWeight: '700',
         textTransform: 'uppercase',
         letterSpacing: '1.5px',
-        color: '#57534E',
+        color: 'var(--text-muted)',
         marginBottom: '10px'
       }}>
         {label}
@@ -91,7 +91,7 @@ export default function AnimatedKPICard({
         fontFamily: "'Oswald', sans-serif",
         fontSize: '28px',
         fontWeight: '700',
-        color: '#F5F5F4',
+        color: 'var(--text-primary)',
         lineHeight: '1'
       }}>
         {isNumeric && isMoney ? (
@@ -112,7 +112,7 @@ export default function AnimatedKPICard({
         <div style={{
           fontSize: '11px',
           fontFamily: "'Inter', sans-serif",
-          color: '#57534E',
+          color: 'var(--text-muted)',
           marginTop: '6px'
         }}>
           {subtitle}

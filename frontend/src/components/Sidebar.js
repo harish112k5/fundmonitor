@@ -186,8 +186,8 @@ export default function Sidebar() {
             <HelmetIcon size={32} />
           </div>
           <div>
-            <h1>BUILDMANAGER</h1>
-            <span>Construction ERP</span>
+            <h1>FINFRA</h1>
+            <span>Financial Infrastructure</span>
           </div>
         </div>
 
@@ -200,7 +200,7 @@ export default function Sidebar() {
               <span style={{
                 position: 'absolute', bottom: -1, right: -1,
                 width: 6, height: 6, borderRadius: '50%',
-                background: '#16A34A', border: '1px solid #111111',
+                background: '#16A34A', border: '1px solid var(--bg-secondary)',
                 animation: 'sitePulse 2s ease-in-out infinite'
               }} />
             </div>
@@ -229,9 +229,9 @@ export default function Sidebar() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
                       padding: '0 12px', height: '40px', cursor: 'pointer',
-                      borderLeft: isActive ? '3px solid #F59E0B' : '3px solid transparent',
-                      background: isActive ? 'rgba(245,158,11,0.08)' : 'transparent',
-                      color: isActive ? '#F5F5F4' : '#9CA3AF',
+                      borderLeft: isActive ? '3px solid var(--text-accent)' : '3px solid transparent',
+                      background: isActive ? 'var(--accent-glow)' : 'transparent',
+                      color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
                       fontWeight: isActive ? '600' : '500',
                       fontSize: '13px',
                       transition: 'all 0.15s ease',
@@ -239,14 +239,14 @@ export default function Sidebar() {
                     }}
                     onMouseEnter={e => {
                       if (!isActive) {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                        e.currentTarget.style.color = '#D6D3CE';
+                        e.currentTarget.style.background = 'var(--bg-card-hover)';
+                        e.currentTarget.style.color = 'var(--text-primary)';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!isActive) {
                         e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = '#9CA3AF';
+                        e.currentTarget.style.color = 'var(--text-muted)';
                       }
                     }}
                   >
@@ -257,7 +257,7 @@ export default function Sidebar() {
                     {item.badge > 0 && (
                       <span style={{
                         backgroundColor: '#DC2626',
-                        color: '#fff',
+                        color: 'var(--text-primary)',
                         borderRadius: '4px',
                         padding: '1px 6px',
                         fontSize: '10px',
@@ -281,9 +281,9 @@ export default function Sidebar() {
               width: '100%',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '8px 12px', borderRadius: '6px',
-              border: '1px solid #2D2D2D',
+              border: '1px solid var(--border-medium)',
               background: 'transparent',
-              cursor: 'pointer', color: '#9CA3AF',
+              cursor: 'pointer', color: 'var(--text-muted)',
               fontSize: '10px', fontWeight: '500',
               fontFamily: "'Inter', sans-serif",
               textTransform: 'uppercase', letterSpacing: '1px',
@@ -297,7 +297,7 @@ export default function Sidebar() {
             <span style={{
               width: 32, height: 16,
               borderRadius: 8,
-              background: isDark ? '#F59E0B' : '#374151',
+              background: isDark ? 'var(--text-accent)' : 'var(--border-medium)',
               position: 'relative',
               transition: 'background 0.3s',
               flexShrink: 0,

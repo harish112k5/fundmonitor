@@ -105,12 +105,12 @@ export default function Projects() {
 
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
-  if (data.length === 0 && user?.role_id === 3) {
+  if (data.length === 0 && (user?.role_id === 3 || user?.role_id === 4)) {
     return (
       <PageWrapper>
-        <AnimatedItem delay={0} style={{ textAlign: 'center', padding: '80px 20px', color: '#57534E' }}>
+        <AnimatedItem delay={0} style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-muted)' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏗️</div>
-          <h3 style={{ fontFamily: "'Oswald', sans-serif", color: '#F5F5F4', marginBottom: '8px', textTransform: 'uppercase' }}>No Projects Assigned Yet</h3>
+          <h3 style={{ fontFamily: "'Oswald', sans-serif", color: 'var(--text-primary)', marginBottom: '8px', textTransform: 'uppercase' }}>No Projects Assigned Yet</h3>
           <p>Your admin will assign you to a project shortly. Check back soon.</p>
           <button onClick={load} className="btn btn-secondary" style={{ margin: '24px auto 0' }}>Refresh</button>
         </AnimatedItem>

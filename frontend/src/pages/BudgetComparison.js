@@ -121,7 +121,7 @@ export default function BudgetComparison() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 60, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{ width: 60, height: 6, background: 'var(--border-subtle)', borderRadius: 3, overflow: 'hidden' }}>
                             <div style={{
                               width: `${Math.min(budgetPct, 100)}%`, height: '100%', borderRadius: 3,
                               background: budgetPct > 100 ? 'var(--danger)' : budgetPct > 80 ? 'var(--warning)' : 'var(--success)'

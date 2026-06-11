@@ -77,7 +77,7 @@ export default function Billing() {
         flexWrap: 'nowrap'
       }}>
         <div>
-          <h1 style={{ margin: 0, color: '#F1F5F9' }}>Billing</h1>
+          <h1 style={{ margin: 0, color: 'var(--text-primary)' }}>Billing</h1>
           <p style={{ margin: 0, color: '#94A3B8' }}>Manage invoices</p>
         </div>
         <button
@@ -88,7 +88,7 @@ export default function Billing() {
           }}
           style={{
             backgroundColor: '#7C3AED',
-            color: '#fff',
+            color: 'var(--text-primary)',
             border: 'none',
             borderRadius: '8px',
             padding: '10px 18px',

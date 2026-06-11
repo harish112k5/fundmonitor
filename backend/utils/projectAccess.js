@@ -15,23 +15,26 @@ async function getAllowedProjectIds(userId, roleId) {
     return rows.map(r => r.id);
   }
 
-  if (roleId === 2 || roleId === 3) {
-    // Manager + Engineer: only assigned projects via project_team
-    const [rows] = await pool.query(
+  if (roleId === 2 || roleId === 3 || roleId === 4) {
+    // Manager + Engineer + Viewer: assigned projects via project_team
+    let ids = [];
+    const [teamRows] = await pool.query(
       'SELECT project_id as id FROM project_team WHERE user_id = ?',
       [userId]
     );
-    return rows.map(r => r.id);
-  }
+    ids = ids.concat(teamRows.map(r => r.id));
 
-  if (roleId === 4) {
-    // Investor
-    const [rows] = await pool.query(`
-      SELECT pi.project_id as id FROM project_investments pi
-      JOIN investors inv ON inv.investor_id = pi.investor_id
-      WHERE inv.user_id = ?
-    `, [userId]);
-    return rows.map(r => r.id);
+    if (roleId === 4) {
+      // Viewer might also be an investor
+      const [invRows] = await pool.query(`
+        SELECT pi.project_id as id FROM project_investments pi
+        JOIN investors inv ON inv.investor_id = pi.investor_id
+        WHERE inv.user_id = ?
+      `, [userId]);
+      ids = ids.concat(invRows.map(r => r.id));
+    }
+    
+    return [...new Set(ids)];
   }
 
   if (roleId === 5) {

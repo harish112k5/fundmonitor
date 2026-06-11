@@ -28,14 +28,14 @@ export function AnimatedProgressBar({ progress, color = '#F59E0B', label, showVa
           letterSpacing: '0.5px'
         }}>
           <span>{label}</span>
-          {showValue && <span style={{ color: '#F5F5F4' }}>{p}%</span>}
+          {showValue && <span style={{ color: 'var(--text-primary)' }}>{p}%</span>}
         </div>
       )}
       
       <div style={{ 
         width: '100%', 
         height: '6px', 
-        backgroundColor: '#2D2D2D', 
+        backgroundColor: 'var(--border-subtle)', 
         borderRadius: '3px',
         overflow: 'hidden'
       }}>

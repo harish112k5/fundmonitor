@@ -52,7 +52,7 @@ export default function ProjectTeam() {
     } catch { toast.error('Failed'); }
   };
 
-  const roleLabels = { site_engineer: 'Site Engineer', project_manager: 'Project Manager', supervisor: 'Supervisor', accountant: 'Accountant' };
+  const roleLabels = { site_engineer: 'Site Engineer', project_manager: 'Project Manager', supervisor: 'Supervisor', accountant: 'Accountant', viewer: 'Viewer' };
 
   const columns = [
     { header: 'ID', accessor: 'id', style: { width: 60 } },
@@ -94,6 +94,7 @@ export default function ProjectTeam() {
               <option value="project_manager">Project Manager</option>
               <option value="supervisor">Supervisor</option>
               <option value="accountant">Accountant</option>
+              <option value="viewer">Viewer</option>
             </select></div>
           <div className="form-group"><label className="form-label">Joined Date</label>
             <input className="form-input" type="date" name="joined_at" value={form.joined_at} onChange={handleChange} /></div>

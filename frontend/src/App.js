@@ -217,8 +217,8 @@ function App() {
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#1e1e2e',
-            color: '#f1f5f9',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
             border: '1px solid rgba(255,255,255,0.06)',
             borderRadius: '12px',
             fontSize: '0.85rem',

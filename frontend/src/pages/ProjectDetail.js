@@ -59,7 +59,7 @@ function ProgressBar({ pct }) {
         <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Completion</span>
         <span style={{ fontSize: '0.82rem', fontWeight: 700, color }}>{p}%</span>
       </div>
-      <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--border-subtle)', borderRadius: 999, height: 8, overflow: 'hidden' }}>
         <div style={{ width: `${p}%`, height: '100%', background: color, borderRadius: 999, transition: 'width 0.6s ease' }} />
       </div>
     </div>
@@ -505,7 +505,7 @@ export default function ProjectDetail() {
           
           {/* Chart 1: Budget vs Actual */}
           <div style={chartCardStyle}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#fff' }}>Budget vs Actual Cost</h3>
+            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Budget vs Actual Cost</h3>
             <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               {isOverBudget ? (
                 <span style={{ color: '#ef4444' }}>{formatINR(Math.abs(financials.budget_variance))} Over Budget</span>
@@ -516,10 +516,10 @@ export default function ProjectDetail() {
             <div style={{ height: 250 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={budgetData} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="name" stroke="#a0aec0" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#a0aec0" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
-                  <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }} formatter={(val) => formatINR(val)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
+                  <Tooltip cursor={{ fill: 'var(--border-subtle)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]} isAnimationActive={true}>
                     {budgetData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                   </Bar>
@@ -530,7 +530,7 @@ export default function ProjectDetail() {
 
           {/* Chart 2: Cost Breakdown */}
           <div style={chartCardStyle}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#fff' }}>Cost Breakdown</h3>
+            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Cost Breakdown</h3>
             <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Distribution of actual project expenses</p>
             <div style={{ height: 250 }}>
               {costBreakdown.length > 0 ? (
@@ -539,7 +539,7 @@ export default function ProjectDetail() {
                     <Pie data={costBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" stroke="rgba(0,0,0,0.5)" strokeWidth={2} isAnimationActive={true}>
                       {costBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ background: '#1e1e2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }} formatter={(val) => formatINR(val)} />
+                    <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem' }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -551,16 +551,16 @@ export default function ProjectDetail() {
 
           {/* Chart 3: Monthly Cost Trend */}
           <div style={{ ...chartCardStyle, gridColumn: '1 / -1' }}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#fff' }}>Monthly Cost Trend</h3>
+            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Monthly Cost Trend</h3>
             <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Expenditure progression over time</p>
             <div style={{ height: 320 }}>
               {monthlyTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="month" stroke="#a0aec0" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#a0aec0" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
-                    <Tooltip contentStyle={{ background: '#1e1e2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }} formatter={(val) => formatINR(val)} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+                    <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
+                    <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem', paddingTop: 15 }} />
                     <Line type="monotone" dataKey="materials" name="Materials" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
                     <Line type="monotone" dataKey="manpower" name="Manpower" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
@@ -576,16 +576,16 @@ export default function ProjectDetail() {
 
           {/* Chart 4: Resource Utilization (Stacked) */}
           <div style={chartCardStyle}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#fff' }}>Resource Utilization Split</h3>
+            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Resource Utilization Split</h3>
             <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Monthly 3M distribution</p>
             <div style={{ height: 260 }}>
               {monthlyTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyTrend} margin={{ left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="month" stroke="#a0aec0" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#a0aec0" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
-                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }} formatter={(val) => formatINR(val)} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+                    <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
+                    <Tooltip cursor={{ fill: 'var(--border-subtle)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem', paddingTop: 10 }} />
                     <Bar dataKey="materials" name="Materials" stackId="a" fill="#3b82f6" isAnimationActive={true} />
                     <Bar dataKey="manpower" name="Manpower" stackId="a" fill="#f97316" isAnimationActive={true} />
@@ -600,16 +600,16 @@ export default function ProjectDetail() {
 
           {/* Chart 5: Funding vs Expense */}
           <div style={chartCardStyle}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#fff' }}>Funding Sources vs Burn</h3>
+            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Funding Sources vs Burn</h3>
             <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total investments, loans and expenses</p>
             <div style={{ height: 260 }}>
               {fundingData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={fundingData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                    <XAxis type="number" stroke="#a0aec0" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
-                    <YAxis dataKey="name" type="category" stroke="#a0aec0" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }} formatter={(val) => formatINR(val)} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
+                    <XAxis type="number" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
+                    <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                    <Tooltip cursor={{ fill: 'var(--border-subtle)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30} isAnimationActive={true}>
                       {fundingData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                     </Bar>
@@ -624,7 +624,7 @@ export default function ProjectDetail() {
           {/* Chart 6: Billing Status (Manager+ only) */}
           {isManager && (
             <div style={{ ...chartCardStyle }}>
-              <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#fff' }}>Billing Status Breakdown</h3>
+              <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Billing Status Breakdown</h3>
               <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Invoice statuses by count</p>
               <div style={{ height: 260, position: 'relative' }}>
                 {billingBreakdown.length > 0 ? (
@@ -634,12 +634,12 @@ export default function ProjectDetail() {
                         <Pie data={billingBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" stroke="rgba(0,0,0,0.5)" strokeWidth={2} isAnimationActive={true} labelLine={false}>
                           {billingBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                         </Pie>
-                        <Tooltip contentStyle={{ background: '#1e1e2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }} formatter={(val) => [val, 'Invoices']} />
+                        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => [val, 'Invoices']} />
                         <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem' }} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div style={{ position: 'absolute', top: '43%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff', lineHeight: 1 }}>{billing.length}</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{billing.length}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>Total</div>
                     </div>
                   </>
@@ -799,7 +799,7 @@ export default function ProjectDetail() {
         <div className="form-group">
           <label className="form-label">Material *</label>
           {editingRow ? (
-            <input className="form-input" disabled value={editingRow.material_name || ''} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }} />
+            <input className="form-input" disabled value={editingRow.material_name || ''} style={{ background: 'var(--border-subtle)', color: 'var(--text-muted)' }} />
           ) : (
             <select className="form-select" name="material_id" value={formMaterial.material_id} onChange={handleChangeMaterial}>
               <option value="">Select a material</option>
@@ -835,7 +835,7 @@ export default function ProjectDetail() {
         <div className="form-group">
           <label className="form-label">Worker *</label>
           {editingRow ? (
-            <input className="form-input" disabled value={editingRow.worker_name || ''} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }} />
+            <input className="form-input" disabled value={editingRow.worker_name || ''} style={{ background: 'var(--border-subtle)', color: 'var(--text-muted)' }} />
           ) : (
             <select className="form-select" name="worker_id" value={formManpower.worker_id} onChange={handleChangeManpower}>
               <option value="">Select a worker</option>
@@ -871,7 +871,7 @@ export default function ProjectDetail() {
         <div className="form-group">
           <label className="form-label">Machine *</label>
           {editingRow ? (
-            <input className="form-input" disabled value={editingRow.machine_name || ''} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }} />
+            <input className="form-input" disabled value={editingRow.machine_name || ''} style={{ background: 'var(--border-subtle)', color: 'var(--text-muted)' }} />
           ) : (
             <select className="form-select" name="machine_id" value={formMachine.machine_id} onChange={handleChangeMachine}>
               <option value="">Select a machine</option>

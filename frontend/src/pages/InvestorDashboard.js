@@ -96,7 +96,7 @@ export default function InvestorDashboard() {
           <h3 style={{ color: '#EF4444', margin: '0 0 8px' }}>Failed to Load Data</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>{error}</p>
           <button onClick={fetchData}
-            style={{ backgroundColor: '#7C3AED', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer', fontWeight: '600' }}>
+            style={{ backgroundColor: '#7C3AED', color: 'var(--text-primary)', border: 'none', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer', fontWeight: '600' }}>
             Retry
           </button>
         </div>

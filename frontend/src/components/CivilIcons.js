@@ -232,14 +232,14 @@ export const HelmetIcon = ({ size = 36 }) => (
 export const SkylineSVG = ({ width = '100%', height = 70 }) => (
   <svg width={width} height={height} viewBox="0 0 400 70" fill="none" preserveAspectRatio="xMaxYMax meet">
     {/* Buildings */}
-    <rect x="20" y="30" width="30" height="40" fill="#374151" />
-    <rect x="55" y="20" width="25" height="50" fill="#374151" />
-    <rect x="85" y="35" width="35" height="35" fill="#374151" />
-    <rect x="125" y="15" width="20" height="55" fill="#374151" />
-    <rect x="150" y="25" width="40" height="45" fill="#374151" />
-    <rect x="195" y="10" width="25" height="60" fill="#374151" />
-    <rect x="225" y="30" width="30" height="40" fill="#374151" />
-    <rect x="260" y="20" width="20" height="50" fill="#374151" />
+    <rect x="20" y="30" width="30" height="40" fill="var(--border-medium)" />
+    <rect x="55" y="20" width="25" height="50" fill="var(--border-medium)" />
+    <rect x="85" y="35" width="35" height="35" fill="var(--border-medium)" />
+    <rect x="125" y="15" width="20" height="55" fill="var(--border-medium)" />
+    <rect x="150" y="25" width="40" height="45" fill="var(--border-medium)" />
+    <rect x="195" y="10" width="25" height="60" fill="var(--border-medium)" />
+    <rect x="225" y="30" width="30" height="40" fill="var(--border-medium)" />
+    <rect x="260" y="20" width="20" height="50" fill="var(--border-medium)" />
     {/* Scaffolding on one building */}
     <line x1="150" y1="30" x2="190" y2="30" stroke="#4B5563" strokeWidth="0.5" />
     <line x1="150" y1="40" x2="190" y2="40" stroke="#4B5563" strokeWidth="0.5" />
@@ -249,8 +249,8 @@ export const SkylineSVG = ({ width = '100%', height = 70 }) => (
     <line x1="175" y1="25" x2="175" y2="70" stroke="#4B5563" strokeWidth="0.5" />
     <line x1="185" y1="25" x2="185" y2="70" stroke="#4B5563" strokeWidth="0.5" />
     {/* Tower crane */}
-    <line x1="310" y1="5" x2="310" y2="70" stroke="#374151" strokeWidth="2" />
-    <line x1="290" y1="5" x2="370" y2="5" stroke="#374151" strokeWidth="2" />
+    <line x1="310" y1="5" x2="310" y2="70" stroke="var(--border-medium)" strokeWidth="2" />
+    <line x1="290" y1="5" x2="370" y2="5" stroke="var(--border-medium)" strokeWidth="2" />
     <line x1="310" y1="5" x2="290" y2="5" stroke="#F59E0B" strokeWidth="2" />
     {/* Crane cables */}
     <line x1="370" y1="5" x2="360" y2="40" stroke="#4B5563" strokeWidth="0.7" />
@@ -259,14 +259,14 @@ export const SkylineSVG = ({ width = '100%', height = 70 }) => (
     <circle cx="310" cy="5" r="2" fill="#F59E0B" />
     <circle cx="370" cy="5" r="1.5" fill="#FCD34D" opacity="0.8" />
     {/* Counterweight */}
-    <rect x="285" y="5" width="8" height="6" fill="#374151" />
+    <rect x="285" y="5" width="8" height="6" fill="var(--border-medium)" />
     {/* Small excavator at ground level */}
-    <rect x="330" y="60" width="20" height="10" rx="2" fill="#374151" />
-    <rect x="342" y="54" width="8" height="6" rx="1" fill="#374151" />
-    <line x1="350" y1="56" x2="365" y2="48" stroke="#374151" strokeWidth="1.5" />
-    <line x1="365" y1="48" x2="370" y2="55" stroke="#374151" strokeWidth="1.5" />
+    <rect x="330" y="60" width="20" height="10" rx="2" fill="var(--border-medium)" />
+    <rect x="342" y="54" width="8" height="6" rx="1" fill="var(--border-medium)" />
+    <line x1="350" y1="56" x2="365" y2="48" stroke="var(--border-medium)" strokeWidth="1.5" />
+    <line x1="365" y1="48" x2="370" y2="55" stroke="var(--border-medium)" strokeWidth="1.5" />
     {/* Ground line */}
-    <line x1="0" y1="70" x2="400" y2="70" stroke="#2D2D2D" strokeWidth="1" />
+    <line x1="0" y1="70" x2="400" y2="70" stroke="var(--border-subtle)" strokeWidth="1" />
   </svg>
 );
 
@@ -274,34 +274,34 @@ export const SkylineSVG = ({ width = '100%', height = 70 }) => (
 export const ConstructionSVG = ({ width = '100%', height = '100%' }) => (
   <svg width={width} height={height} viewBox="0 0 400 600" fill="none" preserveAspectRatio="xMidYMid meet" style={{ maxWidth: '400px' }}>
     {/* Main building under construction */}
-    <rect x="100" y="120" width="200" height="350" fill="#1E1E1E" stroke="#374151" strokeWidth="1" />
+    <rect x="100" y="120" width="200" height="350" fill="var(--bg-card)" stroke="var(--border-medium)" strokeWidth="1" />
     {/* Floors */}
     {[0,1,2,3,4,5,6].map(i => (
-      <line key={`floor-${i}`} x1="100" y1={170 + i * 50} x2="300" y2={170 + i * 50} stroke="#2D2D2D" strokeWidth="1" />
+      <line key={`floor-${i}`} x1="100" y1={170 + i * 50} x2="300" y2={170 + i * 50} stroke="var(--border-subtle)" strokeWidth="1" />
     ))}
     {/* Vertical columns */}
     {[0,1,2,3].map(i => (
-      <line key={`col-${i}`} x1={130 + i * 50} y1="120" x2={130 + i * 50} y2="470" stroke="#2D2D2D" strokeWidth="1" />
+      <line key={`col-${i}`} x1={130 + i * 50} y1="120" x2={130 + i * 50} y2="470" stroke="var(--border-subtle)" strokeWidth="1" />
     ))}
     {/* Scaffolding left */}
-    <rect x="70" y="150" width="30" height="320" fill="none" stroke="#374151" strokeWidth="0.5" />
+    <rect x="70" y="150" width="30" height="320" fill="none" stroke="var(--border-medium)" strokeWidth="0.5" />
     {[0,1,2,3,4,5,6].map(i => (
       <React.Fragment key={`scaff-l-${i}`}>
-        <line x1="70" y1={170 + i * 50} x2="100" y2={170 + i * 50} stroke="#374151" strokeWidth="0.5" />
-        <line x1="70" y1={170 + i * 50} x2="100" y2={170 + (i + 1) * 50} stroke="#374151" strokeWidth="0.3" />
+        <line x1="70" y1={170 + i * 50} x2="100" y2={170 + i * 50} stroke="var(--border-medium)" strokeWidth="0.5" />
+        <line x1="70" y1={170 + i * 50} x2="100" y2={170 + (i + 1) * 50} stroke="var(--border-medium)" strokeWidth="0.3" />
       </React.Fragment>
     ))}
     {/* Scaffolding right */}
-    <rect x="300" y="180" width="30" height="290" fill="none" stroke="#374151" strokeWidth="0.5" />
+    <rect x="300" y="180" width="30" height="290" fill="none" stroke="var(--border-medium)" strokeWidth="0.5" />
     {[0,1,2,3,4,5].map(i => (
       <React.Fragment key={`scaff-r-${i}`}>
-        <line x1="300" y1={200 + i * 50} x2="330" y2={200 + i * 50} stroke="#374151" strokeWidth="0.5" />
-        <line x1="300" y1={200 + i * 50} x2="330" y2={200 + (i + 1) * 50} stroke="#374151" strokeWidth="0.3" />
+        <line x1="300" y1={200 + i * 50} x2="330" y2={200 + i * 50} stroke="var(--border-medium)" strokeWidth="0.5" />
+        <line x1="300" y1={200 + i * 50} x2="330" y2={200 + (i + 1) * 50} stroke="var(--border-medium)" strokeWidth="0.3" />
       </React.Fragment>
     ))}
     {/* Tower crane */}
-    <line x1="200" y1="20" x2="200" y2="120" stroke="#374151" strokeWidth="3" />
-    <line x1="120" y1="20" x2="350" y2="20" stroke="#374151" strokeWidth="3" />
+    <line x1="200" y1="20" x2="200" y2="120" stroke="var(--border-medium)" strokeWidth="3" />
+    <line x1="120" y1="20" x2="350" y2="20" stroke="var(--border-medium)" strokeWidth="3" />
     {/* Crane jib */}
     <line x1="200" y1="20" x2="350" y2="20" stroke="#F59E0B" strokeWidth="3" />
     {/* Crane cables */}
@@ -311,11 +311,11 @@ export const ConstructionSVG = ({ width = '100%', height = '100%' }) => (
     <circle cx="350" cy="20" r="3" fill="#FCD34D" opacity="0.8" />
     <circle cx="120" cy="20" r="3" fill="#FCD34D" opacity="0.5" />
     {/* Counterweight */}
-    <rect x="110" y="20" width="16" height="12" fill="#374151" />
+    <rect x="110" y="20" width="16" height="12" fill="var(--border-medium)" />
     {/* Ground */}
-    <line x1="0" y1="470" x2="400" y2="470" stroke="#2D2D2D" strokeWidth="2" />
+    <line x1="0" y1="470" x2="400" y2="470" stroke="var(--border-subtle)" strokeWidth="2" />
     {/* Company branding */}
-    <text x="200" y="520" textAnchor="middle" fill="#F59E0B" fontFamily="Oswald" fontSize="28" fontWeight="700" letterSpacing="3">BUILDMANAGER</text>
-    <text x="200" y="545" textAnchor="middle" fill="#57534E" fontFamily="Inter" fontSize="11" letterSpacing="3">CONSTRUCTION PROJECT INTELLIGENCE</text>
+    <text x="200" y="520" textAnchor="middle" fill="#F59E0B" fontFamily="Oswald" fontSize="28" fontWeight="700" letterSpacing="3">FINFRA</text>
+    <text x="200" y="545" textAnchor="middle" fill="var(--text-muted)" fontFamily="Inter" fontSize="11" letterSpacing="3">FINANCIAL INFRASTRUCTURE INTELLIGENCE</text>
   </svg>
 );

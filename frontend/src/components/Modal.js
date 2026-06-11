@@ -18,8 +18,8 @@ export default function Modal({ isOpen, onClose, title, children, width = '520px
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: '#1E1E1E',
-          border: '1px solid #374151',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-medium)',
           borderTop: '3px solid #F59E0B',
           borderRadius: '8px',
           padding: '28px',
@@ -35,14 +35,14 @@ export default function Modal({ isOpen, onClose, title, children, width = '520px
         <div style={{ 
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
           paddingBottom: '12px', marginBottom: '20px',
-          borderBottom: '1px solid #2D2D2D'
+          borderBottom: '1px solid var(--border-subtle)'
         }}>
           <h2 style={{ 
             margin: 0, 
             fontFamily: "'Oswald', sans-serif",
             fontSize: '20px', 
             fontWeight: '600', 
-            color: '#F5F5F4',
+            color: 'var(--text-primary)',
             textTransform: 'uppercase',
             display: 'flex',
             alignItems: 'center',
@@ -64,14 +64,14 @@ export default function Modal({ isOpen, onClose, title, children, width = '520px
             style={{
               width: '32px', height: '32px', borderRadius: '6px',
               backgroundColor: 'transparent',
-              border: '1px solid #2D2D2D',
-              color: '#9CA3AF', fontSize: '18px',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-secondary)', fontSize: '18px',
               cursor: 'pointer', display: 'flex',
               alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.15s'
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#2A2A2A'; e.currentTarget.style.borderColor = '#374151'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = '#2D2D2D'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-input)'; e.currentTarget.style.borderColor = 'var(--border-medium)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
           >
             ×
           </button>
@@ -82,7 +82,7 @@ export default function Modal({ isOpen, onClose, title, children, width = '520px
         {footer && (
           <div style={{ 
             marginTop: '20px', paddingTop: '20px',
-            borderTop: '1px solid #2D2D2D',
+            borderTop: '1px solid var(--border-subtle)',
             display: 'flex', gap: '10px', justifyContent: 'flex-end' 
           }}>
             {footer}

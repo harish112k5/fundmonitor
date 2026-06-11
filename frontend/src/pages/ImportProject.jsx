@@ -65,11 +65,11 @@ export default function ImportProject() {
   };
 
   const C = {
-    page  : { background:'#1E1E1E', minHeight:'100vh', padding:'28px 36px', color:'#f1f5f9' },
-    card  : { background:'#1a1a2e', border:'1px solid #374151', borderRadius:12, padding:'24px' },
+    page  : { background:'var(--bg-card)', minHeight:'100vh', padding:'28px 36px', color:'var(--text-primary)' },
+    card  : { background:'var(--bg-card)', border:'1px solid var(--border-medium)', borderRadius:12, padding:'24px' },
     hdr   : { fontSize:24, fontWeight:700, margin:'0 0 4px' },
     sub   : { fontSize:13, color:'#64748b', margin:0 },
-    back  : { background:'transparent', border:'1px solid #374151', borderRadius:8, color:'#94a3b8', padding:'7px 16px', cursor:'pointer', fontSize:13, marginBottom:24 },
+    back  : { background:'transparent', border:'1px solid var(--border-medium)', borderRadius:8, color:'#94a3b8', padding:'7px 16px', cursor:'pointer', fontSize:13, marginBottom:24 },
     btnPrimary: { padding:'12px 28px', background:'#F59E0B', border:'none', borderRadius:9, color:'white', fontWeight:700, fontSize:15, cursor:'pointer', boxShadow:'0 2px 10px #F59E0B44' },
     btnSecondary: { padding:'11px 24px', background:'transparent', border:'1px solid #F59E0B', borderRadius:9, color:'#FCD34D', fontWeight:600, fontSize:14, cursor:'pointer' },
   };
@@ -81,7 +81,7 @@ export default function ImportProject() {
       {/* Header */}
       <div style={{ marginBottom:28 }}>
         <h1 style={C.hdr}>📥 Import Project from Excel</h1>
-        <p style={C.sub}>Upload the BuildManager template to create a project with all resources in one step.</p>
+        <p style={C.sub}>Upload the Finfra template to create a project with all resources in one step.</p>
       </div>
 
       {/* Prerequisites */}
@@ -111,7 +111,7 @@ export default function ImportProject() {
           onDrop={onDrop}
           onClick={() => fileRef.current.click()}
           style={{
-            border:`2px dashed ${dragging?'#F59E0B':'#374151'}`,
+            border:`2px dashed ${dragging?'#F59E0B':'var(--border-medium)'}`,
             borderRadius:12, padding:'40px 20px', textAlign:'center',
             cursor:'pointer', transition:'all 0.2s',
             background: dragging ? '#13113b' : 'transparent',
@@ -129,7 +129,7 @@ export default function ImportProject() {
               <p style={{ fontSize:12, color:'#64748b', margin:'0 0 12px' }}>or click to browse — .xlsx only, max 10MB</p>
               <a
                 href={`${axios.defaults.baseURL}/template/download`}
-                download="BuildManager_Import_Template.xlsx"
+                download="Finfra_Import_Template.xlsx"
                 onClick={e => e.stopPropagation()}
                 style={{ fontSize:12, color:'#FCD34D', textDecoration:'underline' }}
               >
@@ -184,7 +184,7 @@ export default function ImportProject() {
               { label:'Successfully Inserted', value:result.inserted,  color:'#10b981' },
               { label:'Failed / Skipped',      value:result.failed,    color: result.failed>0?'#ef4444':'#64748b' },
             ].map(s => (
-              <div key={s.label} style={{ background:'#1E1E1E', borderRadius:10, padding:'16px 20px', textAlign:'center', border:`1px solid ${s.color}33` }}>
+              <div key={s.label} style={{ background:'var(--bg-card)', borderRadius:10, padding:'16px 20px', textAlign:'center', border:`1px solid ${s.color}33` }}>
                 <p style={{ fontSize:28, fontWeight:700, margin:'0 0 4px', color:s.color }}>{s.value}</p>
                 <p style={{ fontSize:12, color:'#64748b', margin:0 }}>{s.label}</p>
               </div>
@@ -197,7 +197,7 @@ export default function ImportProject() {
             {Object.entries(result.sheets || {}).map(([sheet, data]) => {
               const conf = SHEET_ICONS[sheet] || { icon:'📄', color:'#94a3b8' };
               return (
-                <div key={sheet} style={{ background:'#1E1E1E', borderRadius:10, padding:'14px 16px', border:`1px solid ${conf.color}33` }}>
+                <div key={sheet} style={{ background:'var(--bg-card)', borderRadius:10, padding:'14px 16px', border:`1px solid ${conf.color}33` }}>
                   <p style={{ margin:'0 0 6px', fontSize:13, fontWeight:600 }}>{conf.icon} {sheet}</p>
                   <p style={{ margin:'0 0 2px', fontSize:12, color:'#10b981' }}>✅ {data.inserted} inserted</p>
                   {data.failed > 0 && <p style={{ margin:0, fontSize:12, color:'#ef4444' }}>❌ {data.failed} failed</p>}
@@ -215,7 +215,7 @@ export default function ImportProject() {
                   <thead>
                     <tr>
                       {['Sheet','Excel Row','Error'].map(h => (
-                        <th key={h} style={{ textAlign:'left', padding:'8px 12px', borderBottom:'1px solid #374151', fontSize:11, color:'#64748b', textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</th>
+                        <th key={h} style={{ textAlign:'left', padding:'8px 12px', borderBottom:'1px solid var(--border-medium)', fontSize:11, color:'#64748b', textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>

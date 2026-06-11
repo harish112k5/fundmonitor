@@ -38,7 +38,7 @@ function Pagination({ page, totalPages, onPrev, onNext, total, pageSize }) {
         >← Prev</button>
         <span style={{
           padding: '6px 14px', background: '#F59E0B', borderRadius: 6,
-          color: '#fff', fontSize: 13, fontWeight: 700, minWidth: 36, textAlign: 'center',
+          color: 'var(--text-primary)', fontSize: 13, fontWeight: 700, minWidth: 36, textAlign: 'center',
         }}>
           {page} / {totalPages || 1}
         </span>
@@ -321,7 +321,7 @@ export default function AdminPanel() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={() => setShowCreateAdmin(true)} style={{
             padding: '8px 16px', background: COLORS.purple, border: 'none',
-            borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+            borderRadius: 8, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 500,
           }}>+ Create Admin</button>
           <button onClick={fetchAll} style={{
             padding: '8px 16px', background: 'transparent', border: '1px solid var(--border-subtle)',
@@ -395,7 +395,7 @@ export default function AdminPanel() {
                         </td>
                         <td style={S.td}>
                           <span style={{
-                            background: getActionColor(a.action), color: '#fff',
+                            background: getActionColor(a.action), color: 'var(--text-primary)',
                             padding: '3px 10px', borderRadius: 4, fontSize: 11,
                             fontWeight: 700, letterSpacing: '0.04em', whiteSpace: 'nowrap',
                           }}>
@@ -409,7 +409,7 @@ export default function AdminPanel() {
                           {a.record_id || '—'}
                         </td>
                         <td style={S.td}>
-                          <span style={{ color: '#fff', fontWeight: 500 }}>
+                          <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                             {a.performed_by || <span style={{ color: '#475569' }}>Unknown</span>}
                           </span>
                         </td>
@@ -481,7 +481,7 @@ export default function AdminPanel() {
                         <td style={S.td}>
                           <button onClick={() => { setSelectedUser(u); setAssignProjectId(''); setShowAssignModal(true); }}
                             style={{ padding: '5px 14px', background: COLORS.green, border: 'none',
-                              borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
+                              borderRadius: 6, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
                             Assign Project
                           </button>
                         </td>
@@ -542,7 +542,7 @@ export default function AdminPanel() {
                             {pi === 0 ? (
                               <td style={S.td} rowSpan={userGroup.projects.length}>
                                 <span style={{
-                                  fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4,
+                                  fontSize: 12, padding: '2px 8px', background: 'var(--bg-card)', borderRadius: 4,
                                   color: row.role_name === 'manager' ? '#3b82f6' : COLORS.purple
                                 }}>
                                   {row.role_name}
@@ -562,7 +562,7 @@ export default function AdminPanel() {
                                 {pi === userGroup.projects.length - 1 && (
                                   <button onClick={() => { setSelectedUser(row); setAssignProjectId(''); setShowAssignModal(true); }}
                                     style={{ padding: '4px 10px', background: COLORS.green, border: 'none',
-                                      borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                                      borderRadius: 6, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, fontWeight: 500,
                                       whiteSpace: 'nowrap' }}>
                                     + Add Project
                                   </button>
@@ -619,7 +619,7 @@ export default function AdminPanel() {
                           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.email}</div>
                         </td>
                         <td style={S.td}>
-                          <span style={{ fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4, color: '#94a3b8' }}>
+                          <span style={{ fontSize: 12, padding: '2px 8px', background: 'var(--bg-card)', borderRadius: 4, color: '#94a3b8' }}>
                             {u.role_name}
                           </span>
                         </td>
@@ -707,7 +707,7 @@ export default function AdminPanel() {
                           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.user_email}</div>
                         </td>
                         <td style={S.td}>
-                          <span style={{ fontSize: 12, padding: '2px 8px', background: '#1e293b', borderRadius: 4, color: '#94a3b8' }}>
+                          <span style={{ fontSize: 12, padding: '2px 8px', background: 'var(--bg-card)', borderRadius: 4, color: '#94a3b8' }}>
                             {s.role_name}
                           </span>
                         </td>
@@ -778,7 +778,7 @@ export default function AdminPanel() {
               <label style={{ display: 'block', marginBottom: 6, color: COLORS.muted, fontSize: 14 }}>Select Project</label>
               <select value={assignProjectId} onChange={e => setAssignProjectId(e.target.value)}
                 style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
-                  background: '#0F0F1A', border: `1px solid ${COLORS.border}`,
+                  background: 'var(--bg-input)', border: `1px solid ${COLORS.border}`,
                   color: COLORS.text, fontSize: 14 }}>
                 <option value="">-- Choose project --</option>
                 {projects.map(p => (
@@ -797,6 +797,7 @@ export default function AdminPanel() {
                 <option value="manager">Manager</option>
                 <option value="supervisor">Supervisor</option>
                 <option value="accountant">Accountant</option>
+                <option value="viewer">Viewer</option>
               </select>
             </div>
 
@@ -809,7 +810,7 @@ export default function AdminPanel() {
               </button>
               <button onClick={handleAssign}
                 style={{ padding: '9px 20px', borderRadius: 8, border: 'none',
-                  background: COLORS.green, color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
+                  background: COLORS.green, color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 500 }}>
                 Assign Project
               </button>
             </div>
@@ -834,19 +835,19 @@ export default function AdminPanel() {
               <input
                 placeholder="Email" type="email" value={adminForm.email}
                 onChange={e => setAdminForm({ ...adminForm, email: e.target.value })}
-                style={{ padding: '10px 14px', background: '#1E1E1E', border: '1px solid #374151', borderRadius: 8, color: '#f1f5f9', fontSize: 14 }}
+                style={{ padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border-medium)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 14 }}
               />
               <input
                 placeholder="Password" type="password" value={adminForm.password}
                 onChange={e => setAdminForm({ ...adminForm, password: e.target.value })}
-                style={{ padding: '10px 14px', background: '#1E1E1E', border: '1px solid #374151', borderRadius: 8, color: '#f1f5f9', fontSize: 14 }}
+                style={{ padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border-medium)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 14 }}
               />
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
                 <button onClick={() => { setShowCreateAdmin(false); setAdminForm({ name: '', email: '', password: '' }); }}
                   style={{ padding: '8px 18px', background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13 }}
                 >Cancel</button>
                 <button onClick={handleCreateAdmin}
-                  style={{ padding: '8px 18px', background: '#F59E0B', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+                  style={{ padding: '8px 18px', background: '#F59E0B', border: 'none', borderRadius: 8, color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
                 >Create Admin</button>
               </div>
             </div>

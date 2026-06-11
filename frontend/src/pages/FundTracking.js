@@ -131,7 +131,7 @@ export default function FundTracking() {
             </p>
           </div>
 
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: '#FFF', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '15px', marginTop: '16px', transition: 'background-color 0.2s' }}>
+          <button type="submit" disabled={loading} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: 'var(--text-primary)', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '15px', marginTop: '16px', transition: 'background-color 0.2s' }}>
             {loading ? 'Processing...' : 'Record Receipt & Allocate'}
           </button>
 

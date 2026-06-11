@@ -16,7 +16,7 @@ router.get('/download', async (req, res) => {
 
     // ── Create workbook ─────────────────────────────────────────────
     const wb = new ExcelJS.Workbook();
-    wb.creator    = 'BuildManager CPMS';
+    wb.creator    = 'Finfra CPMS';
     wb.created    = new Date();
     wb.properties.date1904 = false;
 
@@ -114,14 +114,14 @@ router.get('/download', async (req, res) => {
     const wsInstr = wb.addWorksheet('📋 Instructions', { tabColor: { argb: '7C3AED' } });
     wsInstr.mergeCells('A1:D1');
     const instrTitle = wsInstr.getCell('A1');
-    instrTitle.value = 'BuildManager — Project Import Template';
+    instrTitle.value = 'Finfra — Project Import Template';
     instrTitle.font  = { name: 'Arial', size: 16, bold: true, color: { argb: 'FFFFFF' } };
     instrTitle.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: '7C3AED' } };
     instrTitle.alignment = { horizontal: 'center', vertical: 'middle' };
     wsInstr.getRow(1).height = 42;
 
     wsInstr.mergeCells('A2:D2');
-    wsInstr.getCell('A2').value = 'Construction ERP | Fill this file to import a complete project with all data';
+    wsInstr.getCell('A2').value = 'Finfra | Fill this file to import a complete project with all data';
     wsInstr.getCell('A2').font  = { name: 'Arial', size: 10, color: { argb: '64748B' } };
     wsInstr.getCell('A2').alignment = { horizontal: 'center' };
 
@@ -351,7 +351,7 @@ router.get('/download', async (req, res) => {
 
     // ── SEND FILE ────────────────────────────────────────────────────
     res.setHeader('Content-Type',        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename="BuildManager_Import_Template.xlsx"');
+    res.setHeader('Content-Disposition', 'attachment; filename="Finfra_Import_Template.xlsx"');
     await wb.xlsx.write(res);
     res.end();
 

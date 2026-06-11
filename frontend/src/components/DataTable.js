@@ -30,9 +30,9 @@ export default function DataTable({
     <div>
       {/* Header row */}
       <div style={{
-        background: '#1E1E1E',
-        border: '1px solid #2D2D2D',
-        borderBottom: '1px solid #2D2D2D',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-subtle)',
+        borderBottom: '1px solid var(--border-subtle)',
         borderRadius: '8px 8px 0 0',
         display: 'flex',
         alignItems: 'center',
@@ -51,7 +51,7 @@ export default function DataTable({
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <span style={{ color: '#57534E', fontSize: '11px', whiteSpace: 'nowrap', fontFamily: "'Inter', sans-serif" }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', fontFamily: "'Inter', sans-serif" }}>
             {filtered.length} record{filtered.length !== 1 ? 's' : ''}
           </span>
           {addButton}
@@ -60,8 +60,8 @@ export default function DataTable({
 
       {/* Table body */}
       <div style={{
-        background: '#1E1E1E',
-        border: '1px solid #2D2D2D',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-subtle)',
         borderTop: 'none',
         borderRadius: '0 0 8px 8px',
         overflow: 'hidden',

@@ -204,7 +204,7 @@ export default function InvestorOnboarding() {
             <div style={{ fontSize: '64px', marginBottom: '16px' }}>🎉</div>
             <h2 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>Onboarding Complete!</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>The investor has been successfully registered and schedules created.</p>
-            <button onClick={() => window.location.href='/finance/investor-dashboard'} style={{ padding: '12px 24px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: '#FFF', fontWeight: '600', cursor: 'pointer' }}>
+            <button onClick={() => window.location.href='/finance/investor-dashboard'} style={{ padding: '12px 24px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: 'var(--text-primary)', fontWeight: '600', cursor: 'pointer' }}>
               Go to Dashboard
             </button>
           </div>
@@ -212,7 +212,7 @@ export default function InvestorOnboarding() {
 
         {step < 5 && (
           <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
-            <button onClick={handleNext} disabled={loading} style={{ padding: '12px 32px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: '#FFF', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }}>
+            <button onClick={handleNext} disabled={loading} style={{ padding: '12px 32px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: 'var(--text-primary)', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }}>
               {loading ? 'Processing...' : (step === 4 ? 'Finish Setup' : 'Next Step →')}
             </button>
           </div>

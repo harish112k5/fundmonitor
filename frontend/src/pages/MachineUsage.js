@@ -23,8 +23,8 @@ const labelStyle = {
 const inputStyle = {
   width: '100%',
   padding: '8px 12px',
-  background: 'var(--bg-input, rgba(255,255,255,0.05))',
-  border: '1px solid var(--border-subtle, rgba(255,255,255,0.06))',
+  background: 'var(--bg-input, var(--border-subtle))',
+  border: '1px solid var(--border-subtle, var(--border-subtle))',
   borderRadius: '6px',
   color: 'var(--text-primary)',
   fontSize: '0.85rem',
@@ -225,7 +225,7 @@ export default function MachineUsage() {
           margin-bottom: 8px;
           padding: 8px;
           border-radius: 8px;
-          background: #1E1E1E;
+          background: var(--bg-card);
           align-items: center;
         }
         @media (max-width: 900px) {
@@ -375,7 +375,7 @@ export default function MachineUsage() {
                   key={row._id}
                   className="responsive-grid-row"
                   style={{
-                    border: isIncomplete && submitting ? '1px solid #ef4444' : '1px solid #374151',
+                    border: isIncomplete && submitting ? '1px solid #ef4444' : '1px solid var(--border-medium)',
                   }}
                 >
                   <div className="responsive-grid-cell-wrapper" data-label="Machine *">
@@ -415,7 +415,7 @@ export default function MachineUsage() {
                   </div>
 
                   <div className="responsive-grid-cell-wrapper" data-label="Total Cost">
-                    <div style={{ ...inputStyle, background: '#1E1E1E', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                    <div style={{ ...inputStyle, background: 'var(--bg-card)', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
                       ₹{cost.toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -437,7 +437,7 @@ export default function MachineUsage() {
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        color: rows.length === 1 ? '#374151' : '#ef4444',
+                        color: rows.length === 1 ? 'var(--border-medium)' : '#ef4444',
                         cursor: rows.length === 1 ? 'not-allowed' : 'pointer',
                         fontSize: 18,
                       }}
@@ -471,7 +471,7 @@ export default function MachineUsage() {
             <div style={{
               marginTop: 16,
               padding: '10px 16px',
-              background: '#1E1E1E',
+              background: 'var(--bg-card)',
               borderRadius: 8,
               display: 'flex',
               justifyContent: 'space-between',
@@ -479,12 +479,12 @@ export default function MachineUsage() {
               color: '#94a3b8',
             }}>
               <span>{rows.length} row{rows.length > 1 ? 's' : ''}</span>
-              <span>Total Machine Cost: <strong style={{ color: '#f1f5f9' }}>₹{totalCost.toLocaleString('en-IN')}</strong></span>
+              <span>Total Machine Cost: <strong style={{ color: 'var(--text-primary)' }}>₹{totalCost.toLocaleString('en-IN')}</strong></span>
             </div>
 
             {/* Footer buttons */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #374151', borderRadius: 8, color: '#94a3b8', cursor: 'pointer' }}>
+              <button onClick={() => setShowModal(false)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--border-medium)', borderRadius: 8, color: '#94a3b8', cursor: 'pointer' }}>
                 Cancel
               </button>
               <button
