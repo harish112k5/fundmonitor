@@ -254,7 +254,7 @@ router.get('/unassigned-users', adminOnly, async (req, res) => {
       SELECT u.user_id, u.name, u.email, u.created_at, u.role_id, r.role_name
       FROM users u
       JOIN roles r ON u.role_id = r.role_id
-      WHERE u.role_id IN (2, 3, 5, 6)
+      WHERE u.role_id IN (2, 3, 4, 5, 6)
         AND u.is_active = 1
         AND u.is_deleted = 0
         AND u.user_id NOT IN (SELECT DISTINCT user_id FROM project_team)
