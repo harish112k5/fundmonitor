@@ -44,6 +44,7 @@ import FundTracking from './pages/FundTracking';
 import InvestorDashboard from './pages/InvestorDashboard';
 import InvestorOnboarding from './pages/InvestorOnboarding';
 import TaxCompliance from './pages/TaxCompliance';
+import ProjectFinanceDetail from './pages/ProjectFinanceDetail';
 
 // Protected route wrapper
 function ProtectedRoute({ children, roles }) {
@@ -95,6 +96,7 @@ function AppRoutes() {
               <Route path="/alerts" element={<AlertsPage />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/projects/:id/finance" element={<ProjectFinanceDetail />} />
               <Route path="/project-progress" element={<ProjectProgress />} />
 
               {/* Admin + Manager */}

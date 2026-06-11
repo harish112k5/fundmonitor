@@ -265,4 +265,99 @@ router.delete('/:id', roleGuard('admin', 'manager'), async (req, res) => {
   }
 });
 
+// GET /api/projects/:id/finance-summary
+router.get('/:id/finance-summary', async (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    // 1. Project base info
+    const [[project]] = await db.query(
+      `SELECT project_id, project_name, tender_amount, work_completed_percent,
+              start_date, end_date, status
+       FROM projects WHERE project_id = ?`,
+      [projectId]
+    );
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+
+    // 2. Billing summary for this project
+    const [[billingSummary]] = await db.query(
+      `SELECT
+         COUNT(*)                        AS total_invoices,
+         SUM(billable_amount)            AS total_billable,
+         SUM(submitted_amount)           AS total_submitted,
+         SUM(certified_amount)           AS total_certified,
+         SUM(payment_received)           AS total_received,
+         SUM(rejection_amount)           AS total_rejected,
+         SUM(submitted_amount - certified_amount)  AS pending_approval,
+         SUM(certified_amount  - payment_received) AS pending_payment
+       FROM billing WHERE project_id = ?`,
+      [projectId]
+    );
+
+    // 3. Actual cost breakdown (3M + Expenses)
+    const [[materialCost]]  = await db.query(
+      `SELECT COALESCE(SUM(quantity * unit_price),0) AS cost FROM material_usage  WHERE project_id = ?`, [projectId]);
+    const [[manpowerCost]]  = await db.query(
+      `SELECT COALESCE(SUM(work_days * daily_rate),0) AS cost FROM manpower_usage  WHERE project_id = ?`, [projectId]);
+    const [[machineCost]]   = await db.query(
+      `SELECT COALESCE(SUM(usage_hours * hourly_rate),0) AS cost FROM machine_usage   WHERE project_id = ?`, [projectId]);
+    const [[expenseCost]]   = await db.query(
+      `SELECT COALESCE(SUM(amount),0)     AS cost FROM expenses         WHERE project_id = ?`, [projectId]);
+
+    const actualCost =
+      parseFloat(materialCost.cost)  +
+      parseFloat(manpowerCost.cost)  +
+      parseFloat(machineCost.cost)   +
+      parseFloat(expenseCost.cost);
+
+    // 4. Investment & Loan info
+    const [[investments]] = await db.query(
+      `SELECT COALESCE(SUM(amount),0) AS total FROM project_investments WHERE project_id = ?`, [projectId]);
+    const [[loans]] = await db.query(
+      `SELECT COALESCE(SUM(principal),0) AS total FROM project_loans WHERE project_id = ?`, [projectId]);
+
+    // 5. All individual billing records
+    const [billingRecords] = await db.query(
+      `SELECT * FROM billing WHERE project_id = ? ORDER BY billing_date DESC`, [projectId]);
+
+    res.json({
+      success: true,
+      data: {
+        project,
+        billing_summary: {
+          ...billingSummary,
+          total_billable:   parseFloat(billingSummary?.total_billable  || 0),
+          total_submitted:  parseFloat(billingSummary?.total_submitted || 0),
+          total_certified:  parseFloat(billingSummary?.total_certified || 0),
+          total_received:   parseFloat(billingSummary?.total_received  || 0),
+          pending_approval: parseFloat(billingSummary?.pending_approval|| 0),
+          pending_payment:  parseFloat(billingSummary?.pending_payment || 0),
+        },
+        actual_cost: {
+          material:  parseFloat(materialCost.cost),
+          manpower:  parseFloat(manpowerCost.cost),
+          machine:   parseFloat(machineCost.cost),
+          expenses:  parseFloat(expenseCost.cost),
+          total:     actualCost
+        },
+        investments: parseFloat(investments.total),
+        loans:       parseFloat(loans.total),
+        billing_records: billingRecords,
+        computed: {
+          net_profit: parseFloat(billingSummary?.total_certified || 0) - actualCost,
+          budget_utilization: project.tender_amount > 0
+            ? ((actualCost / project.tender_amount) * 100).toFixed(1)
+            : 0,
+          roi: parseFloat(investments.total) > 0
+            ? (((parseFloat(billingSummary?.total_certified || 0) - actualCost) / parseFloat(investments.total)) * 100).toFixed(1)
+            : 0
+        }
+      }
+    });
+  } catch (err) {
+    console.error('GET /projects/:id/finance-summary error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
