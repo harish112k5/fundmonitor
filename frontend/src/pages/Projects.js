@@ -7,6 +7,7 @@ import Modal from '../components/Modal';
 import DeleteConfirm from '../components/DeleteConfirm';
 import toast from 'react-hot-toast';
 import { HiOutlinePlus } from 'react-icons/hi';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 
 const initialForm = {
   project_name: '', location: '', start_date: '', end_date: '',
@@ -81,19 +82,19 @@ export default function Projects() {
         to={`/projects/${r.project_id}`}
         style={{
           fontWeight: 600,
-          color: 'var(--accent-start, #6366f1)',
+          color: '#F59E0B',
           textDecoration: 'none',
-          transition: 'color 0.15s, text-decoration 0.15s'
+          transition: 'color 0.15s'
         }}
-        onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.color = '#818cf8'; }}
-        onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none'; e.currentTarget.style.color = 'var(--accent-start, #6366f1)'; }}
+        onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.color = '#FCD34D'; }}
+        onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none'; e.currentTarget.style.color = '#F59E0B'; }}
       >
         {r.project_name}
       </Link>
     )},
     { header: 'Location', accessor: 'location', render: r => r.location || '—' },
     { header: 'Budget', accessor: 'estimated_budget', render: r => (
-      <span className="currency">{fmt(r.estimated_budget)}</span>
+      <span style={{ fontFamily: "'Roboto Mono', monospace", fontWeight: '500' }}>{fmt(r.estimated_budget)}</span>
     )},
     { header: 'Status', accessor: 'status', render: r => (
       <span className={`badge badge-${r.status}`}>{r.status?.replace('_', ' ')}</span>
@@ -106,42 +107,44 @@ export default function Projects() {
 
   if (data.length === 0 && user?.role_id === 3) {
     return (
-      <div className="animate-in" style={{ textAlign: 'center', padding: '80px 20px', color: '#94A3B8' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏗️</div>
-        <h3 style={{ color: '#F1F5F9', marginBottom: '8px' }}>No Projects Assigned Yet</h3>
-        <p>Your admin will assign you to a project shortly. Check back soon.</p>
-        <button
-          onClick={load}
-          className="btn btn-secondary"
-          style={{ margin: '24px auto 0' }}
-        >
-          Refresh
-        </button>
-      </div>
+      <PageWrapper>
+        <AnimatedItem delay={0} style={{ textAlign: 'center', padding: '80px 20px', color: '#57534E' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏗️</div>
+          <h3 style={{ fontFamily: "'Oswald', sans-serif", color: '#F5F5F4', marginBottom: '8px', textTransform: 'uppercase' }}>No Projects Assigned Yet</h3>
+          <p>Your admin will assign you to a project shortly. Check back soon.</p>
+          <button onClick={load} className="btn btn-secondary" style={{ margin: '24px auto 0' }}>Refresh</button>
+        </AnimatedItem>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="animate-in">
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1>Projects</h1>
-          <p>Manage your construction projects</p>
+    <PageWrapper>
+      <AnimatedItem delay={0}>
+        <div className="page-header">
+          <div className="page-header-left">
+            <div>
+              <h1>Projects</h1>
+              <p>Manage your construction projects</p>
+            </div>
+          </div>
         </div>
-      </div>
+      </AnimatedItem>
 
-      <DataTable
-        columns={columns} data={data}
-        onEdit={handleEdit}
-        onDelete={(r) => { setDeleteTarget(r); setShowDelete(true); }}
-        searchPlaceholder="Search projects..."
-        emptyIcon="🏗" emptyTitle="No projects yet"
-              addButton={
-          <button className="btn btn-primary" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-            <HiOutlinePlus /> Add Project
-          </button>
-        }
-      />
+      <AnimatedItem delay={0.1}>
+        <DataTable
+          columns={columns} data={data}
+          onEdit={handleEdit}
+          onDelete={(r) => { setDeleteTarget(r); setShowDelete(true); }}
+          searchPlaceholder="Search projects..."
+          emptyIcon="🏗" emptyTitle="No projects yet"
+          addButton={
+            <button className="btn-premium" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
+              <HiOutlinePlus /> Add Project
+            </button>
+          }
+        />
+      </AnimatedItem>
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}
         title={editing ? 'Edit Project' : 'New Project'}
@@ -205,6 +208,6 @@ export default function Projects() {
           customButtonText="Move to Bin"
         />
       </Modal>
-    </div>
+    </PageWrapper>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -202,7 +203,8 @@ export default function ManpowerUsage() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <style>{`
         .responsive-grid-header {
           display: grid;
@@ -217,7 +219,7 @@ export default function ManpowerUsage() {
           margin-bottom: 8px;
           padding: 8px;
           border-radius: 8px;
-          background: #13131f;
+          background: #1E1E1E;
           align-items: center;
         }
         @media (max-width: 900px) {
@@ -360,7 +362,7 @@ export default function ManpowerUsage() {
                   key={row._id}
                   className="responsive-grid-row"
                   style={{
-                    border: isIncomplete && submitting ? '1px solid #ef4444' : '1px solid #2a2a45',
+                    border: isIncomplete && submitting ? '1px solid #ef4444' : '1px solid #374151',
                   }}
                 >
                   <div className="responsive-grid-cell-wrapper" data-label="Worker *">
@@ -400,7 +402,7 @@ export default function ManpowerUsage() {
                   </div>
 
                   <div className="responsive-grid-cell-wrapper" data-label="Total Cost">
-                    <div style={{ ...inputStyle, background: '#0f0f1a', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                    <div style={{ ...inputStyle, background: '#1E1E1E', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
                       ₹{cost.toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -412,7 +414,7 @@ export default function ManpowerUsage() {
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        color: rows.length === 1 ? '#2a2a45' : '#ef4444',
+                        color: rows.length === 1 ? '#374151' : '#ef4444',
                         cursor: rows.length === 1 ? 'not-allowed' : 'pointer',
                         fontSize: 18,
                       }}
@@ -432,9 +434,9 @@ export default function ManpowerUsage() {
                 marginTop: 8,
                 padding: '10px',
                 background: 'transparent',
-                border: '1px dashed #7c3aed',
+                border: '1px dashed #F59E0B',
                 borderRadius: 8,
-                color: '#8b5cf6',
+                color: '#FCD34D',
                 cursor: 'pointer',
                 fontSize: 14,
               }}
@@ -446,7 +448,7 @@ export default function ManpowerUsage() {
             <div style={{
               marginTop: 16,
               padding: '10px 16px',
-              background: '#0f0f1a',
+              background: '#1E1E1E',
               borderRadius: 8,
               display: 'flex',
               justifyContent: 'space-between',
@@ -459,13 +461,13 @@ export default function ManpowerUsage() {
 
             {/* Footer buttons */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #2a2a45', borderRadius: 8, color: '#94a3b8', cursor: 'pointer' }}>
+              <button onClick={() => setShowModal(false)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #374151', borderRadius: 8, color: '#94a3b8', cursor: 'pointer' }}>
                 Cancel
               </button>
               <button
                 onClick={handleBulkSubmit}
                 disabled={submitting}
-                style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: 'white', fontWeight: 600, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}
+                style={{ padding: '10px 24px', background: '#F59E0B', border: 'none', borderRadius: 8, color: 'white', fontWeight: 600, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}
               >
                 {submitting ? 'Saving...' : `Submit All (${rows.length})`}
               </button>
@@ -477,6 +479,7 @@ export default function ManpowerUsage() {
       <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Confirm Delete">
         <DeleteConfirm itemName="this record" onConfirm={handleDelete} onCancel={() => setShowDelete(false)} />
       </Modal>
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

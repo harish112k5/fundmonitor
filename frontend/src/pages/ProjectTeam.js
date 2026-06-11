@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -65,7 +66,8 @@ export default function ProjectTeam() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <div className="page-header">
         <div className="page-header-left"><h1>Project Team</h1><p>Assign team members to projects</p></div>
       </div>
@@ -100,6 +102,7 @@ export default function ProjectTeam() {
       <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Confirm Delete">
         <DeleteConfirm itemName={deleteTarget?.user_name} onConfirm={handleDelete} onCancel={() => setShowDelete(false)} />
       </Modal>
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

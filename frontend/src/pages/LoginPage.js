@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { HelmetIcon, ConstructionSVG } from '../components/CivilIcons';
 import {
-  HiOutlineOfficeBuilding,
   HiOutlineMail,
   HiOutlineLockClosed,
   HiOutlineUser,
   HiOutlineEye,
-  HiOutlineEyeOff
+  HiOutlineEyeOff,
+  HiOutlineOfficeBuilding
 } from 'react-icons/hi';
 
 export default function LoginPage() {
@@ -52,26 +53,22 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      {/* Animated background orbs */}
-      <div className="login-bg-orb login-bg-orb-1" />
-      <div className="login-bg-orb login-bg-orb-2" />
-      <div className="login-bg-orb login-bg-orb-3" />
-
+      {/* Left side — form */}
       <div className="login-container">
         <div className="login-card">
           {/* Brand */}
           <div className="login-brand">
             <div className="login-brand-icon">
-              <HiOutlineOfficeBuilding />
+              <HelmetIcon size={48} />
             </div>
-            <h1>BuildManager</h1>
-            <p>Construction Project Monitoring System</p>
+            <h1>BUILDMANAGER</h1>
+            <p>Construction Project Intelligence System</p>
           </div>
 
           {/* Title */}
           <div className="login-title">
-            <h2>{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
-            <p>{isRegister ? 'Register to get started' : 'Sign in to your account'}</p>
+            <h2>{isRegister ? 'CREATE ACCOUNT' : 'SIGN IN TO SITE'}</h2>
+            <p>{isRegister ? 'Register to get started' : 'Enter your credentials to access the command center'}</p>
           </div>
 
           {/* Form */}
@@ -121,7 +118,7 @@ export default function LoginPage() {
               {loading ? (
                 <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} />
               ) : (
-                isRegister ? 'Create Account' : 'Sign In'
+                isRegister ? 'CREATE ACCOUNT' : 'ACCESS COMMAND CENTER'
               )}
             </button>
           </form>
@@ -133,12 +130,17 @@ export default function LoginPage() {
               {isRegister ? 'Sign In' : 'Register'}
             </button>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="login-footer">
-          <p>Construction Project Monitoring System © {new Date().getFullYear()}</p>
+          {/* Footer */}
+          <div className="login-footer">
+            <p>Construction Project Monitoring System © {new Date().getFullYear()}</p>
+          </div>
         </div>
+      </div>
+
+      {/* Right side — Construction illustration */}
+      <div className="login-illustration">
+        <ConstructionSVG />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import toast from 'react-hot-toast';
@@ -41,7 +42,8 @@ export default function AuditLog() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <div className="page-header">
         <div className="page-header-left">
           <h1>Audit Log</h1>
@@ -54,6 +56,7 @@ export default function AuditLog() {
         emptyIcon="🔒" emptyTitle="No audit records"
         emptyMessage="Audit records will appear here when triggers are configured."
       />
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

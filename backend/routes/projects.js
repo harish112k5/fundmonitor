@@ -128,7 +128,7 @@ router.get('/:id/details', async (req, res) => {
 
     // 4. Material Usage
     const [material_usage] = await db.query(`
-      SELECT mm.material_name, mu.quantity, mm.unit, mu.unit_price,
+      SELECT mu.id, mu.material_id, mm.material_name, mu.quantity, mm.unit, mu.unit_price,
              ROUND(mu.quantity * mu.unit_price, 2) AS total_cost, mu.usage_date
       FROM material_usage mu
       JOIN materials_master mm ON mu.material_id = mm.material_id
@@ -138,7 +138,7 @@ router.get('/:id/details', async (req, res) => {
 
     // 5. Manpower Usage
     const [manpower_usage] = await db.query(`
-      SELECT w.name AS worker_name, mu.work_days, mu.daily_rate,
+      SELECT mu.id, mu.worker_id, w.name AS worker_name, mu.work_days, mu.daily_rate,
              ROUND(mu.work_days * mu.daily_rate, 2) AS total_cost, mu.work_date
       FROM manpower_usage mu
       JOIN workers w ON mu.worker_id = w.worker_id
@@ -148,7 +148,7 @@ router.get('/:id/details', async (req, res) => {
 
     // 6. Machine Usage
     const [machine_usage] = await db.query(`
-      SELECT mm.machine_name, mu.usage_hours, mu.hourly_rate,
+      SELECT mu.id, mu.machine_id, mm.machine_name, mu.usage_hours, mu.hourly_rate,
              ROUND(mu.usage_hours * mu.hourly_rate, 2) AS total_cost, mu.usage_date
       FROM machine_usage mu
       JOIN machines_master mm ON mu.machine_id = mm.machine_id

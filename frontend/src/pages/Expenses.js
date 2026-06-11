@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -12,7 +13,7 @@ import {
 
 const initialForm = { project_id: '', category_id: '', amount: '', description: '', expense_date: '', recorded_by: '' };
 
-const COLORS = ['#7c3aed', '#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
+const COLORS = ['#F59E0B', '#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
 
 export default function Expenses() {
   const [data, setData] = useState([]);
@@ -98,7 +99,8 @@ export default function Expenses() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <div className="page-header">
         <div className="page-header-left"><h1>Expenses</h1><p>Track project expenses</p></div>
       </div>
@@ -116,7 +118,7 @@ export default function Expenses() {
           {[
             { label: 'Total Expenses', value: `₹${totalExpenses.toLocaleString('en-IN')}`, color: '#ef4444', icon: '💰' },
             { label: 'This Month', value: `₹${(monthlyTotals[currentMonth] || 0).toLocaleString('en-IN')}`, color: '#f59e0b', icon: '📅' },
-            { label: 'Categories', value: Object.keys(categoryTotals).length, color: '#7c3aed', icon: '📊' },
+            { label: 'Categories', value: Object.keys(categoryTotals).length, color: '#F59E0B', icon: '📊' },
             { label: 'Total Records', value: data.length, color: '#3b82f6', icon: '📋' },
           ].map(card => (
             <div key={card.label} style={{
@@ -207,7 +209,7 @@ export default function Expenses() {
                       fontSize: 12,
                     }}
                   />
-                  <Bar dataKey="total" fill="#7c3aed" radius={[4, 4, 0, 0]} name="Expenses" />
+                  <Bar dataKey="total" fill="#F59E0B" radius={[4, 4, 0, 0]} name="Expenses" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -255,6 +257,7 @@ export default function Expenses() {
       <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Confirm Delete">
         <DeleteConfirm itemName="this expense" onConfirm={handleDelete} onCancel={() => setShowDelete(false)} />
       </Modal>
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

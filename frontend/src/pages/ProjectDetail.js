@@ -6,8 +6,14 @@ import {
 } from 'recharts';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
+import Modal from '../components/Modal';
+import DeleteConfirm from '../components/DeleteConfirm';
+import toast from 'react-hot-toast';
 import {
   HiOutlineArrowLeft,
+  HiOutlinePlus,
+  HiOutlinePencil,
+  HiOutlineTrash,
   HiOutlineOfficeBuilding,
   HiOutlineCurrencyDollar,
   HiOutlineCube,
@@ -176,12 +182,134 @@ export default function ProjectDetail() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('analytics');
 
-  useEffect(() => {
+  // Master lists for dropdowns
+  const [masterMaterials, setMasterMaterials] = useState([]);
+  const [masterWorkers, setMasterWorkers] = useState([]);
+  const [masterMachines, setMasterMachines] = useState([]);
+
+  // Modals state
+  const [activeModal, setActiveModal] = useState(null); // 'materials', 'manpower', 'machines'
+  const [editingRow, setEditingRow] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Forms state
+  const [formMaterial, setFormMaterial] = useState({ material_id: '', quantity: '', unit_price: '', usage_date: '' });
+  const [formManpower, setFormManpower] = useState({ worker_id: '', work_days: '', daily_rate: '', work_date: '' });
+  const [formMachine, setFormMachine] = useState({ machine_id: '', usage_hours: '', hourly_rate: '', usage_date: '' });
+
+  const loadProjectDetails = () => {
     API.get(`/projects/${id}/details`)
       .then(r => setData(r.data))
       .catch(err => setError(err.response?.data?.error || 'Failed to load project'))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadProjectDetails();
+    Promise.all([
+      API.get('/materials').catch(() => ({ data: [] })),
+      API.get('/workers').catch(() => ({ data: [] })),
+      API.get('/machines').catch(() => ({ data: [] }))
+    ]).then(([mat, work, mach]) => {
+      setMasterMaterials(mat.data);
+      setMasterWorkers(work.data);
+      setMasterMachines(mach.data);
+    });
   }, [id]);
+
+  const openAddModal = (type) => {
+    setEditingRow(null);
+    if (type === 'materials') setFormMaterial({ material_id: '', quantity: '', unit_price: '', usage_date: '' });
+    if (type === 'manpower') setFormManpower({ worker_id: '', work_days: '', daily_rate: '', work_date: '' });
+    if (type === 'machines') setFormMachine({ machine_id: '', usage_hours: '', hourly_rate: '', usage_date: '' });
+    setActiveModal(type);
+  };
+
+  const openEditModal = (type, row) => {
+    setEditingRow(row);
+    if (type === 'materials') setFormMaterial({ material_id: row.material_id || '', quantity: row.quantity || '', unit_price: row.unit_price || '', usage_date: row.usage_date?.split('T')[0] || '' });
+    if (type === 'manpower') setFormManpower({ worker_id: row.worker_id || '', work_days: row.work_days || '', daily_rate: row.daily_rate || '', work_date: row.work_date?.split('T')[0] || '' });
+    if (type === 'machines') setFormMachine({ machine_id: row.machine_id || '', usage_hours: row.usage_hours || '', hourly_rate: row.hourly_rate || '', usage_date: row.usage_date?.split('T')[0] || '' });
+    setActiveModal(type);
+  };
+
+  const handleChangeMaterial = (e) => {
+    const val = e.target.value;
+    if (e.target.name === 'material_id') {
+      const found = masterMaterials.find(m => m.material_id == val);
+      setFormMaterial({ ...formMaterial, material_id: val, unit_price: found?.unit_price || formMaterial.unit_price });
+    } else {
+      setFormMaterial({ ...formMaterial, [e.target.name]: val });
+    }
+  };
+  const handleChangeManpower = (e) => {
+    const val = e.target.value;
+    if (e.target.name === 'worker_id') {
+      const found = masterWorkers.find(m => m.worker_id == val);
+      setFormManpower({ ...formManpower, worker_id: val, daily_rate: found?.daily_rate || formManpower.daily_rate });
+    } else {
+      setFormManpower({ ...formManpower, [e.target.name]: val });
+    }
+  };
+  const handleChangeMachine = (e) => {
+    const val = e.target.value;
+    if (e.target.name === 'machine_id') {
+      const found = masterMachines.find(m => m.machine_id == val);
+      setFormMachine({ ...formMachine, machine_id: val, hourly_rate: found?.hourly_rate || formMachine.hourly_rate });
+    } else {
+      setFormMachine({ ...formMachine, [e.target.name]: val });
+    }
+  };
+
+  const handleResourceSubmit = async (type) => {
+    try {
+      let endpoint = '';
+      let payload = { project_id: id };
+      let editId = null;
+
+      if (type === 'materials') {
+        endpoint = '/material-usage';
+        payload = { ...payload, ...formMaterial };
+        editId = editingRow?.id;
+      } else if (type === 'manpower') {
+        endpoint = '/manpower-usage';
+        payload = { ...payload, ...formManpower };
+        editId = editingRow?.id;
+      } else if (type === 'machines') {
+        endpoint = '/machine-usage';
+        payload = { ...payload, ...formMachine };
+        editId = editingRow?.id;
+      }
+
+      if (editingRow) {
+        await API.put(`${endpoint}/${editId}`, payload);
+        toast.success('Record updated');
+      } else {
+        await API.post(endpoint, payload);
+        toast.success('Record added');
+      }
+      setActiveModal(null);
+      loadProjectDetails();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to save');
+    }
+  };
+
+  const handleResourceDelete = async () => {
+    try {
+      const type = deleteTarget.type;
+      const endpoint = type === 'materials' ? '/material-usage' 
+                     : type === 'manpower' ? '/manpower-usage' 
+                     : '/machine-usage';
+      
+      await API.delete(`${endpoint}/${deleteTarget.row.id}`);
+      toast.success('Record deleted');
+      setDeleteTarget(null);
+      loadProjectDetails();
+    } catch (err) {
+      toast.error('Failed to delete');
+    }
+  };
 
   // ── Data Processing for Analytics (Hooks MUST be above returns) ──
   const costBreakdown = useMemo(() => {
@@ -527,7 +655,20 @@ export default function ProjectDetail() {
       {/* ── SECTION 3: Resource Usage ── */}
       {['materials', 'manpower', 'machines'].includes(activeTab) && (
         <div className="card" style={{ marginBottom: 20 }}>
-          <SectionHeader icon={HiOutlineCube} title="Resource Usage Details" color="#f59e0b" />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10, background: `#f59e0b22`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', fontSize: '1.1rem'
+              }}>
+                <HiOutlineCube />
+              </div>
+              <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Usage Details</h2>
+            </div>
+            <button className="btn-premium btn-sm" onClick={() => openAddModal(activeTab)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <HiOutlinePlus /> Add {activeTab === 'materials' ? 'Material' : activeTab === 'manpower' ? 'Manpower' : 'Machine'}
+            </button>
+          </div>
 
         {activeTab === 'materials' && (
           <SimpleTable
@@ -539,6 +680,12 @@ export default function ProjectDetail() {
               { key: 'unit_price', label: 'Unit Price', render: r => fmt(r.unit_price) },
               { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.total_cost)}</span> },
               { key: 'usage_date', label: 'Date', render: r => fmtDate(r.usage_date) },
+              { key: 'actions', label: 'Actions', render: r => (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn-icon" onClick={() => openEditModal('materials', r)} title="Edit"><HiOutlinePencil /></button>
+                  <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'materials', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
+                </div>
+              )}
             ]}
             rows={material_usage}
           />
@@ -553,6 +700,12 @@ export default function ProjectDetail() {
               { key: 'daily_rate', label: 'Daily Rate', render: r => fmt(r.daily_rate) },
               { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.total_cost)}</span> },
               { key: 'work_date', label: 'Date', render: r => fmtDate(r.work_date) },
+              { key: 'actions', label: 'Actions', render: r => (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn-icon" onClick={() => openEditModal('manpower', r)} title="Edit"><HiOutlinePencil /></button>
+                  <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'manpower', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
+                </div>
+              )}
             ]}
             rows={manpower_usage}
           />
@@ -567,6 +720,12 @@ export default function ProjectDetail() {
               { key: 'hourly_rate', label: 'Hourly Rate', render: r => fmt(r.hourly_rate) },
               { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.total_cost)}</span> },
               { key: 'usage_date', label: 'Date', render: r => fmtDate(r.usage_date) },
+              { key: 'actions', label: 'Actions', render: r => (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn-icon" onClick={() => openEditModal('machines', r)} title="Edit"><HiOutlinePencil /></button>
+                  <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'machines', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
+                </div>
+              )}
             ]}
             rows={machine_usage}
           />
@@ -627,6 +786,126 @@ export default function ProjectDetail() {
           />
         </div>
       )}
+      {/* ── Modals for Adding/Editing Resources ── */}
+      <Modal
+        isOpen={activeModal === 'materials'}
+        onClose={() => setActiveModal(null)}
+        title={editingRow ? 'Edit Material Usage' : 'Add Material Usage'}
+        footer={<>
+          <button className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+          <button className="btn-premium" onClick={() => handleResourceSubmit('materials')}>{editingRow ? 'Update' : 'Save'}</button>
+        </>}
+      >
+        <div className="form-group">
+          <label className="form-label">Material *</label>
+          {editingRow ? (
+            <input className="form-input" disabled value={editingRow.material_name || ''} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }} />
+          ) : (
+            <select className="form-select" name="material_id" value={formMaterial.material_id} onChange={handleChangeMaterial}>
+              <option value="">Select a material</option>
+              {masterMaterials.map(m => <option key={m.material_id} value={m.material_id}>{m.material_name}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Quantity *</label>
+            <input className="form-input" type="number" name="quantity" value={formMaterial.quantity} onChange={handleChangeMaterial} placeholder="0.00" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Unit Price (₹) *</label>
+            <input className="form-input" type="number" name="unit_price" value={formMaterial.unit_price} onChange={handleChangeMaterial} placeholder="0" />
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Date *</label>
+          <input className="form-input" type="date" name="usage_date" value={formMaterial.usage_date} onChange={handleChangeMaterial} />
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={activeModal === 'manpower'}
+        onClose={() => setActiveModal(null)}
+        title={editingRow ? 'Edit Manpower Usage' : 'Add Manpower Usage'}
+        footer={<>
+          <button className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+          <button className="btn-premium" onClick={() => handleResourceSubmit('manpower')}>{editingRow ? 'Update' : 'Save'}</button>
+        </>}
+      >
+        <div className="form-group">
+          <label className="form-label">Worker *</label>
+          {editingRow ? (
+            <input className="form-input" disabled value={editingRow.worker_name || ''} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }} />
+          ) : (
+            <select className="form-select" name="worker_id" value={formManpower.worker_id} onChange={handleChangeManpower}>
+              <option value="">Select a worker</option>
+              {masterWorkers.map(w => <option key={w.worker_id} value={w.worker_id}>{w.name}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Work Days *</label>
+            <input className="form-input" type="number" name="work_days" value={formManpower.work_days} onChange={handleChangeManpower} placeholder="1.0" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Daily Rate (₹) *</label>
+            <input className="form-input" type="number" name="daily_rate" value={formManpower.daily_rate} onChange={handleChangeManpower} placeholder="0" />
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Date *</label>
+          <input className="form-input" type="date" name="work_date" value={formManpower.work_date} onChange={handleChangeManpower} />
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={activeModal === 'machines'}
+        onClose={() => setActiveModal(null)}
+        title={editingRow ? 'Edit Machine Usage' : 'Add Machine Usage'}
+        footer={<>
+          <button className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+          <button className="btn-premium" onClick={() => handleResourceSubmit('machines')}>{editingRow ? 'Update' : 'Save'}</button>
+        </>}
+      >
+        <div className="form-group">
+          <label className="form-label">Machine *</label>
+          {editingRow ? (
+            <input className="form-input" disabled value={editingRow.machine_name || ''} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }} />
+          ) : (
+            <select className="form-select" name="machine_id" value={formMachine.machine_id} onChange={handleChangeMachine}>
+              <option value="">Select a machine</option>
+              {masterMachines.map(m => <option key={m.machine_id} value={m.machine_id}>{m.machine_name}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Usage Hours *</label>
+            <input className="form-input" type="number" name="usage_hours" value={formMachine.usage_hours} onChange={handleChangeMachine} placeholder="1.0" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Hourly Rate (₹) *</label>
+            <input className="form-input" type="number" name="hourly_rate" value={formMachine.hourly_rate} onChange={handleChangeMachine} placeholder="0" />
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Date *</label>
+          <input className="form-input" type="date" name="usage_date" value={formMachine.usage_date} onChange={handleChangeMachine} />
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Confirm Delete">
+        <DeleteConfirm 
+          itemName={
+            deleteTarget?.type === 'materials' ? 'Material Usage' :
+            deleteTarget?.type === 'manpower' ? 'Manpower Usage' :
+            'Machine Usage'
+          }
+          onConfirm={handleResourceDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      </Modal>
     </div>
   );
 }

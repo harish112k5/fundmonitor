@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -36,7 +37,7 @@ function Pagination({ page, totalPages, onPrev, onNext, total, pageSize }) {
           }}
         >← Prev</button>
         <span style={{
-          padding: '6px 14px', background: '#7c3aed', borderRadius: 6,
+          padding: '6px 14px', background: '#F59E0B', borderRadius: 6,
           color: '#fff', fontSize: 13, fontWeight: 700, minWidth: 36, textAlign: 'center',
         }}>
           {page} / {totalPages || 1}
@@ -258,7 +259,7 @@ export default function AdminPanel() {
     if (action.includes('INSERT'))   return '#10b981';
     if (action.includes('UPDATE'))   return '#3b82f6';
     if (action.includes('DELETE'))   return '#ef4444';
-    if (action.includes('CREATE'))   return '#7c3aed';
+    if (action.includes('CREATE'))   return '#F59E0B';
     return '#64748b';
   };
 
@@ -337,7 +338,7 @@ export default function AdminPanel() {
             { label: 'Active Sessions', value: stats?.active_sessions  || 0, color: '#10b981' },
             { label: 'Blocked Users',   value: stats?.blocked_users    || 0, color: '#ef4444' },
             { label: 'Actions Today',   value: stats?.total_actions_today || 0, color: '#f59e0b' },
-            { label: 'Admin Accounts',  value: adminCount, color: '#7c3aed' },
+            { label: 'Admin Accounts',  value: adminCount, color: '#F59E0B' },
             { label: 'Unassigned',      value: unassigned.length, color: unassigned.length > 0 ? '#f59e0b' : '#10b981' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ ...S.card, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -833,19 +834,19 @@ export default function AdminPanel() {
               <input
                 placeholder="Email" type="email" value={adminForm.email}
                 onChange={e => setAdminForm({ ...adminForm, email: e.target.value })}
-                style={{ padding: '10px 14px', background: '#0f0f1a', border: '1px solid #2a2a45', borderRadius: 8, color: '#f1f5f9', fontSize: 14 }}
+                style={{ padding: '10px 14px', background: '#1E1E1E', border: '1px solid #374151', borderRadius: 8, color: '#f1f5f9', fontSize: 14 }}
               />
               <input
                 placeholder="Password" type="password" value={adminForm.password}
                 onChange={e => setAdminForm({ ...adminForm, password: e.target.value })}
-                style={{ padding: '10px 14px', background: '#0f0f1a', border: '1px solid #2a2a45', borderRadius: 8, color: '#f1f5f9', fontSize: 14 }}
+                style={{ padding: '10px 14px', background: '#1E1E1E', border: '1px solid #374151', borderRadius: 8, color: '#f1f5f9', fontSize: 14 }}
               />
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
                 <button onClick={() => { setShowCreateAdmin(false); setAdminForm({ name: '', email: '', password: '' }); }}
                   style={{ padding: '8px 18px', background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13 }}
                 >Cancel</button>
                 <button onClick={handleCreateAdmin}
-                  style={{ padding: '8px 18px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+                  style={{ padding: '8px 18px', background: '#F59E0B', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
                 >Create Admin</button>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import { HiOutlineTrash, HiOutlineRefresh, HiOutlineXCircle } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
@@ -59,7 +60,8 @@ export default function RecycleBin() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <div className="page-header">
         <div className="page-header-left">
           <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -221,6 +223,7 @@ export default function RecycleBin() {
           </div>
         </div>
       )}
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

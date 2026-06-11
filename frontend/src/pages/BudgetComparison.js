@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import toast from 'react-hot-toast';
 
@@ -26,7 +27,8 @@ export default function BudgetComparison() {
   }), { billable: 0, actual: 0, billed: 0, profitLoss: 0 });
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <div className="page-header">
         <div className="page-header-left">
           <h1>Budget Analysis</h1>
@@ -136,6 +138,7 @@ export default function BudgetComparison() {
           </div>
         )}
       </div>
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

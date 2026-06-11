@@ -28,13 +28,12 @@ export default function DataTable({
 
   return (
     <div>
-      {/* Header row — outside overflow:hidden so the add button is never clipped */}
+      {/* Header row */}
       <div style={{
-        background: 'var(--glass-bg)',
-        backdropFilter: 'var(--glass-blur)',
-        border: '1px solid var(--border-subtle)',
-        borderBottom: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
+        background: '#1E1E1E',
+        border: '1px solid #2D2D2D',
+        borderBottom: '1px solid #2D2D2D',
+        borderRadius: '8px 8px 0 0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -52,20 +51,19 @@ export default function DataTable({
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+          <span style={{ color: '#57534E', fontSize: '11px', whiteSpace: 'nowrap', fontFamily: "'Inter', sans-serif" }}>
             {filtered.length} record{filtered.length !== 1 ? 's' : ''}
           </span>
           {addButton}
         </div>
       </div>
 
-      {/* Table body — has overflow:hidden for rounded corners, separate from the header */}
+      {/* Table body */}
       <div style={{
-        background: 'var(--glass-bg)',
-        backdropFilter: 'var(--glass-blur)',
-        border: '1px solid var(--border-subtle)',
+        background: '#1E1E1E',
+        border: '1px solid #2D2D2D',
         borderTop: 'none',
-        borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
+        borderRadius: '0 0 8px 8px',
         overflow: 'hidden',
       }}>
         {filtered.length === 0 ? (
@@ -89,7 +87,12 @@ export default function DataTable({
               </thead>
               <tbody>
                 {filtered.map((row, idx) => (
-                  <tr key={row.id || row[columns[0]?.accessor] || idx}>
+                  <tr 
+                    key={row.id || row[columns[0]?.accessor] || idx}
+                    style={{
+                      animation: `pageEnter 0.3s ease ${idx * 0.03}s both`,
+                    }}
+                  >
                     {columns.map(col => (
                       <td key={col.accessor || col.header} style={col.style}>
                         {col.render ? col.render(row) : row[col.accessor]}
@@ -102,7 +105,7 @@ export default function DataTable({
                             <>
                               {onEdit && (
                                 <button
-                                  className="btn btn-secondary btn-icon btn-sm"
+                                  className="btn btn-icon btn-sm"
                                   onClick={() => onEdit(row)}
                                   title="Edit"
                                 >

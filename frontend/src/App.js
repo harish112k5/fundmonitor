@@ -201,7 +201,7 @@ function AppRoutes() {
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+              </Routes>
           </Layout>
         </ProtectedRoute>
       } />
