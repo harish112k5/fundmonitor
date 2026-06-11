@@ -49,6 +49,7 @@ const iconMap = {
   '/budget-comparison': ProgressIcon,
   '/users': UsersIcon,
   '/audit-log': AuditIcon,
+  '/profile': UsersIcon,
 };
 
 export default function Sidebar() {
@@ -56,42 +57,45 @@ export default function Sidebar() {
   const [recycleCount, setRecycleCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, hasRoleId } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const roleId = user?.role_id;
 
   React.useEffect(() => {
-    if (['admin', 'manager'].includes(user?.role_name)) {
+    if (hasRoleId(1, 2)) {
       import('../api').then(API => {
         API.default.get('/recycle-bin')
           .then(res => setRecycleCount(res.data.length))
-          .catch(err => console.error('Failed to load recycle bin count'));
+          .catch(() => {});
       });
     }
-  }, [user?.role_name, location.pathname]);
+  }, [roleId, location.pathname, hasRoleId]);
 
+  // Navigation sections defined by role_id arrays
+  // role_ids: 1=Admin, 2=Manager, 3=Engineer, 4=Accountant, 5=Supervisor, 6=Viewer
   const navSections = [
     {
       title: 'Overview',
-      roles: ['admin', 'manager', 'engineer', 'viewer'],
+      roles: [1, 2, 3, 5, 6],
       items: [
         { path: '/', label: 'Dashboard' },
-        { path: '/alerts', label: 'Alerts' },
-        { path: '/recycle-bin', label: 'Recycle Bin', roles: ['admin', 'manager'], badge: recycleCount }
+        { path: '/alerts', label: 'Alerts', roles: [1, 2, 3] },
+        { path: '/recycle-bin', label: 'Recycle Bin', roles: [1, 2], badge: recycleCount },
       ]
     },
     {
       title: 'Projects',
-      roles: ['admin', 'manager', 'engineer', 'viewer'],
+      roles: [1, 2, 3, 5, 6],
       items: [
         { path: '/projects', label: 'Projects' },
-        { path: '/project-progress', label: 'Progress' },
-        { path: '/project-team', label: 'Team', roles: ['admin', 'manager'] },
-        { path: '/import', label: 'Import Project', roles: ['admin', 'manager'] },
+        { path: '/project-progress', label: 'Progress', roles: [1, 2, 3] },
+        { path: '/project-team', label: 'Team', roles: [1, 2] },
+        { path: '/import', label: 'Import Project', roles: [1, 2] },
       ]
     },
     {
       title: 'Resources (3M)',
-      roles: ['admin', 'manager', 'engineer'],
+      roles: [1, 2, 3],
       items: [
         { path: '/materials', label: 'Materials' },
         { path: '/machines', label: 'Machines' },
@@ -100,7 +104,7 @@ export default function Sidebar() {
     },
     {
       title: 'Usage Tracking',
-      roles: ['admin', 'manager', 'engineer'],
+      roles: [1, 2, 3, 5, 6],
       items: [
         { path: '/material-usage', label: 'Material Usage' },
         { path: '/manpower-usage', label: 'Manpower Usage' },
@@ -109,7 +113,7 @@ export default function Sidebar() {
     },
     {
       title: 'Finance (Core)',
-      roles: ['admin', 'manager'],
+      roles: [1, 2],
       items: [
         { path: '/investors', label: 'Investors' },
         { path: '/financiers', label: 'Financiers' },
@@ -120,7 +124,7 @@ export default function Sidebar() {
     },
     {
       title: 'Financial Analytics',
-      roles: ['admin', 'manager'],
+      roles: [1, 2],
       items: [
         { path: '/finance/dashboard', label: 'Financial Dashboard' },
         { path: '/finance/budgeting', label: 'Budgeting' },
@@ -133,7 +137,7 @@ export default function Sidebar() {
     },
     {
       title: 'Advanced Investors',
-      roles: ['admin', 'manager'],
+      roles: [1],
       items: [
         { path: '/investor/dashboard', label: 'Investor Dashboard' },
         { path: '/investor/onboarding', label: 'Investor Onboarding' },
@@ -142,7 +146,7 @@ export default function Sidebar() {
     },
     {
       title: 'Billing & Expenses',
-      roles: ['admin', 'manager'],
+      roles: [1, 4],
       items: [
         { path: '/expenses', label: 'Expenses' },
         { path: '/billing', label: 'Billing' },
@@ -151,7 +155,7 @@ export default function Sidebar() {
     },
     {
       title: 'System',
-      roles: ['admin'],
+      roles: [1],
       items: [
         { path: '/users', label: 'Users' },
         { path: '/audit-log', label: 'Audit Log' },
@@ -160,11 +164,19 @@ export default function Sidebar() {
   ];
 
   const filteredSections = navSections
-    .filter(section => section.roles.includes(user?.role_name))
+    .filter(section => section.roles.includes(roleId))
     .map(section => ({
       ...section,
-      items: section.items.filter(item => !item.roles || item.roles.includes(user?.role_name))
+      items: section.items.filter(item => !item.roles || item.roles.includes(roleId))
     }));
+
+  const handleProfileClick = () => {
+    if (roleId === 1) {
+      navigate('/admin');
+    } else {
+      navigate('/profile');
+    }
+  };
 
   return (
     <>
@@ -193,7 +205,7 @@ export default function Sidebar() {
 
         {/* User info */}
         {user && (
-          <div className="sidebar-user" onClick={() => { if(user.role_name === 'admin') navigate('/admin'); }} style={{ cursor: user.role_name === 'admin' ? 'pointer' : 'default' }}>
+          <div className="sidebar-user" onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
             <div className="sidebar-user-avatar" style={{ position: 'relative' }}>
               {user.name?.charAt(0)?.toUpperCase()}
               {/* Online indicator */}

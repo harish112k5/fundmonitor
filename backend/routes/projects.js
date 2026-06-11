@@ -3,53 +3,54 @@ const router = express.Router();
 const db = require('../db');
 const { authMiddleware, roleGuard } = require('../middleware/auth');
 
+// GET /api/my-projects — projects assigned to the logged-in user via project_team
+router.get('/my-projects', async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const [rows] = await db.query(`
+      SELECT p.*, u.name AS created_by_name, pt.role AS team_role
+      FROM projects p
+      JOIN project_team pt ON pt.project_id = p.project_id AND pt.user_id = ?
+      LEFT JOIN users u ON p.created_by = u.user_id
+      WHERE p.is_deleted = 0
+      ORDER BY p.project_id DESC
+    `, [user_id]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all projects (role-based filtering)
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { user_id, role_id } = req.user;
-    let query = '';
-    let params = [];
 
-    if (role_id === 1 || role_id === 2) {
-      // Admin + Manager: all projects
-      query = `
+    // Admin(1): see all projects
+    if (role_id === 1) {
+      const [rows] = await db.query(`
         SELECT p.*, u.name AS created_by_name
-        FROM projects p
-        LEFT JOIN users u ON p.created_by = u.user_id
-        WHERE p.is_deleted = 0
-        ORDER BY p.project_id DESC
-      `;
-    } else if (role_id === 3 || role_id === 4) {
-      // Engineer & Viewer: ONLY assigned projects
-      const { getAllowedProjectIds } = require('../utils/projectAccess');
-      const allowedIds = await getAllowedProjectIds(user_id, role_id);
-      
-      if (allowedIds.length === 0) {
-        return res.json([]);
-      }
-      
-      const placeholders = allowedIds.map(() => '?').join(',');
-      query = `
-        SELECT p.*, u.name AS created_by_name
-        FROM projects p
-        LEFT JOIN users u ON p.created_by = u.user_id
-        WHERE p.project_id IN (${placeholders}) AND p.is_deleted = 0
-        ORDER BY p.project_id DESC
-      `;
-      params = allowedIds;
-    } else {
-      // Other roles: all projects
-      query = `
-        SELECT p.*, u.name AS created_by_name
-        FROM projects p
-        LEFT JOIN users u ON p.created_by = u.user_id
-        WHERE p.is_deleted = 0
-        ORDER BY p.project_id DESC
-      `;
+        FROM projects p LEFT JOIN users u ON p.created_by = u.user_id
+        WHERE p.is_deleted = 0 ORDER BY p.project_id DESC
+      `);
+      return res.json(rows);
     }
 
-    const [rows] = await db.query(query, params);
-    res.json(rows);
+    // Accountant(4): no project access
+    if (role_id === 4) {
+      return res.json([]);
+    }
+
+    // Manager(2), Engineer(3), Supervisor(5), Viewer(6): assigned projects only
+    const [rows] = await db.query(`
+      SELECT p.*, u.name AS created_by_name, pt.role AS team_role
+      FROM projects p
+      JOIN project_team pt ON pt.project_id = p.project_id AND pt.user_id = ?
+      LEFT JOIN users u ON p.created_by = u.user_id
+      WHERE p.is_deleted = 0
+      ORDER BY p.project_id DESC
+    `, [user_id]);
+    return res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -272,9 +273,9 @@ router.get('/:id/finance-summary', async (req, res) => {
 
     // 1. Project base info
     const [[project]] = await db.query(
-      `SELECT project_id, project_name, tender_amount, work_completed_percent,
+      `SELECT project_id, project_name, estimated_budget AS tender_amount, work_completed_percent,
               start_date, end_date, status
-       FROM projects WHERE project_id = ?`,
+       FROM projects WHERE project_id = ? AND is_deleted = 0`,
       [projectId]
     );
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
@@ -345,8 +346,8 @@ router.get('/:id/finance-summary', async (req, res) => {
         billing_records: billingRecords,
         computed: {
           net_profit: parseFloat(billingSummary?.total_certified || 0) - actualCost,
-          budget_utilization: project.tender_amount > 0
-            ? ((actualCost / project.tender_amount) * 100).toFixed(1)
+          budget_utilization: parseFloat(project.tender_amount || 0) > 0
+            ? ((actualCost / parseFloat(project.tender_amount)) * 100).toFixed(1)
             : 0,
           roi: parseFloat(investments.total) > 0
             ? (((parseFloat(billingSummary?.total_certified || 0) - actualCost) / parseFloat(investments.total)) * 100).toFixed(1)

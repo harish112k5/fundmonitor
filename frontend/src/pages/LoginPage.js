@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '', role_id: '4' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role_id: '6' });
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -109,7 +109,9 @@ export default function LoginPage() {
                 <select name="role_id" value={form.role_id} onChange={handleChange} className="login-input login-select">
                   <option value="2">Manager</option>
                   <option value="3">Engineer</option>
-                  <option value="4">Viewer</option>
+                  <option value="4">Accountant</option>
+                  <option value="5">Supervisor</option>
+                  <option value="6">Viewer</option>
                 </select>
               </div>
             )}
@@ -126,7 +128,7 @@ export default function LoginPage() {
           {/* Toggle */}
           <div className="login-toggle">
             <span>{isRegister ? 'Already have an account?' : "Don't have an account?"}</span>
-            <button onClick={() => { setIsRegister(!isRegister); setForm({ name: '', email: '', password: '', role_id: '4' }); }}>
+            <button onClick={() => { setIsRegister(!isRegister); setForm({ name: '', email: '', password: '', role_id: '6' }); }}>
               {isRegister ? 'Sign In' : 'Register'}
             </button>
           </div>

@@ -3,6 +3,26 @@ import API from '../api';
 
 const AuthContext = createContext(null);
 
+// Role ID constants
+export const ROLES = {
+  ADMIN: 1,
+  MANAGER: 2,
+  ENGINEER: 3,
+  ACCOUNTANT: 4,
+  SUPERVISOR: 5,
+  VIEWER: 6,
+};
+
+// Role-based home routes
+const ROLE_HOME = {
+  1: '/',              // Admin → main dashboard
+  2: '/',              // Manager → main dashboard (sees only assigned projects)
+  3: '/',              // Engineer → main dashboard
+  4: '/billing',       // Accountant → billing
+  5: '/',              // Supervisor → main dashboard (daily report)
+  6: '/',              // Viewer → main dashboard
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,17 +70,35 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // Role checks
-  const isAdmin = user?.role_name === 'admin';
-  const isManager = user?.role_name === 'manager' || isAdmin;
-  const isEngineer = user?.role_name === 'engineer' || isManager;
+  // Role checks by role_id
+  const roleId = user?.role_id;
+  const isAdmin      = roleId === ROLES.ADMIN;
+  const isManager    = roleId === ROLES.MANAGER;
+  const isEngineer   = roleId === ROLES.ENGINEER;
+  const isAccountant = roleId === ROLES.ACCOUNTANT;
+  const isSupervisor = roleId === ROLES.SUPERVISOR;
+  const isViewer     = roleId === ROLES.VIEWER;
+
+  // Check if user has any of the specified roles (by role_id)
+  const hasRoleId = (...ids) => ids.flat().includes(roleId);
+  // Legacy: check by role_name string
   const hasRole = (...roles) => roles.includes(user?.role_name);
+
+  // Can user edit? (not supervisor or viewer)
+  const canEdit = hasRoleId(1, 2, 3, 4);
+  // Can user delete resources? (admin + manager only)
+  const canDeleteResources = hasRoleId(1, 2);
+
+  // Get home route for current user
+  const getHomeRoute = () => ROLE_HOME[roleId] || '/';
 
   return (
     <AuthContext.Provider value={{
       user, loading, login, register, logout,
-      isAdmin, isManager, isEngineer, hasRole,
-      isAuthenticated: !!user
+      isAdmin, isManager, isEngineer, isAccountant, isSupervisor, isViewer,
+      hasRole, hasRoleId, canEdit, canDeleteResources, getHomeRoute,
+      isAuthenticated: !!user,
+      ROLES
     }}>
       {children}
     </AuthContext.Provider>

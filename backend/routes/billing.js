@@ -17,7 +17,7 @@ router.get('/', authMiddleware, async (req, res) => {
       SELECT 
         b.*,
         p.project_name,
-        p.tender_amount,
+        p.estimated_budget AS tender_amount,
         p.work_completed_percent,
         -- Computed fields
         (b.submitted_amount - b.certified_amount)  AS pending_approval,

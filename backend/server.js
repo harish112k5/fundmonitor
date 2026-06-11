@@ -674,36 +674,46 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/template', require('./routes/template'));
 
 // ─────────────────────── Protected routes ────────────────────────────
-const { authMiddleware } = require('./middleware/auth');
+const { authMiddleware, requireRole, readOnlyForRoles, supervisorDateRestriction } = require('./middleware/auth');
 app.use('/api', authMiddleware);
 
+// ── Everyone (all authenticated) ──
 app.use('/api/roles',             require('./routes/roles'));
-app.use('/api/users',             require('./routes/users'));
+app.use('/api/users',             requireRole(1), require('./routes/users'));
 app.use('/api/projects',          require('./routes/projects'));
-app.use('/api/materials',         require('./routes/materials'));
-app.use('/api/machines',          require('./routes/machines'));
-app.use('/api/worker-roles',      require('./routes/workerRoles'));
-app.use('/api/workers',           require('./routes/workers'));
-app.use('/api/material-usage',    require('./routes/materialUsage'));
-app.use('/api/manpower-usage',    require('./routes/manpowerUsage'));
-app.use('/api/machine-usage',     require('./routes/machineUsage'));
-app.use('/api/investors',         require('./routes/investors'));
-app.use('/api/financiers',        require('./routes/financiers'));
-app.use('/api/investments',       require('./routes/investments'));
-app.use('/api/loans',             require('./routes/loans'));
-app.use('/api/interest-payments', require('./routes/interestPayments'));
-app.use('/api/interestPayments', require('./routes/interestPayments'));
-app.use('/api/expense-categories',require('./routes/expenseCategories'));
-app.use('/api/expenses',          require('./routes/expenses'));
-app.use('/api/billing',           require('./routes/billing'));
+
+// ── Resources: Admin(1), Manager(2), Engineer(3), Supervisor(5), Viewer(6) ──
+// Supervisor gets date-restricted, Viewer+Supervisor get read-only
+app.use('/api/materials',         requireRole(1,2,3), require('./routes/materials'));
+app.use('/api/machines',          requireRole(1,2,3), require('./routes/machines'));
+app.use('/api/worker-roles',      requireRole(1,2,3), require('./routes/workerRoles'));
+app.use('/api/workers',           requireRole(1,2,3), require('./routes/workers'));
+app.use('/api/material-usage',    requireRole(1,2,3,5,6), readOnlyForRoles(5,6), supervisorDateRestriction, require('./routes/materialUsage'));
+app.use('/api/manpower-usage',    requireRole(1,2,3,5,6), readOnlyForRoles(5,6), supervisorDateRestriction, require('./routes/manpowerUsage'));
+app.use('/api/machine-usage',     requireRole(1,2,3,5,6), readOnlyForRoles(5,6), supervisorDateRestriction, require('./routes/machineUsage'));
+
+// ── Finance: Admin(1) + Manager(2) only ──
+app.use('/api/investors',         requireRole(1,2), require('./routes/investors'));
+app.use('/api/financiers',        requireRole(1,2), require('./routes/financiers'));
+app.use('/api/investments',       requireRole(1,2), require('./routes/investments'));
+app.use('/api/loans',             requireRole(1,2), require('./routes/loans'));
+app.use('/api/interest-payments', requireRole(1,2), require('./routes/interestPayments'));
+app.use('/api/interestPayments',  requireRole(1,2), require('./routes/interestPayments'));
+
+// ── Accounting: Admin(1) + Accountant(4) ──
+app.use('/api/expense-categories',requireRole(1,4), require('./routes/expenseCategories'));
+app.use('/api/expenses',          requireRole(1,4), require('./routes/expenses'));
+app.use('/api/billing',           requireRole(1,4), require('./routes/billing'));
+
+// ── Project management ──
 app.use('/api/project-progress',  require('./routes/projectProgress'));
-app.use('/api/project-team',      require('./routes/projectTeam'));
-app.use('/api/audit-log',         require('./routes/auditLog'));
+app.use('/api/project-team',      requireRole(1,2), require('./routes/projectTeam'));
+app.use('/api/audit-log',         requireRole(1), require('./routes/auditLog'));
 app.use('/api/dashboard',         require('./routes/dashboard'));
-app.use('/api/recycle-bin',       require('./routes/recycleBin'));
-app.use('/api/admin',             require('./routes/admin'));
-app.use('/api/finance',           require('./routes/finance'));
-app.use('/api/import',            require('./routes/import'));
+app.use('/api/recycle-bin',       requireRole(1,2), require('./routes/recycleBin'));
+app.use('/api/admin',             requireRole(1), require('./routes/admin'));
+app.use('/api/finance',           requireRole(1,2), require('./routes/finance'));
+app.use('/api/import',            requireRole(1,2), require('./routes/import'));
 
 // ─────────────────────── Error handler ───────────────────────────────
 app.use((err, req, res, next) => {

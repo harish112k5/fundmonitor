@@ -21,10 +21,20 @@ import {
   HiOutlineTrendingDown,
   HiOutlineCog
 } from 'react-icons/hi';
+import AccountantDashboard from './AccountantDashboard';
+import SupervisorDashboard from './SupervisorDashboard';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  if (user?.role_id === 4) {
+    return <AccountantDashboard />;
+  }
+
+  if (user?.role_id === 5) {
+    return <SupervisorDashboard />;
+  }
 
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -208,42 +218,46 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* FINANCIAL METRICS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
-            {statsLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
-                  <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                  <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                </div>
-              ))
-            ) : (
-              <>
-                <AnimatedKPICard index={4} icon={<HiOutlineChartBar size={24} />} color="#DC2626" label="ACTUAL COST" value={fmt(stats?.costs?.total)} isMoney={true} subtitle="Total spending" onClick={() => navigate('/expenses')} />
-                <AnimatedKPICard index={5} icon={<HiOutlineDocumentText size={24} />} color="#16A34A" label="BILLED (REVENUE)" value={fmt(stats?.financial?.billed)} isMoney={true} subtitle={`${fmtCurrency(stats?.financial?.paid)} paid`} onClick={() => navigate('/billing')} />
-                <AnimatedKPICard index={6} icon={isProfit ? <HiOutlineTrendingUp size={24} /> : <HiOutlineTrendingDown size={24} />} color={isProfit ? '#16A34A' : '#DC2626'} label="NET PROFIT / LOSS" value={Math.abs(netProfit)} isMoney={true} prefix={isProfit ? '+' : '-'} subtitle="Revenue − Actual Cost" onClick={() => navigate('/billing')} />
-                <AnimatedKPICard index={7} icon={<HiOutlineCash size={24} />} color="#F59E0B" label="TOTAL INVESTMENTS" value={fmt(stats?.financial?.investments)} isMoney={true} subtitle="From all investors" onClick={() => navigate('/investments')} />
-              </>
-            )}
-          </div>
+          {/* FINANCIAL METRICS (Admin & Manager only) */}
+          {(user?.role_id === 1 || user?.role_id === 2) && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
+              {statsLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
+                    <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                    <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                  </div>
+                ))
+              ) : (
+                <>
+                  <AnimatedKPICard index={4} icon={<HiOutlineChartBar size={24} />} color="#DC2626" label="ACTUAL COST" value={fmt(stats?.costs?.total)} isMoney={true} subtitle="Total spending" onClick={() => navigate('/expenses')} />
+                  <AnimatedKPICard index={5} icon={<HiOutlineDocumentText size={24} />} color="#16A34A" label="BILLED (REVENUE)" value={fmt(stats?.financial?.billed)} isMoney={true} subtitle={`${fmtCurrency(stats?.financial?.paid)} paid`} onClick={() => navigate('/billing')} />
+                  <AnimatedKPICard index={6} icon={isProfit ? <HiOutlineTrendingUp size={24} /> : <HiOutlineTrendingDown size={24} />} color={isProfit ? '#16A34A' : '#DC2626'} label="NET PROFIT / LOSS" value={Math.abs(netProfit)} isMoney={true} prefix={isProfit ? '+' : '-'} subtitle="Revenue − Actual Cost" onClick={() => navigate('/billing')} />
+                  <AnimatedKPICard index={7} icon={<HiOutlineCash size={24} />} color="#F59E0B" label="TOTAL INVESTMENTS" value={fmt(stats?.financial?.investments)} isMoney={true} subtitle="From all investors" onClick={() => navigate('/investments')} />
+                </>
+              )}
+            </div>
+          )}
 
-          {/* RESOURCE COST BREAKDOWN */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
-            {statsLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
-                  <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                  <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                </div>
-              ))
-            ) : (
-              <>
-                <AnimatedKPICard index={8} icon={<HiOutlineCube size={24} />} color="#F59E0B" label="MATERIAL COST" value={fmt(stats?.costs?.material)} isMoney={true} subtitle="Raw materials used" onClick={() => navigate('/materials')} />
-                <AnimatedKPICard index={9} icon={<HiOutlineUsers size={24} />} color="var(--text-secondary)" label="MANPOWER COST" value={fmt(stats?.costs?.manpower)} isMoney={true} subtitle="Labour wages total" onClick={() => navigate('/workers')} />
-                <AnimatedKPICard index={10} icon={<HiOutlineCog size={24} />} color="#0284C7" label="MACHINE COST" value={fmt(stats?.costs?.machine)} isMoney={true} subtitle="Equipment usage cost" onClick={() => navigate('/machines')} />
-              </>
-            )}
-          </div>
+          {/* RESOURCE COST BREAKDOWN (Admin, Manager, Engineer only) */}
+          {(user?.role_id === 1 || user?.role_id === 2 || user?.role_id === 3) && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
+              {statsLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
+                    <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                    <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                  </div>
+                ))
+              ) : (
+                <>
+                  <AnimatedKPICard index={8} icon={<HiOutlineCube size={24} />} color="#F59E0B" label="MATERIAL COST" value={fmt(stats?.costs?.material)} isMoney={true} subtitle="Raw materials used" onClick={() => navigate('/materials')} />
+                  <AnimatedKPICard index={9} icon={<HiOutlineUsers size={24} />} color="var(--text-secondary)" label="MANPOWER COST" value={fmt(stats?.costs?.manpower)} isMoney={true} subtitle="Labour wages total" onClick={() => navigate('/workers')} />
+                  <AnimatedKPICard index={10} icon={<HiOutlineCog size={24} />} color="#0284C7" label="MACHINE COST" value={fmt(stats?.costs?.machine)} isMoney={true} subtitle="Equipment usage cost" onClick={() => navigate('/machines')} />
+                </>
+              )}
+            </div>
+          )}
 
           {/* RECENT ACTIVITY */}
           <AnimatedItem delay={0.2}>

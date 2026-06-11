@@ -16,13 +16,14 @@ router.post('/register', async (req, res) => {
     }
 
     // BLOCK: No self-registration as admin (role_id = 1)
-    const userRoleId = parseInt(role_id) || 4;
+    const userRoleId = parseInt(role_id) || 6;
     if (userRoleId === 1) {
       return res.status(403).json({ error: 'Admin accounts cannot be self-registered' });
     }
 
-    // BLOCK: Only valid roles allowed (2=manager, 3=engineer, 4=viewer)
-    const allowedRoles = [2, 3, 4, 5];
+    // BLOCK: Only valid non-admin roles allowed
+    // 2=manager, 3=engineer, 4=accountant, 5=supervisor, 6=viewer
+    const allowedRoles = [2, 3, 4, 5, 6];
     if (!allowedRoles.includes(userRoleId)) {
       return res.status(400).json({ error: 'Invalid role' });
     }

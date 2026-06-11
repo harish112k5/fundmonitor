@@ -15,7 +15,7 @@ const initialForm = {
 };
 
 export default function Projects() {
-  const { user } = useAuth();
+  const { user, canEdit, canDeleteResources } = useAuth();
   const [data, setData] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
