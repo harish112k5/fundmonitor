@@ -53,7 +53,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware
+// Budget vs Actual module
+app.use('/api/budget-actual',     require('./routes/budgetActual'));
+
+// ─────────────────────── Error handler ───────────────────────────────
+
 app.use((err, req, res, next) => {
   console.error('Server Error:', err);
   res.status(500).json({ error: 'Internal server error' });

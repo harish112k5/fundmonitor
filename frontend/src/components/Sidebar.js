@@ -25,6 +25,7 @@ import {
   HiOutlineTrendingUp
 } from 'react-icons/hi';
 
+
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [recycleCount, setRecycleCount] = useState(0);
@@ -112,6 +113,7 @@ export default function Sidebar() {
         { path: '/expenses', label: 'Expenses', icon: HiOutlineDocumentText },
         { path: '/billing', label: 'Billing', icon: HiOutlineDocumentText },
         { path: '/budget-comparison', label: 'Budget Analysis', icon: HiOutlineChartBar },
+        { path: '/budget-actual', label: 'Budget vs Actual', icon: HiOutlineDocumentText },
       ]
     },
     {

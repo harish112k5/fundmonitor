@@ -34,6 +34,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import RecycleBin from './pages/RecycleBin';
 import ImportProject from './pages/ImportProject';
 import AdminPanel from './pages/AdminPanel';
+import BudgetActual from './pages/BudgetActual';
 import FinancialDashboard from './pages/FinancialDashboard';
 import Budgeting from './pages/Budgeting';
 import FinancialStatements from './pages/FinancialStatements';
@@ -96,6 +97,12 @@ function AppRoutes() {
               {/* Admin + Manager */}
               <Route path="/project-team" element={
                 <ProtectedRoute roles={['admin', 'manager']}><ProjectTeam /></ProtectedRoute>
+              } />
+              <Route path="/budget-actual" element={
+                <ProtectedRoute roles={['admin', 'manager']}><BudgetActual /></ProtectedRoute>
+              } />
+              <Route path="/recycle-bin" element={
+                <ProtectedRoute roles={['admin', 'manager']}><RecycleBin /></ProtectedRoute>
               } />
 
               {/* Admin + Manager + Engineer */}
