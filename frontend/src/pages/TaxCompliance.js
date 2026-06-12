@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import toast from 'react-hot-toast';
 
@@ -165,7 +166,7 @@ export default function TaxCompliance() {
               <textarea value={notes} onChange={e => setNotes(e.target.value)} rows="2" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', resize: 'none' }}></textarea>
             </div>
 
-            <button type="submit" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: '#FFF', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>
+            <button type="submit" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#3B82F6', color: 'var(--text-primary)', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>
               Add Record
             </button>
           </form>

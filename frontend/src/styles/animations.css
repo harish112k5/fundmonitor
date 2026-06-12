@@ -1,0 +1,28 @@
+/* Construction Theme — Minimal Animations Only */
+
+/* Page entrance */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Live indicator pulse */
+@keyframes sitePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Page enter class */
+.page-enter {
+  animation: pageEnter 0.35s ease forwards;
+}
+
+.animate-in {
+  animation: pageEnter 0.35s ease forwards;
+}

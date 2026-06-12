@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -57,7 +58,7 @@ export default function ProjectProgress() {
     { header: 'Period', accessor: 'month', render: r => `${months[r.month - 1]} ${r.year}` },
     { header: 'Progress', accessor: 'progress_percentage', render: r => (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 100, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ width: 100, height: 6, background: 'var(--border-subtle)', borderRadius: 3, overflow: 'hidden' }}>
           <div style={{ width: `${r.progress_percentage}%`, height: '100%', background: 'var(--accent-gradient)', borderRadius: 3, transition: 'width 0.5s ease' }} />
         </div>
         <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-accent)' }}>{r.progress_percentage}%</span>
@@ -69,7 +70,8 @@ export default function ProjectProgress() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <div className="page-header">
         <div className="page-header-left"><h1>Project Progress</h1><p>Monthly progress tracking</p></div>
       </div>
@@ -99,6 +101,7 @@ export default function ProjectProgress() {
       <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Confirm Delete">
         <DeleteConfirm itemName="this record" onConfirm={handleDelete} onCancel={() => setShowDelete(false)} />
       </Modal>
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -51,7 +52,7 @@ export default function ProjectTeam() {
     } catch { toast.error('Failed'); }
   };
 
-  const roleLabels = { site_engineer: 'Site Engineer', project_manager: 'Project Manager', supervisor: 'Supervisor', accountant: 'Accountant' };
+  const roleLabels = { site_engineer: 'Site Engineer', project_manager: 'Project Manager', supervisor: 'Supervisor', accountant: 'Accountant', viewer: 'Viewer' };
 
   const columns = [
     { header: 'ID', accessor: 'id', style: { width: 60 } },
@@ -65,7 +66,8 @@ export default function ProjectTeam() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <div className="page-header">
         <div className="page-header-left"><h1>Project Team</h1><p>Assign team members to projects</p></div>
       </div>
@@ -92,6 +94,7 @@ export default function ProjectTeam() {
               <option value="project_manager">Project Manager</option>
               <option value="supervisor">Supervisor</option>
               <option value="accountant">Accountant</option>
+              <option value="viewer">Viewer</option>
             </select></div>
           <div className="form-group"><label className="form-label">Joined Date</label>
             <input className="form-input" type="date" name="joined_at" value={form.joined_at} onChange={handleChange} /></div>
@@ -100,6 +103,7 @@ export default function ProjectTeam() {
       <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Confirm Delete">
         <DeleteConfirm itemName={deleteTarget?.user_name} onConfirm={handleDelete} onCancel={() => setShowDelete(false)} />
       </Modal>
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

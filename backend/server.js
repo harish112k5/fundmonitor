@@ -1,10 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const logger = require('./utils/logger');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+app.use(helmet());
 
 // ─────────────────────────── CORS ────────────────────────────────
 app.use(cors({
@@ -27,12 +31,12 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Construction ERP API',
+      title: 'Finfra API',
       version: '1.0.0',
       description:
         'REST API for the Construction Project Management & Fund Monitor system. ' +
         'All protected routes require a Bearer JWT token obtained from `/api/auth/login`.',
-      contact: { name: 'Construction ERP Team' },
+      contact: { name: 'Finfra Team' },
     },
     servers: [
       { url: process.env.API_BASE_URL || `http://localhost:${process.env.PORT}`, description: 'Active server' },
@@ -601,7 +605,7 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Swagger UI
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'Construction ERP API Docs',
+  customSiteTitle: 'Finfra API Docs',
   customCss: `
     .swagger-ui .topbar { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
     .swagger-ui .topbar-wrapper .link { display: none; }
@@ -620,15 +624,15 @@ app.get('/api/docs.json', (req, res) => {
 const db = require('./db');
 let dbStatus = 'connecting';
 db.query('SELECT 1')
-  .then(() => { dbStatus = 'connected'; console.log('✅ MySQL Connected'); })
-  .catch(err => { dbStatus = 'disconnected'; console.error('❌ MySQL Connection Error:', err.message); });
+  .then(() => { dbStatus = 'connected'; logger.info('✅ MySQL Connected'); })
+  .catch(err => { dbStatus = 'disconnected'; logger.error(`❌ MySQL Connection Error: ${err.message}`); });
 
 // ─────────────────────────── Public routes ───────────────────────────
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    name: 'Construction ERP API',
+    name: 'Finfra API',
     version: '1.0.0',
     description: 'Backend API for the Construction Project Management & Fund Monitor system.',
     docs:   `${req.protocol}://${req.get('host')}/api/docs`,
@@ -671,49 +675,60 @@ app.get('/api/health', async (req, res) => {
 
 // Auth routes (public — no token needed)
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/template', require('./routes/template'));
 
 // ─────────────────────── Protected routes ────────────────────────────
-const { authMiddleware } = require('./middleware/auth');
+const { authMiddleware, requireRole, readOnlyForRoles, supervisorDateRestriction } = require('./middleware/auth');
+const { checkPermission } = require('./middleware/permissions');
 app.use('/api', authMiddleware);
 
+// ── Everyone (all authenticated) ──
 app.use('/api/roles',             require('./routes/roles'));
-app.use('/api/users',             require('./routes/users'));
+app.use('/api/users',             readOnlyForRoles(2,3,4,5,6), require('./routes/users'));
 app.use('/api/projects',          require('./routes/projects'));
-app.use('/api/materials',         require('./routes/materials'));
-app.use('/api/machines',          require('./routes/machines'));
-app.use('/api/worker-roles',      require('./routes/workerRoles'));
-app.use('/api/workers',           require('./routes/workers'));
-app.use('/api/material-usage',    require('./routes/materialUsage'));
-app.use('/api/manpower-usage',    require('./routes/manpowerUsage'));
-app.use('/api/machine-usage',     require('./routes/machineUsage'));
-app.use('/api/investors',         require('./routes/investors'));
-app.use('/api/financiers',        require('./routes/financiers'));
-app.use('/api/investments',       require('./routes/investments'));
-app.use('/api/loans',             require('./routes/loans'));
-app.use('/api/interest-payments', require('./routes/interestPayments'));
-app.use('/api/interestPayments', require('./routes/interestPayments'));
-app.use('/api/expense-categories',require('./routes/expenseCategories'));
-app.use('/api/expenses',          require('./routes/expenses'));
-app.use('/api/billing',           require('./routes/billing'));
+
+// ── Resource Masters: Admin(1), Manager(2), Engineer(3) can modify, others read-only ──
+app.use('/api/materials',         readOnlyForRoles(4,5,6), require('./routes/materials'));
+app.use('/api/machines',          readOnlyForRoles(4,5,6), require('./routes/machines'));
+app.use('/api/worker-roles',      readOnlyForRoles(4,5,6), require('./routes/workerRoles'));
+app.use('/api/workers',           readOnlyForRoles(4,5,6), require('./routes/workers'));
+
+// ── Usage Logging: Dynamic permission-based (replaces role-only guards) ──
+// GET (read) is allowed for supervisors/viewers via can_log_*  OR read-only role guard fallback
+app.use('/api/material-usage',    checkPermission('can_log_material_usage'), supervisorDateRestriction, require('./routes/materialUsage'));
+app.use('/api/manpower-usage',    checkPermission('can_log_manpower_usage'), supervisorDateRestriction, require('./routes/manpowerUsage'));
+app.use('/api/machine-usage',     checkPermission('can_log_machine_usage'),  supervisorDateRestriction, require('./routes/machineUsage'));
+
+// ── Finance: Dynamic permission-based ──
+app.use('/api/investors',         checkPermission('can_view_investor_data'), require('./routes/investors'));
+app.use('/api/financiers',        checkPermission('can_view_investor_data'), require('./routes/financiers'));
+app.use('/api/investments',       checkPermission('can_view_investor_data'), require('./routes/investments'));
+app.use('/api/loans',             checkPermission('can_view_investor_data'), require('./routes/loans'));
+app.use('/api/interest-payments', checkPermission('can_view_investor_data'), require('./routes/interestPayments'));
+app.use('/api/interestPayments',  checkPermission('can_view_investor_data'), require('./routes/interestPayments'));
+
+// ── Accounting: Dynamic permission-based ──
+app.use('/api/expense-categories', readOnlyForRoles(2,3,5,6), require('./routes/expenseCategories'));
+app.use('/api/expenses',           checkPermission('can_add_expenses', 'can_edit_expenses'), require('./routes/expenses'));
+app.use('/api/billing',            checkPermission('can_create_billing', 'can_edit_billing'), require('./routes/billing'));
+
+// ── Project management ──
 app.use('/api/project-progress',  require('./routes/projectProgress'));
-app.use('/api/project-team',      require('./routes/projectTeam'));
-app.use('/api/audit-log',         require('./routes/auditLog'));
+app.use('/api/project-team',      checkPermission('can_manage_team'), require('./routes/projectTeam'));
+app.use('/api/audit-log',         requireRole(1), require('./routes/auditLog'));
 app.use('/api/dashboard',         require('./routes/dashboard'));
-app.use('/api/recycle-bin',       require('./routes/recycleBin'));
-app.use('/api/admin',             require('./routes/admin'));
-app.use('/api/finance',           require('./routes/finance'));
-app.use('/api/import',            require('./routes/import'));
+app.use('/api/recycle-bin',       requireRole(1,2), require('./routes/recycleBin'));
+app.use('/api/admin',             requireRole(1), require('./routes/admin'));
+app.use('/api/finance',           checkPermission('can_view_financials'), require('./routes/finance'));
+app.use('/api/import',            requireRole(1,2), require('./routes/import'));
 
 // ─────────────────────── Error handler ───────────────────────────────
-app.use((err, req, res, next) => {
-  console.error('Server Error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
+app.use(errorHandler);
 
 // ─────────────────────── Start server ────────────────────────────────
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend running on http://localhost:${PORT}`);
-  console.log(`📋 API docs available at http://localhost:${PORT}/api/docs`);
-  console.log(`❤️  Health check at    http://localhost:${PORT}/api/health`);
+  logger.info(`🚀 Backend running on http://localhost:${PORT}`);
+  logger.info(`📋 API docs available at http://localhost:${PORT}/api/docs`);
+  logger.info(`❤️  Health check at    http://localhost:${PORT}/api/health`);
 });

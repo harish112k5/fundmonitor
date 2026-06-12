@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import toast from 'react-hot-toast';
 import {
@@ -25,7 +26,8 @@ export default function AlertsPage() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
       <div className="page-header">
         <div className="page-header-left">
           <h1>Alerts & Notifications</h1>
@@ -180,6 +182,7 @@ export default function AlertsPage() {
           <p className="alert-empty">No active loans to track</p>
         )}
       </div>
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
+import AnimatedKPICard from '../components/AnimatedKPICard';
+import { SkylineSVG } from '../components/CivilIcons';
 import {
   HiOutlineOfficeBuilding,
   HiOutlineUsers,
@@ -18,761 +21,365 @@ import {
   HiOutlineTrendingDown,
   HiOutlineCog
 } from 'react-icons/hi';
+import AccountantDashboard from './AccountantDashboard';
+import SupervisorDashboard from './SupervisorDashboard';
 
-// Helper component for KPI metric cards
-function MetricCard({
-  icon: Icon,
-  iconColor = '#7c3aed',
-  label,
-  value,
-  subText,
-  borderColorClass,
-  navigateTo,
-  loading,
-  error
-}) {
-  const navigate = useNavigate();
-  return (
-    <div
-      className={`redesign-card ${borderColorClass}`}
-      onClick={() => navigate(navigateTo)}
-      style={{ cursor: 'pointer' }}
-    >
-      <div className="card-header-row">
-        <h3 className="card-label-text">{label}</h3>
-        {Icon && (
-          <div className="card-icon-container" style={{ color: iconColor }}>
-            <Icon />
-          </div>
-        )}
-      </div>
-      {loading ? (
-        <div className="skeleton-pulse" />
-      ) : error ? (
-        <div className="card-value-text">—</div>
-      ) : (
-        <div className="card-value-text">{value}</div>
-      )}
-      <div className={`card-sub-text ${error ? 'error-text' : ''}`}>
-        {error ? 'Failed to load' : subText}
-      </div>
-      <div className="card-arrow-indicator">
-        <HiOutlineArrowRight />
-      </div>
-    </div>
-  );
-}
-
-export default function Dashboard() {
+function DashboardContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // State for metrics stats
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState(false);
 
-  // State for projects
   const [projects, setProjects] = useState([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState(false);
 
-  // State for expenses
   const [expenses, setExpenses] = useState([]);
   const [expensesLoading, setExpensesLoading] = useState(true);
   const [expensesError, setExpensesError] = useState(false);
 
-  // State for alerts count
   const [alertCount, setAlertCount] = useState(0);
   const [alertsLoading, setAlertsLoading] = useState(true);
   const [alertsError, setAlertsError] = useState(false);
 
   const fetchData = () => {
-    // 1. Fetch dashboard stats
-    setStatsLoading(true);
-    setStatsError(false);
+    setStatsLoading(true); setStatsError(false);
     API.get('/dashboard/stats')
-      .then(res => {
-        setStats(res.data);
-      })
-      .catch(err => {
-        console.error('Error loading stats:', err);
-        setStatsError(true);
-      })
+      .then(res => setStats(res.data || res)) // In case api interceptor does not run
+      .catch(() => setStatsError(true))
       .finally(() => setStatsLoading(false));
 
-    // 2. Fetch projects
-    setProjectsLoading(true);
-    setProjectsError(false);
+    setProjectsLoading(true); setProjectsError(false);
     API.get('/projects')
-      .then(res => {
-        setProjects(res.data);
-      })
-      .catch(err => {
-        console.error('Error loading projects:', err);
-        setProjectsError(true);
-      })
+      .then(res => setProjects(res.data || res || []))
+      .catch(() => setProjectsError(true))
       .finally(() => setProjectsLoading(false));
 
-    // 3. Fetch expenses
-    setExpensesLoading(true);
-    setExpensesError(false);
+    setExpensesLoading(true); setExpensesError(false);
     API.get('/expenses')
-      .then(res => {
-        setExpenses(res.data);
-      })
-      .catch(err => {
-        console.error('Error loading expenses:', err);
-        setExpensesError(true);
-      })
+      .then(res => setExpenses(res.data || res || []))
+      .catch(() => setExpensesError(true))
       .finally(() => setExpensesLoading(false));
 
-    // 4. Fetch alerts
-    setAlertsLoading(true);
-    setAlertsError(false);
+    setAlertsLoading(true); setAlertsError(false);
     API.get('/dashboard/alerts')
-      .then(res => {
-        setAlertCount(res.data.totalAlerts || 0);
-      })
-      .catch(err => {
-        console.error('Error loading alerts:', err);
-        setAlertsError(true);
-      })
+      .then(res => setAlertCount((res.data || res).totalAlerts || 0))
+      .catch(() => setAlertsError(true))
       .finally(() => setAlertsLoading(false));
   };
 
-  useEffect(() => {
-    fetchData();
-
-    // No hardcoded body background — theme CSS handles it
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fmt = (n) => {
-    if (n == null || isNaN(n)) return '—';
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency', currency: 'INR', maximumFractionDigits: 0
-    }).format(n);
+    if (n == null || isNaN(n)) return 0;
+    return Number(n);
   };
 
-  // Calculate Net Profit / Loss
-  const netProfit = stats ? (stats.financial?.billed || 0) - (stats.costs?.total || 0) : 0;
-  const isProfit = netProfit >= 0;
+  const fmtCurrency = (n) => {
+    if (n == null || isNaN(n)) return '—';
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+  };
 
-  // Sliced data for recent activities
-  const recentProjects = projects.slice(0, 3);
-  const recentExpenses = expenses.slice(0, 5);
+  const netProfit = useMemo(() => stats ? (stats.financial?.billed || 0) - (stats.costs?.total || 0) : 0, [stats]);
+  const isProfit = useMemo(() => netProfit >= 0, [netProfit]);
 
-  const isEngineer = user?.role_id === 3;
-  const noAccess = isEngineer && stats?.projects?.total_projects === 0;
+  const recentProjects = useMemo(() => projects.slice ? projects.slice(0, 3) : [], [projects]);
+  const recentExpenses = useMemo(() => expenses.slice ? expenses.slice(0, 5) : [], [expenses]);
+
+  const isEngineer = useMemo(() => user?.role_id === 3, [user]);
+  const isViewer = useMemo(() => user?.role_id === 4, [user]);
+  const noAccess = useMemo(() => (isEngineer || isViewer) && stats?.projects?.total_projects === 0, [isEngineer, isViewer, stats]);
+
+  const now = new Date();
+  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
       {noAccess ? (
-        <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-secondary)' }}>
+        <AnimatedItem delay={0} style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-muted)' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏗️</div>
-          <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>No Projects Assigned Yet</h3>
+          <h3 style={{ fontFamily: "'Oswald', sans-serif", color: 'var(--text-primary)', marginBottom: '8px', textTransform: 'uppercase' }}>No Projects Assigned Yet</h3>
           <p>Your admin will assign you to a project shortly. Check back soon.</p>
-          <button
-            onClick={fetchData}
-            className="refresh-btn"
-            style={{ margin: '24px auto 0' }}
-            title="Refresh Data"
-          >
-            <HiOutlineRefresh size={18} /> Refresh
+          <button onClick={fetchData} className="btn-premium" style={{ margin: '24px auto 0' }}>
+            <HiOutlineRefresh size={16} /> Refresh
           </button>
-        </div>
+        </AnimatedItem>
       ) : (
         <>
-      {/* Scope styles specifically for the redesigned dashboard */}
-      <style>{`
-        /* Container layouts */
-        .dashboard-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 20px;
-          margin-bottom: 28px;
-        }
-        @media (max-width: 1024px) {
-          .dashboard-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-        @media (max-width: 640px) {
-          .dashboard-grid {
-            grid-template-columns: 1fr;
-          }
-        }
+          {/* HERO BANNER */}
+          <AnimatedItem delay={0}>
+            <div style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              borderLeft: '4px solid #F59E0B',
+              borderRadius: '8px',
+              padding: '20px 24px',
+              marginBottom: '28px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              minHeight: '80px',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <div style={{ zIndex: 1 }}>
+                <h1 style={{
+                  fontFamily: "'Oswald', sans-serif",
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  color: 'var(--text-primary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  margin: 0
+                }}>
+                  SITE COMMAND CENTER
+                </h1>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'var(--text-secondary)',
+                  marginTop: '4px'
+                }}>
+                  {greeting}, {user?.name || 'User'} — {stats?.projects?.total_projects || 0} active projects
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', zIndex: 1 }}>
+                <div style={{ 
+                  fontFamily: "'Roboto Mono', monospace", 
+                  fontSize: '12px', color: 'var(--text-muted)', textAlign: 'right' 
+                }}>
+                  {now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  <br />
+                  {now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                {!alertsLoading && !alertsError && alertCount > 0 && (
+                  <Link to="/alerts" style={{ textDecoration: 'none' }}>
+                    <button style={{
+                      backgroundColor: 'rgba(220, 38, 38, 0.12)',
+                      border: '1px solid rgba(220, 38, 38, 0.3)',
+                      color: '#DC2626', borderRadius: '6px',
+                      padding: '8px 14px', cursor: 'pointer', fontSize: '12px',
+                      fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px',
+                      textTransform: 'uppercase', letterSpacing: '0.5px',
+                      fontFamily: "'Inter', sans-serif"
+                    }}>
+                      <HiOutlineExclamationCircle size={16} /> {alertCount} Alert{alertCount !== 1 ? 's' : ''}
+                    </button>
+                  </Link>
+                )}
+                <button
+                  onClick={fetchData}
+                  style={{
+                    background: 'transparent', border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-secondary)', borderRadius: '6px',
+                    width: '36px', height: '36px', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  <HiOutlineRefresh size={16} />
+                </button>
+              </div>
+              {/* Skyline illustration */}
+              <div style={{ 
+                position: 'absolute', bottom: 0, right: 0, 
+                opacity: 0.15, pointerEvents: 'none'
+              }}>
+                <SkylineSVG width={400} height={70} />
+              </div>
+            </div>
+          </AnimatedItem>
 
-        .dashboard-grid-3 {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-          margin-bottom: 28px;
-        }
-        @media (max-width: 1024px) {
-          .dashboard-grid-3 {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-        @media (max-width: 640px) {
-          .dashboard-grid-3 {
-            grid-template-columns: 1fr;
-          }
-        }
+          {/* PRIMARY METRICS */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
+            {statsLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
+                  <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                  <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                </div>
+              ))
+            ) : (
+              <>
+                <AnimatedKPICard index={0} icon={<HiOutlineOfficeBuilding size={24} />} color="#F59E0B" label="TOTAL PROJECTS" value={stats?.projects?.total_projects || 0} subtitle={`${stats?.projects?.ongoing || 0} ongoing · ${stats?.projects?.completed || 0} completed`} onClick={() => navigate('/projects')} />
+                <AnimatedKPICard index={1} icon={<HiOutlineUsers size={24} />} color="var(--text-secondary)" label="ACTIVE WORKERS" value={stats?.workers?.active_workers || 0} subtitle={`of ${stats?.workers?.total_workers || 0} total workers`} onClick={() => navigate('/workers')} />
+                <AnimatedKPICard index={2} icon={<HiOutlineTruck size={24} />} color="#0284C7" label="MACHINES" value={stats?.machines?.total_machines || 0} subtitle={`${stats?.machines?.available || 0} available · ${stats?.machines?.in_use || 0} in use`} onClick={() => navigate('/machines')} />
+                <AnimatedKPICard index={3} icon={<HiOutlineCurrencyDollar size={24} />} color="#F59E0B" label="TOTAL BUDGET" value={fmt(stats?.projects?.total_budget)} isMoney={true} subtitle="Across all projects" onClick={() => navigate('/projects')} />
+              </>
+            )}
+          </div>
 
-        /* Solid styling for the redesigned cards */
-        .redesign-card {
-          background: var(--glass-bg) !important;
-          border: var(--glass-border) !important;
-          border-radius: 12px !important;
-          padding: 20px 24px !important;
-          transition: all 0.2s ease !important;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-          overflow: hidden;
-          backdrop-filter: none !important;
-          box-shadow: none !important;
-        }
-
-        .redesign-card:hover {
-          background: var(--bg-card-hover) !important;
-          border-color: var(--accent-start) !important;
-          transform: translateY(-2px);
-        }
-
-        /* Left border accents */
-        .border-accent-purple { border-left: 3px solid #7c3aed !important; }
-        .border-accent-green  { border-left: 3px solid #10b981 !important; }
-        .border-accent-blue   { border-left: 3px solid #3b82f6 !important; }
-        .border-accent-orange { border-left: 3px solid #f59e0b !important; }
-        .border-accent-red    { border-left: 3px solid #ef4444 !important; }
-        .border-accent-violet { border-left: 3px solid #8b5cf6 !important; }
-
-        /* Card sub-elements */
-        .card-header-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 8px;
-        }
-
-        .card-label-text {
-          font-size: 12px !important;
-          font-weight: 500;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          color: var(--text-muted) !important;
-          margin: 0;
-        }
-
-        .card-icon-container {
-          font-size: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .card-value-text {
-          font-size: 28px !important;
-          font-weight: 700 !important;
-          color: var(--text-primary) !important;
-          margin: 4px 0 !important;
-          line-height: 1.2;
-        }
-
-        .card-sub-text {
-          font-size: 13px !important;
-          color: var(--text-secondary) !important;
-          margin-top: 4px;
-        }
-
-        .card-sub-text.error-text {
-          color: #ef4444 !important;
-        }
-
-        .card-arrow-indicator {
-          position: absolute;
-          bottom: 12px;
-          right: 16px;
-          color: var(--text-muted);
-          font-size: 14px;
-          transition: transform 0.2s ease, color 0.2s ease;
-          opacity: 0.7;
-        }
-
-        .redesign-card:hover .card-arrow-indicator {
-          transform: translateX(3px);
-          color: var(--accent-start);
-          opacity: 1;
-        }
-
-        /* Pulse animation skeleton loader */
-        .skeleton-pulse {
-          width: 60%;
-          height: 28px;
-          background-color: var(--border-subtle);
-          border-radius: 4px;
-          animation: pulse 1.5s infinite ease-in-out;
-          margin: 6px 0;
-        }
-
-        @keyframes pulse {
-          0% { opacity: 0.4; }
-          50% { opacity: 1; }
-          100% { opacity: 0.4; }
-        }
-
-        /* Header layout rules */
-        .page-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 28px;
-        }
-
-        .page-header-left h1 {
-          font-size: 1.75rem;
-          font-weight: 700;
-          color: var(--text-primary);
-          letter-spacing: -0.02em;
-          margin: 0;
-        }
-
-        .page-header-left p {
-          font-size: 0.875rem;
-          color: var(--text-secondary);
-          margin-top: 4px;
-          margin-bottom: 0;
-        }
-
-        .dashboard-header-right {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .refresh-btn {
-          background: var(--glass-bg);
-          border: var(--glass-border);
-          color: var(--text-primary);
-          border-radius: 8px;
-          width: 38px;
-          height: 38px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .refresh-btn:hover {
-          background: var(--bg-card-hover);
-          border-color: var(--accent-start);
-          color: var(--accent-start);
-        }
-
-        .alerts-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 16px;
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          color: #ef4444;
-          border-radius: 8px;
-          font-size: 0.85rem;
-          font-weight: 600;
-          text-decoration: none;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          height: 38px;
-        }
-
-        .alerts-btn:hover {
-          background: rgba(239, 68, 68, 0.2);
-          border-color: #ef4444;
-        }
-
-        /* Recent Activity Columns styling */
-        .recent-activity-container {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-          .recent-activity-container {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        .activity-card {
-          background: var(--glass-bg) !important;
-          border: var(--glass-border) !important;
-          border-radius: 12px !important;
-          padding: 24px !important;
-          backdrop-filter: none !important;
-          box-shadow: none !important;
-        }
-
-        .activity-title-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-
-        .activity-title {
-          font-size: 16px !important;
-          font-weight: 600 !important;
-          color: var(--text-primary) !important;
-          margin: 0 !important;
-        }
-
-        .activity-view-all-link {
-          font-size: 13px;
-          color: #7c3aed;
-          font-weight: 500;
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          transition: color 0.2s ease;
-        }
-
-        .activity-view-all-link:hover {
-          color: #8b5cf6;
-        }
-
-        .activity-rows-list {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .activity-row-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 16px;
-          background: var(--bg-card);
-          border: 1px solid var(--border-subtle);
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .activity-row-item:hover {
-          background: var(--bg-card-hover);
-          border-color: var(--accent-start);
-          transform: translateY(-1px);
-        }
-
-        .activity-row-left {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .activity-row-name {
-          font-weight: 600;
-          font-size: 14px;
-          color: var(--text-primary);
-        }
-
-        .activity-row-subtext {
-          font-size: 12px;
-          color: var(--text-secondary);
-        }
-
-        .activity-row-right {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .activity-row-amount {
-          font-weight: 600;
-          font-size: 14px;
-          color: #ef4444;
-        }
-
-        .activity-row-budget {
-          font-weight: 600;
-          font-size: 14px;
-          color: var(--text-primary);
-        }
-      `}</style>
-
-      {/* SECTION 1 — Header Row */}
-      <div className="page-header">
-        <div className="page-header-left">
-          <h1>Welcome, {user?.name || 'User'} 👋</h1>
-          <p>Overview of your construction projects</p>
-        </div>
-        <div className="dashboard-header-right">
-          <button
-            onClick={fetchData}
-            className="refresh-btn"
-            title="Refresh Data"
-          >
-            <HiOutlineRefresh size={18} />
-          </button>
-          {!alertsLoading && !alertsError && alertCount > 0 && (
-            <Link to="/alerts" className="alerts-btn">
-              <HiOutlineExclamationCircle size={18} /> {alertCount} Alert{alertCount !== 1 ? 's' : ''}
-            </Link>
+          {/* FINANCIAL METRICS (Admin & Manager only) */}
+          {(user?.role_id === 1 || user?.role_id === 2) && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
+              {statsLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
+                    <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                    <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                  </div>
+                ))
+              ) : (
+                <>
+                  <AnimatedKPICard index={4} icon={<HiOutlineChartBar size={24} />} color="#DC2626" label="ACTUAL COST" value={fmt(stats?.costs?.total)} isMoney={true} subtitle="Total spending" onClick={() => navigate('/expenses')} />
+                  <AnimatedKPICard index={5} icon={<HiOutlineDocumentText size={24} />} color="#16A34A" label="BILLED (REVENUE)" value={fmt(stats?.financial?.billed)} isMoney={true} subtitle={`${fmtCurrency(stats?.financial?.paid)} paid`} onClick={() => navigate('/billing')} />
+                  <AnimatedKPICard index={6} icon={isProfit ? <HiOutlineTrendingUp size={24} /> : <HiOutlineTrendingDown size={24} />} color={isProfit ? '#16A34A' : '#DC2626'} label="NET PROFIT / LOSS" value={Math.abs(netProfit)} isMoney={true} prefix={isProfit ? '+' : '-'} subtitle="Revenue − Actual Cost" onClick={() => navigate('/billing')} />
+                  <AnimatedKPICard index={7} icon={<HiOutlineCash size={24} />} color="#F59E0B" label="TOTAL INVESTMENTS" value={fmt(stats?.financial?.investments)} isMoney={true} subtitle="From all investors" onClick={() => navigate('/investments')} />
+                </>
+              )}
+            </div>
           )}
-        </div>
-      </div>
 
-      {/* SECTION 2 — PRIMARY METRICS */}
-      <div className="dashboard-grid">
-        <MetricCard
-          icon={HiOutlineOfficeBuilding}
-          iconColor="#7c3aed"
-          label="TOTAL PROJECTS"
-          value={stats?.projects?.total_projects || 0}
-          subText={`${stats?.projects?.ongoing || 0} ongoing · ${stats?.projects?.completed || 0} completed`}
-          borderColorClass="border-accent-purple"
-          navigateTo="/projects"
-          loading={statsLoading}
-          error={statsError}
-        />
-
-        <MetricCard
-          icon={HiOutlineUsers}
-          iconColor="#10b981"
-          label="ACTIVE WORKERS"
-          value={stats?.workers?.active_workers || 0}
-          subText={`of ${stats?.workers?.total_workers || 0} total workers`}
-          borderColorClass="border-accent-green"
-          navigateTo="/workers"
-          loading={statsLoading}
-          error={statsError}
-        />
-
-        <MetricCard
-          icon={HiOutlineTruck}
-          iconColor="#3b82f6"
-          label="MACHINES"
-          value={stats?.machines?.total_machines || 0}
-          subText={`${stats?.machines?.available || 0} available · ${stats?.machines?.in_use || 0} in use`}
-          borderColorClass="border-accent-blue"
-          navigateTo="/machines"
-          loading={statsLoading}
-          error={statsError}
-        />
-
-        <MetricCard
-          icon={HiOutlineCurrencyDollar}
-          iconColor="#f59e0b"
-          label="TOTAL BUDGET"
-          value={fmt(stats?.projects?.total_budget)}
-          subText="Across all projects"
-          borderColorClass="border-accent-orange"
-          navigateTo="/projects"
-          loading={statsLoading}
-          error={statsError}
-        />
-      </div>
-
-      {/* SECTION 3 — FINANCIAL METRICS */}
-      <div className="dashboard-grid">
-        <MetricCard
-          icon={HiOutlineChartBar}
-          iconColor="#ef4444"
-          label="ACTUAL COST"
-          value={fmt(stats?.costs?.total)}
-          subText="Total spending across all projects"
-          borderColorClass="border-accent-red"
-          navigateTo="/expenses"
-          loading={statsLoading}
-          error={statsError}
-        />
-
-        <MetricCard
-          icon={HiOutlineDocumentText}
-          iconColor="#10b981"
-          label="BILLED (REVENUE)"
-          value={fmt(stats?.financial?.billed)}
-          subText={`${fmt(stats?.financial?.paid)} paid · ${fmt((stats?.financial?.billed || 0) - (stats?.financial?.paid || 0))} pending`}
-          borderColorClass="border-accent-green"
-          navigateTo="/billing"
-          loading={statsLoading}
-          error={statsError}
-        />
-
-        <MetricCard
-          icon={isProfit ? HiOutlineTrendingUp : HiOutlineTrendingDown}
-          iconColor={isProfit ? '#10b981' : '#ef4444'}
-          label="NET PROFIT / LOSS"
-          value={(isProfit ? '+' : '') + fmt(netProfit)}
-          subText="Revenue − Actual Cost"
-          borderColorClass={isProfit ? 'border-accent-green' : 'border-accent-red'}
-          navigateTo="/billing"
-          loading={statsLoading}
-          error={statsError}
-        />
-
-        <MetricCard
-          icon={HiOutlineCash}
-          iconColor="#8b5cf6"
-          label="TOTAL INVESTMENTS"
-          value={fmt(stats?.financial?.investments)}
-          subText="From all investors"
-          borderColorClass="border-accent-violet"
-          navigateTo="/investments"
-          loading={statsLoading}
-          error={statsError}
-        />
-      </div>
-
-      {/* SECTION 4 — RESOURCE COST BREAKDOWN */}
-      <div className="dashboard-grid-3">
-        <MetricCard
-          icon={HiOutlineCube}
-          iconColor="#7c3aed"
-          label="MATERIAL COST"
-          value={fmt(stats?.costs?.material)}
-          subText="Raw materials used"
-          borderColorClass="border-accent-purple"
-          navigateTo="/materials"
-          loading={statsLoading}
-          error={statsError}
-        />
-
-        <MetricCard
-          icon={HiOutlineUsers}
-          iconColor="#10b981"
-          label="MANPOWER COST"
-          value={fmt(stats?.costs?.manpower)}
-          subText="Labour wages total"
-          borderColorClass="border-accent-green"
-          navigateTo="/workers"
-          loading={statsLoading}
-          error={statsError}
-        />
-
-        <MetricCard
-          icon={HiOutlineCog}
-          iconColor="#3b82f6"
-          label="MACHINE COST"
-          value={fmt(stats?.costs?.machine)}
-          subText="Equipment usage cost"
-          borderColorClass="border-accent-blue"
-          navigateTo="/machines"
-          loading={statsLoading}
-          error={statsError}
-        />
-      </div>
-
-      {/* SECTION 5 — RECENT ACTIVITY */}
-      <div className="recent-activity-container">
-        {/* Recent Projects */}
-        <div className="activity-card card">
-          <div className="activity-title-row">
-            <h3 className="activity-title">Recent Projects</h3>
-            <Link to="/projects" className="activity-view-all-link">
-              View All <HiOutlineArrowRight />
-            </Link>
-          </div>
-
-          <div className="activity-rows-list">
-            {projectsLoading ? (
-              [1, 2, 3].map(i => (
-                <div key={i} className="activity-row-item" style={{ cursor: 'default' }}>
-                  <div className="skeleton-pulse" style={{ width: '40%', height: '16px' }} />
-                  <div className="skeleton-pulse" style={{ width: '20%', height: '16px' }} />
-                </div>
-              ))
-            ) : projectsError ? (
-              <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: 0 }}>Failed to load recent projects.</p>
-            ) : recentProjects.length > 0 ? (
-              recentProjects.map(p => (
-                <div
-                  key={p.project_id}
-                  className="activity-row-item"
-                  onClick={() => navigate('/projects')}
-                >
-                  <div className="activity-row-left">
-                    <span className="activity-row-name">{p.project_name}</span>
-                    <span className="activity-row-subtext">
-                      {p.location || 'No Location'}
-                    </span>
+          {/* RESOURCE COST BREAKDOWN (Admin, Manager, Engineer only) */}
+          {(user?.role_id === 1 || user?.role_id === 2 || user?.role_id === 3) && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
+              {statsLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
+                    <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                    <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
                   </div>
-                  <div className="activity-row-right">
-                    <span className={`badge badge-${p.status}`}>
-                      {p.status?.replace('_', ' ')}
-                    </span>
-                    <span className="activity-row-budget">
-                      {fmt(p.estimated_budget)}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>No recent projects</p>
-            )}
-          </div>
-        </div>
+                ))
+              ) : (
+                <>
+                  <AnimatedKPICard index={8} icon={<HiOutlineCube size={24} />} color="#F59E0B" label="MATERIAL COST" value={fmt(stats?.costs?.material)} isMoney={true} subtitle="Raw materials used" onClick={() => navigate('/materials')} />
+                  <AnimatedKPICard index={9} icon={<HiOutlineUsers size={24} />} color="var(--text-secondary)" label="MANPOWER COST" value={fmt(stats?.costs?.manpower)} isMoney={true} subtitle="Labour wages total" onClick={() => navigate('/workers')} />
+                  <AnimatedKPICard index={10} icon={<HiOutlineCog size={24} />} color="#0284C7" label="MACHINE COST" value={fmt(stats?.costs?.machine)} isMoney={true} subtitle="Equipment usage cost" onClick={() => navigate('/machines')} />
+                </>
+              )}
+            </div>
+          )}
 
-        {/* Recent Expenses */}
-        <div className="activity-card card">
-          <div className="activity-title-row">
-            <h3 className="activity-title">Recent Expenses</h3>
-            <Link to="/expenses" className="activity-view-all-link">
-              View All <HiOutlineArrowRight />
-            </Link>
-          </div>
+          {/* RECENT ACTIVITY */}
+          <AnimatedItem delay={0.2}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              {/* Recent Projects */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '3px', height: '16px', background: '#F59E0B', borderRadius: '1px', display: 'inline-block' }} />
+                    RECENT SITES
+                  </h3>
+                  <Link to="/projects" style={{ fontSize: '13px', color: '#F59E0B', fontWeight: '500', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    View All <HiOutlineArrowRight />
+                  </Link>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {projectsLoading ? (
+                    [1,2,3].map(i => (
+                      <div key={i} style={{ padding: '12px 14px', background: 'var(--bg-card)', borderRadius: '6px' }}>
+                        <div style={{ width: '40%', height: '14px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                      </div>
+                    ))
+                  ) : projectsError ? (
+                    <p style={{ color: '#DC2626', fontSize: '13px', margin: 0 }}>Failed to load</p>
+                  ) : recentProjects.length > 0 ? (
+                    recentProjects.map((p, i) => (
+                      <div
+                        key={p.project_id}
+                        onClick={() => navigate('/projects')}
+                        style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '12px 14px', background: 'var(--bg-card)', border: '1px solid transparent',
+                          borderRadius: '6px', cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          animation: `pageEnter 0.3s ease ${i * 0.08}s both`
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.05)'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.2)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'transparent'; }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-primary)' }}>{p.project_name}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{p.location || 'No Location'}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span className={`badge badge-${p.status}`}>{p.status?.replace('_', ' ')}</span>
+                          <span style={{ fontFamily: "'Roboto Mono', monospace", fontWeight: '500', fontSize: '13px', color: 'var(--text-primary)' }}>
+                            {fmtCurrency(p.estimated_budget)}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No recent projects</p>
+                  )}
+                </div>
+              </div>
 
-          <div className="activity-rows-list">
-            {expensesLoading ? (
-              [1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="activity-row-item" style={{ cursor: 'default' }}>
-                  <div className="skeleton-pulse" style={{ width: '50%', height: '16px' }} />
-                  <div className="skeleton-pulse" style={{ width: '15%', height: '16px' }} />
+              {/* Recent Expenses */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '3px', height: '16px', background: '#F59E0B', borderRadius: '1px', display: 'inline-block' }} />
+                    RECENT EXPENDITURE
+                  </h3>
+                  <Link to="/expenses" style={{ fontSize: '13px', color: '#F59E0B', fontWeight: '500', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    View All <HiOutlineArrowRight />
+                  </Link>
                 </div>
-              ))
-            ) : expensesError ? (
-              <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: 0 }}>Failed to load recent expenses.</p>
-            ) : recentExpenses.length > 0 ? (
-              recentExpenses.map(e => (
-                <div
-                  key={e.expense_id}
-                  className="activity-row-item"
-                  onClick={() => navigate('/expenses')}
-                >
-                  <div className="activity-row-left">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="badge badge-draft" style={{ margin: 0 }}>
-                        {e.category_name}
-                      </span>
-                      <span className="activity-row-name" style={{ fontWeight: 500, fontSize: '13px' }}>
-                        {e.description ? (e.description.length > 30 ? e.description.substring(0, 30) + '...' : e.description) : 'No description'}
-                      </span>
-                    </div>
-                    <span className="activity-row-subtext">
-                      Project: {e.project_name} · {e.expense_date ? new Date(e.expense_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                    </span>
-                  </div>
-                  <div className="activity-row-right">
-                    <span className="activity-row-amount">
-                      {fmt(e.amount)}
-                    </span>
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {expensesLoading ? (
+                    [1,2,3,4,5].map(i => (
+                      <div key={i} style={{ padding: '12px 14px', background: 'var(--bg-card)', borderRadius: '6px' }}>
+                        <div style={{ width: '50%', height: '14px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+                      </div>
+                    ))
+                  ) : expensesError ? (
+                    <p style={{ color: '#DC2626', fontSize: '13px', margin: 0 }}>Failed to load</p>
+                  ) : recentExpenses.length > 0 ? (
+                    recentExpenses.map((e, i) => (
+                      <div
+                        key={e.expense_id}
+                        onClick={() => navigate('/expenses')}
+                        style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '12px 14px', background: 'var(--bg-card)', border: '1px solid transparent',
+                          borderRadius: '6px', cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          animation: `pageEnter 0.3s ease ${i * 0.08}s both`
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.05)'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.2)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'transparent'; }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="badge badge-pending" style={{ margin: 0 }}>{e.category_name || 'Expense'}</span>
+                            <span style={{ fontWeight: '500', fontSize: '13px', color: '#D6D3CE' }}>
+                              {e.description ? (e.description.length > 30 ? e.description.substring(0, 30) + '...' : e.description) : 'No description'}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                            Project: {e.project_name} · {e.expense_date ? new Date(e.expense_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                          </div>
+                        </div>
+                        <span style={{ fontFamily: "'Roboto Mono', monospace", fontWeight: '500', fontSize: '13px', color: '#DC2626' }}>
+                          {fmtCurrency(e.amount)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No recent expenses</p>
+                  )}
                 </div>
-              ))
-            ) : (
-              <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>No recent expenses</p>
-            )}
-          </div>
-        </div>
-      </div>
+              </div>
+            </div>
+          </AnimatedItem>
+
+          <style>{`
+            @media (max-width: 768px) {
+              .recent-activity-grid { grid-template-columns: 1fr !important; }
+            }
+          `}</style>
         </>
       )}
-    </div>
+    </PageWrapper>
   );
 }
 
+export default function Dashboard() {
+  const { user } = useAuth();
+  if (user?.role_id === 4) return <AccountantDashboard />;
+  if (user?.role_id === 5) return <SupervisorDashboard />;
+  return <DashboardContent />;
+}

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { HelmetIcon, ConstructionSVG } from '../components/CivilIcons';
 import {
-  HiOutlineOfficeBuilding,
   HiOutlineMail,
   HiOutlineLockClosed,
   HiOutlineUser,
   HiOutlineEye,
-  HiOutlineEyeOff
+  HiOutlineEyeOff,
+  HiOutlineOfficeBuilding
 } from 'react-icons/hi';
 
 export default function LoginPage() {
@@ -15,7 +16,7 @@ export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '', role_id: '4' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role_id: '6' });
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -33,17 +34,25 @@ export default function LoginPage() {
         toast.success('Welcome back!');
       }
     } catch (err) {
-      const code = err.response?.data?.code;
-      const msg = err.response?.data?.error;
+      const status = err.response?.status;
+      const data   = err.response?.data;
+      // Backend always sends { success: false, message: '...' }
+      const msg    = data?.message || err.message || 'Authentication failed';
+      const code   = data?.code || data?.error;
 
       if (code === 'ACCOUNT_BLOCKED') {
-        toast.error('🚫 Account suspended. Contact admin.');
+        toast.error('🚫 Account suspended. Contact your administrator.');
       } else if (code === 'PENDING_APPROVAL') {
         toast.error('⏳ Account pending admin approval. Please wait.');
-      } else if (err.response?.status === 401) {
-        toast.error('Invalid email or password');
+      } else if (status === 401) {
+        toast.error('Invalid email or password. Please try again.');
+      } else if (status === 400) {
+        // Validation error from Joi — show the clean message from backend
+        toast.error(msg);
+      } else if (status === 429) {
+        toast.error('Too many attempts. Please wait 15 minutes and try again.');
       } else {
-        toast.error(msg || 'Authentication failed');
+        toast.error(msg);
       }
     } finally {
       setLoading(false);
@@ -52,26 +61,22 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      {/* Animated background orbs */}
-      <div className="login-bg-orb login-bg-orb-1" />
-      <div className="login-bg-orb login-bg-orb-2" />
-      <div className="login-bg-orb login-bg-orb-3" />
-
+      {/* Left side — form */}
       <div className="login-container">
         <div className="login-card">
           {/* Brand */}
           <div className="login-brand">
             <div className="login-brand-icon">
-              <HiOutlineOfficeBuilding />
+              <HelmetIcon size={48} />
             </div>
-            <h1>BuildManager</h1>
-            <p>Construction Project Monitoring System</p>
+            <h1>FINFRA</h1>
+            <p>Financial Infrastructure System</p>
           </div>
 
           {/* Title */}
           <div className="login-title">
-            <h2>{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
-            <p>{isRegister ? 'Register to get started' : 'Sign in to your account'}</p>
+            <h2>{isRegister ? 'CREATE ACCOUNT' : 'SIGN IN TO SITE'}</h2>
+            <p>{isRegister ? 'Register to get started' : 'Enter your credentials to access the command center'}</p>
           </div>
 
           {/* Form */}
@@ -112,7 +117,9 @@ export default function LoginPage() {
                 <select name="role_id" value={form.role_id} onChange={handleChange} className="login-input login-select">
                   <option value="2">Manager</option>
                   <option value="3">Engineer</option>
-                  <option value="4">Viewer</option>
+                  <option value="4">Accountant</option>
+                  <option value="5">Supervisor</option>
+                  <option value="6">Viewer</option>
                 </select>
               </div>
             )}
@@ -121,7 +128,7 @@ export default function LoginPage() {
               {loading ? (
                 <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} />
               ) : (
-                isRegister ? 'Create Account' : 'Sign In'
+                isRegister ? 'CREATE ACCOUNT' : 'ACCESS COMMAND CENTER'
               )}
             </button>
           </form>
@@ -129,16 +136,21 @@ export default function LoginPage() {
           {/* Toggle */}
           <div className="login-toggle">
             <span>{isRegister ? 'Already have an account?' : "Don't have an account?"}</span>
-            <button onClick={() => { setIsRegister(!isRegister); setForm({ name: '', email: '', password: '', role_id: '4' }); }}>
+            <button onClick={() => { setIsRegister(!isRegister); setForm({ name: '', email: '', password: '', role_id: '6' }); }}>
               {isRegister ? 'Sign In' : 'Register'}
             </button>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="login-footer">
-          <p>Construction Project Monitoring System © {new Date().getFullYear()}</p>
+          {/* Footer */}
+          <div className="login-footer">
+            <p>Construction Project Monitoring System © {new Date().getFullYear()}</p>
+          </div>
         </div>
+      </div>
+
+      {/* Right side — Construction illustration */}
+      <div className="login-illustration">
+        <ConstructionSVG />
       </div>
     </div>
   );

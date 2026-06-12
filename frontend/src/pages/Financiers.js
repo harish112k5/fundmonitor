@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
 import toast from 'react-hot-toast';
 import { formatINR } from '../utils/finance';
@@ -61,7 +62,8 @@ export default function Financiers() {
   if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
+      <AnimatedItem delay={0}>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'nowrap' }}>
@@ -195,6 +197,7 @@ export default function Financiers() {
           </div>
         </div>
       )}
-    </div>
+    </AnimatedItem>
+    </PageWrapper>
   );
 }

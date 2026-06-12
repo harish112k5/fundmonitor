@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -6,46 +6,49 @@ import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 
-// Pages
-import Dashboard from './pages/Dashboard';
-import Projects from './pages/Projects';
-import Materials from './pages/Materials';
-import Machines from './pages/Machines';
-import Workers from './pages/Workers';
-import MaterialUsage from './pages/MaterialUsage';
-import ManpowerUsage from './pages/ManpowerUsage';
-import MachineUsage from './pages/MachineUsage';
-import Investors from './pages/Investors';
-import Financiers from './pages/Financiers';
-import Investments from './pages/Investments';
-import Loans from './pages/Loans';
-import InterestPayments from './pages/InterestPayments';
-import Expenses from './pages/Expenses';
-import Billing from './pages/Billing';
-import ProjectProgress from './pages/ProjectProgress';
-import ProjectTeam from './pages/ProjectTeam';
-import Users from './pages/Users';
-import AuditLog from './pages/AuditLog';
-import AlertsPage from './pages/AlertsPage';
-import BudgetComparison from './pages/BudgetComparison';
-import ProjectDetail from './pages/ProjectDetail';
-import RecycleBin from './pages/RecycleBin';
-import ImportProject from './pages/ImportProject';
-import AdminPanel from './pages/AdminPanel';
+// Lazy loaded Pages
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Projects = React.lazy(() => import('./pages/Projects'));
+const Materials = React.lazy(() => import('./pages/Materials'));
+const Machines = React.lazy(() => import('./pages/Machines'));
+const Workers = React.lazy(() => import('./pages/Workers'));
+const MaterialUsage = React.lazy(() => import('./pages/MaterialUsage'));
+const ManpowerUsage = React.lazy(() => import('./pages/ManpowerUsage'));
+const MachineUsage = React.lazy(() => import('./pages/MachineUsage'));
+const Investors = React.lazy(() => import('./pages/Investors'));
+const Financiers = React.lazy(() => import('./pages/Financiers'));
+const Investments = React.lazy(() => import('./pages/Investments'));
+const Loans = React.lazy(() => import('./pages/Loans'));
+const InterestPayments = React.lazy(() => import('./pages/InterestPayments'));
+const Expenses = React.lazy(() => import('./pages/Expenses'));
+const Billing = React.lazy(() => import('./pages/Billing'));
+const ProjectProgress = React.lazy(() => import('./pages/ProjectProgress'));
+const ProjectTeam = React.lazy(() => import('./pages/ProjectTeam'));
+const Users = React.lazy(() => import('./pages/Users'));
+const AuditLog = React.lazy(() => import('./pages/AuditLog'));
+const AlertsPage = React.lazy(() => import('./pages/AlertsPage'));
+const BudgetComparison = React.lazy(() => import('./pages/BudgetComparison'));
+const ProjectDetail = React.lazy(() => import('./pages/ProjectDetail'));
+const RecycleBin = React.lazy(() => import('./pages/RecycleBin'));
+const ImportProject = React.lazy(() => import('./pages/ImportProject'));
+const AdminPanel = React.lazy(() => import('./pages/AdminPanel'));
+const ProjectFinanceDetail = React.lazy(() => import('./pages/ProjectFinanceDetail'));
+const Unauthorized = React.lazy(() => import('./pages/Unauthorized'));
+const MyProfile = React.lazy(() => import('./pages/MyProfile'));
 
 // Finance & Investor Pages
-import Budgeting from './pages/Budgeting';
-import FinancialDashboard from './pages/FinancialDashboard';
-import FinancialForecast from './pages/FinancialForecast';
-import FinancialPlanning from './pages/FinancialPlanning';
-import FinancialRatios from './pages/FinancialRatios';
-import FinancialStatements from './pages/FinancialStatements';
-import FundTracking from './pages/FundTracking';
-import InvestorDashboard from './pages/InvestorDashboard';
-import InvestorOnboarding from './pages/InvestorOnboarding';
-import TaxCompliance from './pages/TaxCompliance';
+const Budgeting = React.lazy(() => import('./pages/Budgeting'));
+const FinancialDashboard = React.lazy(() => import('./pages/FinancialDashboard'));
+const FinancialForecast = React.lazy(() => import('./pages/FinancialForecast'));
+const FinancialPlanning = React.lazy(() => import('./pages/FinancialPlanning'));
+const FinancialRatios = React.lazy(() => import('./pages/FinancialRatios'));
+const FinancialStatements = React.lazy(() => import('./pages/FinancialStatements'));
+const FundTracking = React.lazy(() => import('./pages/FundTracking'));
+const InvestorDashboard = React.lazy(() => import('./pages/InvestorDashboard'));
+const InvestorOnboarding = React.lazy(() => import('./pages/InvestorOnboarding'));
+const TaxCompliance = React.lazy(() => import('./pages/TaxCompliance'));
 
-// Protected route wrapper
+// Protected route wrapper — uses role_id integers
 function ProtectedRoute({ children, roles }) {
   const { isAuthenticated, loading, user } = useAuth();
 
@@ -59,13 +62,19 @@ function ProtectedRoute({ children, roles }) {
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  // Role-based access
-  if (roles && !roles.includes(user?.role_name)) {
-    return <Navigate to="/" replace />;
+  // Role-based access by role_id
+  if (roles && !roles.includes(user?.role_id)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return children;
 }
+
+const SuspenseLoader = () => (
+  <div className="loading-spinner" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="spinner" />
+  </div>
+);
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -89,119 +98,140 @@ function AppRoutes() {
       <Route path="/*" element={
         <ProtectedRoute>
           <Layout>
-            <Routes>
-              {/* Everyone */}
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/alerts" element={<AlertsPage />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/projects/:id" element={<ProjectDetail />} />
-              <Route path="/project-progress" element={<ProjectProgress />} />
+            <Suspense fallback={<SuspenseLoader />}>
+              <Routes>
+                {/* Everyone (all authenticated) */}
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
+                <Route path="/profile" element={<MyProfile />} />
 
-              {/* Admin + Manager */}
-              <Route path="/project-team" element={
-                <ProtectedRoute roles={['admin', 'manager']}><ProjectTeam /></ProtectedRoute>
-              } />
+                {/* Projects: Admin(1), Manager(2), Engineer(3), Supervisor(5), Viewer(6) */}
+                <Route path="/projects" element={
+                  <ProtectedRoute roles={[1,2,3,5,6]}><Projects /></ProtectedRoute>
+                } />
+                <Route path="/projects/:id" element={
+                  <ProtectedRoute roles={[1,2,3,5,6]}><ProjectDetail /></ProtectedRoute>
+                } />
+                <Route path="/projects/:id/finance" element={
+                  <ProtectedRoute roles={[1,2,3]}><ProjectFinanceDetail /></ProtectedRoute>
+                } />
+                <Route path="/project-progress" element={
+                  <ProtectedRoute roles={[1,2,3]}><ProjectProgress /></ProtectedRoute>
+                } />
+                <Route path="/alerts" element={
+                  <ProtectedRoute roles={[1,2,3]}><AlertsPage /></ProtectedRoute>
+                } />
 
-              {/* Admin + Manager + Engineer */}
-              <Route path="/materials" element={
-                <ProtectedRoute roles={['admin', 'manager', 'engineer']}><Materials /></ProtectedRoute>
-              } />
-              <Route path="/machines" element={
-                <ProtectedRoute roles={['admin', 'manager', 'engineer']}><Machines /></ProtectedRoute>
-              } />
-              <Route path="/workers" element={
-                <ProtectedRoute roles={['admin', 'manager', 'engineer']}><Workers /></ProtectedRoute>
-              } />
-              <Route path="/material-usage" element={
-                <ProtectedRoute roles={['admin', 'manager', 'engineer']}><MaterialUsage /></ProtectedRoute>
-              } />
-              <Route path="/manpower-usage" element={
-                <ProtectedRoute roles={['admin', 'manager', 'engineer']}><ManpowerUsage /></ProtectedRoute>
-              } />
-              <Route path="/machine-usage" element={
-                <ProtectedRoute roles={['admin', 'manager', 'engineer']}><MachineUsage /></ProtectedRoute>
-              } />
+                {/* Admin + Manager */}
+                <Route path="/project-team" element={
+                  <ProtectedRoute roles={[1, 2]}><ProjectTeam /></ProtectedRoute>
+                } />
+                <Route path="/import" element={
+                  <ProtectedRoute roles={[1, 2]}><ImportProject /></ProtectedRoute>
+                } />
+                <Route path="/recycle-bin" element={
+                  <ProtectedRoute roles={[1, 2]}><RecycleBin /></ProtectedRoute>
+                } />
 
-              {/* Admin + Manager only */}
-              <Route path="/investors" element={
-                <ProtectedRoute roles={['admin', 'manager']}><Investors /></ProtectedRoute>
-              } />
-              <Route path="/financiers" element={
-                <ProtectedRoute roles={['admin', 'manager']}><Financiers /></ProtectedRoute>
-              } />
-              <Route path="/investments" element={
-                <ProtectedRoute roles={['admin', 'manager']}><Investments /></ProtectedRoute>
-              } />
-              <Route path="/loans" element={
-                <ProtectedRoute roles={['admin', 'manager']}><Loans /></ProtectedRoute>
-              } />
-              <Route path="/interest-payments" element={
-                <ProtectedRoute roles={['admin', 'manager']}><InterestPayments /></ProtectedRoute>
-              } />
-              <Route path="/expenses" element={
-                <ProtectedRoute roles={['admin', 'manager']}><Expenses /></ProtectedRoute>
-              } />
-              <Route path="/billing" element={
-                <ProtectedRoute roles={['admin', 'manager']}><Billing /></ProtectedRoute>
-              } />
-              <Route path="/budget-comparison" element={
-                <ProtectedRoute roles={['admin', 'manager']}><BudgetComparison /></ProtectedRoute>
-              } />
-              <Route path="/recycle-bin" element={
-                <ProtectedRoute roles={['admin', 'manager']}><RecycleBin /></ProtectedRoute>
-              } />
-              <Route path="/import" element={
-                <ProtectedRoute roles={['admin', 'manager']}><ImportProject /></ProtectedRoute>
-              } />
-              
-              {/* Finance Module Pages */}
-              <Route path="/finance/budgeting" element={
-                <ProtectedRoute roles={['admin', 'manager']}><Budgeting /></ProtectedRoute>
-              } />
-              <Route path="/finance/dashboard" element={
-                <ProtectedRoute roles={['admin', 'manager']}><FinancialDashboard /></ProtectedRoute>
-              } />
-              <Route path="/finance/forecast" element={
-                <ProtectedRoute roles={['admin', 'manager']}><FinancialForecast /></ProtectedRoute>
-              } />
-              <Route path="/finance/planning" element={
-                <ProtectedRoute roles={['admin', 'manager']}><FinancialPlanning /></ProtectedRoute>
-              } />
-              <Route path="/finance/ratios" element={
-                <ProtectedRoute roles={['admin', 'manager']}><FinancialRatios /></ProtectedRoute>
-              } />
-              <Route path="/finance/statements" element={
-                <ProtectedRoute roles={['admin', 'manager']}><FinancialStatements /></ProtectedRoute>
-              } />
-              <Route path="/finance/tax" element={
-                <ProtectedRoute roles={['admin', 'manager']}><TaxCompliance /></ProtectedRoute>
-              } />
-              
-              {/* Investor Module Pages */}
-              <Route path="/investor/dashboard" element={
-                <ProtectedRoute roles={['admin', 'manager']}><InvestorDashboard /></ProtectedRoute>
-              } />
-              <Route path="/investor/onboarding" element={
-                <ProtectedRoute roles={['admin', 'manager']}><InvestorOnboarding /></ProtectedRoute>
-              } />
-              <Route path="/investor/fund-tracking" element={
-                <ProtectedRoute roles={['admin', 'manager']}><FundTracking /></ProtectedRoute>
-              } />
+                {/* Resources: Admin(1), Manager(2), Engineer(3) — master data */}
+                <Route path="/materials" element={
+                  <ProtectedRoute roles={[1, 2, 3]}><Materials /></ProtectedRoute>
+                } />
+                <Route path="/machines" element={
+                  <ProtectedRoute roles={[1, 2, 3]}><Machines /></ProtectedRoute>
+                } />
+                <Route path="/workers" element={
+                  <ProtectedRoute roles={[1, 2, 3]}><Workers /></ProtectedRoute>
+                } />
 
-              {/* Admin only */}
-              <Route path="/users" element={
-                <ProtectedRoute roles={['admin']}><Users /></ProtectedRoute>
-              } />
-              <Route path="/audit-log" element={
-                <ProtectedRoute roles={['admin']}><AuditLog /></ProtectedRoute>
-              } />
-              <Route path="/admin" element={
-                <ProtectedRoute roles={['admin']}><AdminPanel /></ProtectedRoute>
-              } />
+                {/* Usage: Admin(1), Manager(2), Engineer(3), Supervisor(5), Viewer(6) */}
+                <Route path="/material-usage" element={
+                  <ProtectedRoute roles={[1,2,3,5,6]}><MaterialUsage /></ProtectedRoute>
+                } />
+                <Route path="/manpower-usage" element={
+                  <ProtectedRoute roles={[1,2,3,5,6]}><ManpowerUsage /></ProtectedRoute>
+                } />
+                <Route path="/machine-usage" element={
+                  <ProtectedRoute roles={[1,2,3,5,6]}><MachineUsage /></ProtectedRoute>
+                } />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                {/* Finance: Admin(1), Manager(2) */}
+                <Route path="/investors" element={
+                  <ProtectedRoute roles={[1, 2]}><Investors /></ProtectedRoute>
+                } />
+                <Route path="/financiers" element={
+                  <ProtectedRoute roles={[1, 2]}><Financiers /></ProtectedRoute>
+                } />
+                <Route path="/investments" element={
+                  <ProtectedRoute roles={[1, 2]}><Investments /></ProtectedRoute>
+                } />
+                <Route path="/loans" element={
+                  <ProtectedRoute roles={[1, 2]}><Loans /></ProtectedRoute>
+                } />
+                <Route path="/interest-payments" element={
+                  <ProtectedRoute roles={[1, 2]}><InterestPayments /></ProtectedRoute>
+                } />
+
+                {/* Accounting: Admin(1), Manager(2), Engineer(3), Accountant(4), Viewer(6) */}
+                <Route path="/expenses" element={
+                  <ProtectedRoute roles={[1, 2, 3, 4, 6]}><Expenses /></ProtectedRoute>
+                } />
+                <Route path="/billing" element={
+                  <ProtectedRoute roles={[1, 2, 4]}><Billing /></ProtectedRoute>
+                } />
+                <Route path="/budget-comparison" element={
+                  <ProtectedRoute roles={[1, 2, 4]}><BudgetComparison /></ProtectedRoute>
+                } />
+
+                {/* Finance Module Pages: Admin(1), Manager(2) */}
+                <Route path="/finance/budgeting" element={
+                  <ProtectedRoute roles={[1, 2]}><Budgeting /></ProtectedRoute>
+                } />
+                <Route path="/finance/dashboard" element={
+                  <ProtectedRoute roles={[1, 2]}><FinancialDashboard /></ProtectedRoute>
+                } />
+                <Route path="/finance/forecast" element={
+                  <ProtectedRoute roles={[1, 2]}><FinancialForecast /></ProtectedRoute>
+                } />
+                <Route path="/finance/planning" element={
+                  <ProtectedRoute roles={[1, 2]}><FinancialPlanning /></ProtectedRoute>
+                } />
+                <Route path="/finance/ratios" element={
+                  <ProtectedRoute roles={[1, 2]}><FinancialRatios /></ProtectedRoute>
+                } />
+                <Route path="/finance/statements" element={
+                  <ProtectedRoute roles={[1, 2]}><FinancialStatements /></ProtectedRoute>
+                } />
+                <Route path="/finance/tax" element={
+                  <ProtectedRoute roles={[1, 2]}><TaxCompliance /></ProtectedRoute>
+                } />
+                
+                {/* Investor Module: Admin(1) only */}
+                <Route path="/investor/dashboard" element={
+                  <ProtectedRoute roles={[1]}><InvestorDashboard /></ProtectedRoute>
+                } />
+                <Route path="/investor/onboarding" element={
+                  <ProtectedRoute roles={[1]}><InvestorOnboarding /></ProtectedRoute>
+                } />
+                <Route path="/investor/fund-tracking" element={
+                  <ProtectedRoute roles={[1]}><FundTracking /></ProtectedRoute>
+                } />
+
+                {/* Admin only */}
+                <Route path="/users" element={
+                  <ProtectedRoute roles={[1]}><Users /></ProtectedRoute>
+                } />
+                <Route path="/audit-log" element={
+                  <ProtectedRoute roles={[1]}><AuditLog /></ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedRoute roles={[1]}><AdminPanel /></ProtectedRoute>
+                } />
+
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
           </Layout>
         </ProtectedRoute>
       } />
@@ -217,8 +247,8 @@ function App() {
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#1e1e2e',
-            color: '#f1f5f9',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
             border: '1px solid rgba(255,255,255,0.06)',
             borderRadius: '12px',
             fontSize: '0.85rem',
