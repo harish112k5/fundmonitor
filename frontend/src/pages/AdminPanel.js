@@ -115,7 +115,8 @@ export default function AdminPanel() {
   const fetchStats = async () => {
     try {
       const { data } = await API.get('/admin/stats');
-      if (data.success) setStats(data.data);
+      const d = data.data || data;
+      if (d && !d.success) setStats(d);
     } catch (err) { console.error(err); }
   };
 
@@ -123,9 +124,10 @@ export default function AdminPanel() {
     setLoadingUsers(true);
     try {
       const { data } = await API.get('/admin/users');
-      if (data.success) {
-        setUsers(data.data);
-        setAdminCount(data.data.filter(u => u.role_id === 1).length);
+      const d = data.data || data;
+      if (d) {
+        setUsers(Array.isArray(d) ? d : []);
+        setAdminCount((Array.isArray(d) ? d : []).filter(u => u.role_id === 1).length);
       }
     } catch (err) { console.error(err); }
     setLoadingUsers(false);
@@ -135,7 +137,8 @@ export default function AdminPanel() {
     setLoadingSessions(true);
     try {
       const { data } = await API.get('/admin/sessions');
-      if (data.success) setSessions(data.data);
+      const d = data.data || data;
+      if (d) setSessions(Array.isArray(d) ? d : []);
     } catch (err) { console.error(err); }
     setLoadingSessions(false);
   };
@@ -144,7 +147,8 @@ export default function AdminPanel() {
     setLoadingActivities(true);
     try {
       const { data } = await API.get('/admin/activity');
-      if (data.success) setActivities(data.data);
+      const d = data.data || data;
+      if (d) setActivities(Array.isArray(d) ? d : []);
     } catch (err) { console.error(err); }
     setLoadingActivities(false);
   };
@@ -155,15 +159,18 @@ export default function AdminPanel() {
         API.get('/admin/unassigned-users'),
         API.get('/admin/assigned-users')
       ]);
-      if (unRes.data.success) setUnassigned(unRes.data.data);
-      if (asRes.data.success) setAssigned(asRes.data.data);
+      const un = unRes.data?.data || unRes.data;
+      const as = asRes.data?.data || asRes.data;
+      if (un) setUnassigned(Array.isArray(un) ? un : []);
+      if (as) setAssigned(Array.isArray(as) ? as : []);
     } catch (err) { console.error(err); }
   };
 
   const fetchProjects = async () => {
     try {
       const { data } = await API.get('/projects');
-      setProjects(Array.isArray(data) ? data : []);
+      const d = data.data || data;
+      setProjects(Array.isArray(d) ? d : []);
     } catch (err) { console.error(err); }
   };
 
@@ -183,6 +190,23 @@ export default function AdminPanel() {
       toast.success('User unblocked');
       fetchAll();
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to unblock user'); }
+  };
+
+  const handleApprove = async (userId, userName) => {
+    try {
+      await API.patch(`/admin/users/${userId}/approve`);
+      toast.success(`User ${userName} approved`);
+      fetchAll();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to approve'); }
+  };
+
+  const handleReject = async (userId, userName) => {
+    if (!window.confirm(`Reject user "${userName}"? This will delete their pending account.`)) return;
+    try {
+      await API.patch(`/admin/users/${userId}/reject`);
+      toast.success('User rejected');
+      fetchAll();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to reject'); }
   };
 
   const handleAssign = async () => {
@@ -624,7 +648,11 @@ export default function AdminPanel() {
                           </span>
                         </td>
                         <td style={S.td}>
-                          {u.is_active === 1 ? (
+                          {u.is_approved === 0 ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#F59E0B', fontSize: 13, fontWeight: 500 }}>
+                              ⏳ Pending
+                            </span>
+                          ) : u.is_active === 1 ? (
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#10b981', fontSize: 13 }}>
                               ● Active
                             </span>
@@ -645,6 +673,11 @@ export default function AdminPanel() {
                         <td style={S.td}>
                           {u.user_id === user?.user_id ? (
                             <span style={{ padding: '4px 10px', background: '#334155', borderRadius: 4, fontSize: 12 }}>You</span>
+                          ) : u.is_approved === 0 ? (
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button style={{ ...S.unblockBtn, padding: '5px 10px' }} onClick={() => handleApprove(u.user_id, u.name)}>Approve</button>
+                              <button style={{ ...S.blockBtn, padding: '5px 10px' }} onClick={() => handleReject(u.user_id, u.name)}>Reject</button>
+                            </div>
                           ) : u.is_active === 1 ? (
                             <button style={S.blockBtn} onClick={() => handleBlock(u.user_id, u.name)}>Block</button>
                           ) : (

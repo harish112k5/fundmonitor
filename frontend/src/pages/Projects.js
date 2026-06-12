@@ -27,7 +27,7 @@ export default function Projects() {
 
   const load = () => {
     Promise.all([API.get('/projects'), API.get('/users')])
-      .then(([d, u]) => { setData(d.data); setUsers(u.data); })
+      .then(([d, u]) => { setData(d.data?.data || d.data); setUsers(u.data?.data || u.data); })
       .catch(() => toast.error('Failed to load'))
       .finally(() => setLoading(false));
   };
@@ -134,14 +134,16 @@ export default function Projects() {
       <AnimatedItem delay={0.1}>
         <DataTable
           columns={columns} data={data}
-          onEdit={handleEdit}
-          onDelete={(r) => { setDeleteTarget(r); setShowDelete(true); }}
+          onEdit={canEdit ? handleEdit : undefined}
+          onDelete={canDeleteResources ? (r) => { setDeleteTarget(r); setShowDelete(true); } : undefined}
           searchPlaceholder="Search projects..."
           emptyIcon="🏗" emptyTitle="No projects yet"
           addButton={
-            <button className="btn-premium" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
-              <HiOutlinePlus /> Add Project
-            </button>
+            (user?.role_id === 1 || user?.role_id === 2) ? (
+              <button className="btn-premium" onClick={() => { setEditing(null); setForm(initialForm); setShowModal(true); }}>
+                <HiOutlinePlus /> Add Project
+              </button>
+            ) : null
           }
         />
       </AnimatedItem>

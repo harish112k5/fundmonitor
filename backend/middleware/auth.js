@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access denied. No token provided.' });
+    return res.status(401).json({ success: false, data: null, message: 'Access denied. No token provided.', error: null });
   }
 
   try {
@@ -17,13 +17,19 @@ async function authMiddleware(req, res, next) {
     // Re-check is_active on every request
     const [rows] = await db.query('SELECT is_active FROM users WHERE user_id = ?', [decoded.user_id]);
     if (!rows.length || rows[0].is_active === 0) {
-      return res.status(403).json({ code: 'ACCOUNT_BLOCKED', error: 'Account suspended' });
+      return res.status(403).json({ success: false, data: null, message: 'Account suspended', error: 'ACCOUNT_BLOCKED' });
     }
 
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token.' });
+    let message = 'Invalid token.';
+    if (err.name === 'TokenExpiredError') {
+      message = 'Your session has expired. Please log in again.';
+    } else if (err.name === 'JsonWebTokenError') {
+      message = 'Invalid authentication token.';
+    }
+    return res.status(401).json({ success: false, data: null, message: message, error: err.name });
   }
 }
 
@@ -31,49 +37,42 @@ async function authMiddleware(req, res, next) {
 function roleGuard(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Not authenticated' });
+      return res.status(401).json({ success: false, data: null, message: 'Not authenticated', error: null });
     }
     if (!allowedRoles.includes(req.user.role_name)) {
-      return res.status(403).json({ error: 'Access denied. Insufficient permissions.' });
+      return res.status(403).json({ success: false, data: null, message: 'Access denied. Insufficient permissions.', error: null });
     }
     next();
   };
 }
 
 // Role-based access control (by role_id integer — preferred)
-// Usage: requireRole(1, 2, 4) or requireRole([1, 2, 4])
 function requireRole(...allowedRoleIds) {
-  // Flatten in case an array is passed
   const ids = allowedRoleIds.flat();
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Not authenticated' });
+      return res.status(401).json({ success: false, data: null, message: 'Not authenticated', error: null });
     }
     if (!ids.includes(req.user.role_id)) {
-      return res.status(403).json({ error: 'Access denied. Insufficient permissions.' });
+      return res.status(403).json({ success: false, data: null, message: 'Access denied. Insufficient permissions.', error: null });
     }
     next();
   };
 }
 
 // Project assignment check middleware
-// Ensures user is assigned to the project they're accessing
-// Admin (1) and Accountant (4) skip this check
 async function requireProjectAccess(req, res, next) {
   if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
+    return res.status(401).json({ success: false, data: null, message: 'Not authenticated', error: null });
   }
 
-  // Admin and Accountant bypass project checks
   if ([1, 4].includes(req.user.role_id)) {
     return next();
   }
 
-  // Extract project_id from params, query, or body
   const projectId = req.params.projectId || req.params.id || req.query.project_id || req.body?.project_id;
   
   if (!projectId) {
-    // No specific project requested — let the route handler filter by assignment
     return next();
   }
 
@@ -85,41 +84,55 @@ async function requireProjectAccess(req, res, next) {
     if (rows.length > 0) {
       return next();
     }
-    return res.status(403).json({ error: 'You are not assigned to this project.' });
+    return res.status(403).json({ success: false, data: null, message: 'You are not assigned to this project.', error: null });
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to verify project access.' });
+    return res.status(500).json({ success: false, data: null, message: 'Failed to verify project access.', error: err.message });
   }
 }
 
-// Read-only enforcement — blocks POST/PUT/DELETE for specified roles
+// Read-only enforcement
 function readOnlyForRoles(...roleIds) {
   const ids = roleIds.flat();
   return (req, res, next) => {
     if (!req.user) return next();
     if (ids.includes(req.user.role_id) && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
-      return res.status(403).json({ error: 'Read-only access. You cannot modify data.' });
+      return res.status(403).json({ success: false, data: null, message: 'Read-only access. You cannot modify data.', error: null });
     }
     next();
   };
 }
 
-// Supervisor date restriction — only allows today's data
+// Supervisor date restriction
 function supervisorDateRestriction(req, res, next) {
   if (!req.user || req.user.role_id !== 5) return next();
   
-  // For GET requests, force date to today
   const today = new Date().toISOString().split('T')[0];
   if (req.query.date && req.query.date !== today) {
-    return res.status(403).json({ error: 'Supervisors can only view today\'s data.' });
+    return res.status(403).json({ success: false, data: null, message: 'Supervisors can only view today\'s data.', error: null });
   }
-  // Inject today's date if none provided
   if (!req.query.date) {
     req.query.date = today;
   }
   next();
 }
 
+// Attach user's project-specific permissions to req.user
+// Requires permissions.js — imported lazily to avoid circular dependency
+async function attachPermissions(req, res, next) {
+  if (!req.user) return next();
+  const project_id = req.params.projectId || req.params.id || req.query.project_id;
+  if (project_id) {
+    try {
+      const { getUserProjectPermissions } = require('./permissions');
+      req.user.projectPermissions = await getUserProjectPermissions(req.user.user_id, project_id);
+    } catch (_) {
+      req.user.projectPermissions = [];
+    }
+  }
+  next();
+}
+
 module.exports = { 
   authMiddleware, roleGuard, requireRole, requireProjectAccess, 
-  readOnlyForRoles, supervisorDateRestriction, JWT_SECRET 
+  readOnlyForRoles, supervisorDateRestriction, attachPermissions, JWT_SECRET 
 };

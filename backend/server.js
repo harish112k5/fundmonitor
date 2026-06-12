@@ -1,10 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const logger = require('./utils/logger');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+app.use(helmet());
 
 // ─────────────────────────── CORS ────────────────────────────────
 app.use(cors({
@@ -620,8 +624,8 @@ app.get('/api/docs.json', (req, res) => {
 const db = require('./db');
 let dbStatus = 'connecting';
 db.query('SELECT 1')
-  .then(() => { dbStatus = 'connected'; console.log('✅ MySQL Connected'); })
-  .catch(err => { dbStatus = 'disconnected'; console.error('❌ MySQL Connection Error:', err.message); });
+  .then(() => { dbStatus = 'connected'; logger.info('✅ MySQL Connected'); })
+  .catch(err => { dbStatus = 'disconnected'; logger.error(`❌ MySQL Connection Error: ${err.message}`); });
 
 // ─────────────────────────── Public routes ───────────────────────────
 
@@ -675,56 +679,56 @@ app.use('/api/template', require('./routes/template'));
 
 // ─────────────────────── Protected routes ────────────────────────────
 const { authMiddleware, requireRole, readOnlyForRoles, supervisorDateRestriction } = require('./middleware/auth');
+const { checkPermission } = require('./middleware/permissions');
 app.use('/api', authMiddleware);
 
 // ── Everyone (all authenticated) ──
 app.use('/api/roles',             require('./routes/roles'));
-app.use('/api/users',             requireRole(1), require('./routes/users'));
+app.use('/api/users',             readOnlyForRoles(2,3,4,5,6), require('./routes/users'));
 app.use('/api/projects',          require('./routes/projects'));
 
-// ── Resources: Admin(1), Manager(2), Engineer(3), Supervisor(5), Viewer(6) ──
-// Supervisor gets date-restricted, Viewer+Supervisor get read-only
-app.use('/api/materials',         requireRole(1,2,3), require('./routes/materials'));
-app.use('/api/machines',          requireRole(1,2,3), require('./routes/machines'));
-app.use('/api/worker-roles',      requireRole(1,2,3), require('./routes/workerRoles'));
-app.use('/api/workers',           requireRole(1,2,3), require('./routes/workers'));
-app.use('/api/material-usage',    requireRole(1,2,3,5,6), readOnlyForRoles(5,6), supervisorDateRestriction, require('./routes/materialUsage'));
-app.use('/api/manpower-usage',    requireRole(1,2,3,5,6), readOnlyForRoles(5,6), supervisorDateRestriction, require('./routes/manpowerUsage'));
-app.use('/api/machine-usage',     requireRole(1,2,3,5,6), readOnlyForRoles(5,6), supervisorDateRestriction, require('./routes/machineUsage'));
+// ── Resource Masters: Admin(1), Manager(2), Engineer(3) can modify, others read-only ──
+app.use('/api/materials',         readOnlyForRoles(4,5,6), require('./routes/materials'));
+app.use('/api/machines',          readOnlyForRoles(4,5,6), require('./routes/machines'));
+app.use('/api/worker-roles',      readOnlyForRoles(4,5,6), require('./routes/workerRoles'));
+app.use('/api/workers',           readOnlyForRoles(4,5,6), require('./routes/workers'));
 
-// ── Finance: Admin(1) + Manager(2) only ──
-app.use('/api/investors',         requireRole(1,2), require('./routes/investors'));
-app.use('/api/financiers',        requireRole(1,2), require('./routes/financiers'));
-app.use('/api/investments',       requireRole(1,2), require('./routes/investments'));
-app.use('/api/loans',             requireRole(1,2), require('./routes/loans'));
-app.use('/api/interest-payments', requireRole(1,2), require('./routes/interestPayments'));
-app.use('/api/interestPayments',  requireRole(1,2), require('./routes/interestPayments'));
+// ── Usage Logging: Dynamic permission-based (replaces role-only guards) ──
+// GET (read) is allowed for supervisors/viewers via can_log_*  OR read-only role guard fallback
+app.use('/api/material-usage',    checkPermission('can_log_material_usage'), supervisorDateRestriction, require('./routes/materialUsage'));
+app.use('/api/manpower-usage',    checkPermission('can_log_manpower_usage'), supervisorDateRestriction, require('./routes/manpowerUsage'));
+app.use('/api/machine-usage',     checkPermission('can_log_machine_usage'),  supervisorDateRestriction, require('./routes/machineUsage'));
 
-// ── Accounting: Admin(1) + Accountant(4) ──
-app.use('/api/expense-categories',requireRole(1,4), require('./routes/expenseCategories'));
-app.use('/api/expenses',          requireRole(1,4), require('./routes/expenses'));
-app.use('/api/billing',           requireRole(1,4), require('./routes/billing'));
+// ── Finance: Dynamic permission-based ──
+app.use('/api/investors',         checkPermission('can_view_investor_data'), require('./routes/investors'));
+app.use('/api/financiers',        checkPermission('can_view_investor_data'), require('./routes/financiers'));
+app.use('/api/investments',       checkPermission('can_view_investor_data'), require('./routes/investments'));
+app.use('/api/loans',             checkPermission('can_view_investor_data'), require('./routes/loans'));
+app.use('/api/interest-payments', checkPermission('can_view_investor_data'), require('./routes/interestPayments'));
+app.use('/api/interestPayments',  checkPermission('can_view_investor_data'), require('./routes/interestPayments'));
+
+// ── Accounting: Dynamic permission-based ──
+app.use('/api/expense-categories', readOnlyForRoles(2,3,5,6), require('./routes/expenseCategories'));
+app.use('/api/expenses',           checkPermission('can_add_expenses', 'can_edit_expenses'), require('./routes/expenses'));
+app.use('/api/billing',            checkPermission('can_create_billing', 'can_edit_billing'), require('./routes/billing'));
 
 // ── Project management ──
 app.use('/api/project-progress',  require('./routes/projectProgress'));
-app.use('/api/project-team',      requireRole(1,2), require('./routes/projectTeam'));
+app.use('/api/project-team',      checkPermission('can_manage_team'), require('./routes/projectTeam'));
 app.use('/api/audit-log',         requireRole(1), require('./routes/auditLog'));
 app.use('/api/dashboard',         require('./routes/dashboard'));
 app.use('/api/recycle-bin',       requireRole(1,2), require('./routes/recycleBin'));
 app.use('/api/admin',             requireRole(1), require('./routes/admin'));
-app.use('/api/finance',           requireRole(1,2), require('./routes/finance'));
+app.use('/api/finance',           checkPermission('can_view_financials'), require('./routes/finance'));
 app.use('/api/import',            requireRole(1,2), require('./routes/import'));
 
 // ─────────────────────── Error handler ───────────────────────────────
-app.use((err, req, res, next) => {
-  console.error('Server Error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
+app.use(errorHandler);
 
 // ─────────────────────── Start server ────────────────────────────────
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend running on http://localhost:${PORT}`);
-  console.log(`📋 API docs available at http://localhost:${PORT}/api/docs`);
-  console.log(`❤️  Health check at    http://localhost:${PORT}/api/health`);
+  logger.info(`🚀 Backend running on http://localhost:${PORT}`);
+  logger.info(`📋 API docs available at http://localhost:${PORT}/api/docs`);
+  logger.info(`❤️  Health check at    http://localhost:${PORT}/api/health`);
 });

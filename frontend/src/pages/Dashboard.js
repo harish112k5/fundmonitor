@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -47,25 +47,25 @@ function DashboardContent() {
   const fetchData = () => {
     setStatsLoading(true); setStatsError(false);
     API.get('/dashboard/stats')
-      .then(res => setStats(res.data))
+      .then(res => setStats(res.data || res)) // In case api interceptor does not run
       .catch(() => setStatsError(true))
       .finally(() => setStatsLoading(false));
 
     setProjectsLoading(true); setProjectsError(false);
     API.get('/projects')
-      .then(res => setProjects(res.data))
+      .then(res => setProjects(res.data || res || []))
       .catch(() => setProjectsError(true))
       .finally(() => setProjectsLoading(false));
 
     setExpensesLoading(true); setExpensesError(false);
     API.get('/expenses')
-      .then(res => setExpenses(res.data))
+      .then(res => setExpenses(res.data || res || []))
       .catch(() => setExpensesError(true))
       .finally(() => setExpensesLoading(false));
 
     setAlertsLoading(true); setAlertsError(false);
     API.get('/dashboard/alerts')
-      .then(res => setAlertCount(res.data.totalAlerts || 0))
+      .then(res => setAlertCount((res.data || res).totalAlerts || 0))
       .catch(() => setAlertsError(true))
       .finally(() => setAlertsLoading(false));
   };
@@ -82,15 +82,15 @@ function DashboardContent() {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
   };
 
-  const netProfit = stats ? (stats.financial?.billed || 0) - (stats.costs?.total || 0) : 0;
-  const isProfit = netProfit >= 0;
+  const netProfit = useMemo(() => stats ? (stats.financial?.billed || 0) - (stats.costs?.total || 0) : 0, [stats]);
+  const isProfit = useMemo(() => netProfit >= 0, [netProfit]);
 
-  const recentProjects = projects.slice(0, 3);
-  const recentExpenses = expenses.slice(0, 5);
+  const recentProjects = useMemo(() => projects.slice ? projects.slice(0, 3) : [], [projects]);
+  const recentExpenses = useMemo(() => expenses.slice ? expenses.slice(0, 5) : [], [expenses]);
 
-  const isEngineer = user?.role_id === 3;
-  const isViewer = user?.role_id === 4;
-  const noAccess = (isEngineer || isViewer) && stats?.projects?.total_projects === 0;
+  const isEngineer = useMemo(() => user?.role_id === 3, [user]);
+  const isViewer = useMemo(() => user?.role_id === 4, [user]);
+  const noAccess = useMemo(() => (isEngineer || isViewer) && stats?.projects?.total_projects === 0, [isEngineer, isViewer, stats]);
 
   const now = new Date();
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';

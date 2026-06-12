@@ -277,7 +277,7 @@ export default function ManpowerUsage() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={editing ? 'Edit Record' : 'Log Manpower Usage'}
-        style={editing ? { maxWidth: '560px', width: '100%' } : { maxWidth: '860px', width: '90vw' }}
+        width={editing ? '560px' : '860px'}
         footer={null}
       >
         {editing ? (

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import API from '../api';
 
 const AuthContext = createContext(null);
@@ -24,15 +24,36 @@ const ROLE_HOME = {
 };
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]               = useState(null);
+  const [loading, setLoading]         = useState(true);
+  // permissions: { [projectId]: ['can_view_project', 'can_add_expenses', ...] }
+  const [permissions, setPermissions] = useState({});
+
+  // Fetch permissions from backend and build projectId → permissionCode[] map
+  const fetchPermissions = useCallback(async () => {
+    try {
+      const res = await API.get('/auth/me/permissions');
+      if (res.data?.success) {
+        const permMap = {};
+        (res.data.data.projects || []).forEach(p => {
+          permMap[String(p.project_id)] = p.permissions || [];
+        });
+        setPermissions(permMap);
+      }
+    } catch (_) {
+      // Non-critical — silently ignore if endpoint not available
+    }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       API.get('/auth/me')
-        .then(res => setUser(res.data))
+        .then(res => {
+          setUser(res.data);
+          fetchPermissions(); // load permissions after verifying session
+        })
         .catch(() => {
           localStorage.removeItem('token');
           delete API.defaults.headers.common['Authorization'];
@@ -41,7 +62,7 @@ export function AuthProvider({ children }) {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [fetchPermissions]);
 
   const login = async (email, password) => {
     const res = await API.post('/auth/login', { email, password });
@@ -49,6 +70,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', token);
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(userData);
+    await fetchPermissions(); // load dynamic permissions right after login
     return userData;
   };
 
@@ -59,7 +81,6 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    // Tell backend to mark session as ended
     try {
       await API.post('/auth/logout');
     } catch (_) {
@@ -68,10 +89,33 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     delete API.defaults.headers.common['Authorization'];
     setUser(null);
+    setPermissions({});
   };
 
+  /**
+   * Check if the current user has a specific permission on a specific project.
+   * Admin (role_id=1) always returns true regardless of permissions state.
+   *
+   * @param {number|string} projectId
+   * @param {string} permissionCode  e.g. 'can_add_expenses'
+   */
+  const hasPermission = useCallback((projectId, permissionCode) => {
+    if (!user) return false;
+    if (user.role_id === ROLES.ADMIN) return true; // Admin bypass
+    const key = String(projectId);
+    return (permissions[key] || []).includes(permissionCode);
+  }, [user, permissions]);
+
+  /**
+   * Check if user has ANY of the listed permissions on a project.
+   * Useful for routes that allow multiple permission codes.
+   */
+  const hasAnyPermission = useCallback((projectId, ...codes) => {
+    return codes.some(code => hasPermission(projectId, code));
+  }, [hasPermission]);
+
   // Role checks by role_id
-  const roleId = user?.role_id;
+  const roleId       = user?.role_id;
   const isAdmin      = roleId === ROLES.ADMIN;
   const isManager    = roleId === ROLES.MANAGER;
   const isEngineer   = roleId === ROLES.ENGINEER;
@@ -98,6 +142,11 @@ export function AuthProvider({ children }) {
       isAdmin, isManager, isEngineer, isAccountant, isSupervisor, isViewer,
       hasRole, hasRoleId, canEdit, canDeleteResources, getHomeRoute,
       isAuthenticated: !!user,
+      // Dynamic permission system
+      permissions,
+      hasPermission,
+      hasAnyPermission,
+      fetchPermissions,
       ROLES
     }}>
       {children}

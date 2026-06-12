@@ -34,17 +34,25 @@ export default function LoginPage() {
         toast.success('Welcome back!');
       }
     } catch (err) {
-      const code = err.response?.data?.code;
-      const msg = err.response?.data?.error;
+      const status = err.response?.status;
+      const data   = err.response?.data;
+      // Backend always sends { success: false, message: '...' }
+      const msg    = data?.message || err.message || 'Authentication failed';
+      const code   = data?.code || data?.error;
 
       if (code === 'ACCOUNT_BLOCKED') {
-        toast.error('🚫 Account suspended. Contact admin.');
+        toast.error('🚫 Account suspended. Contact your administrator.');
       } else if (code === 'PENDING_APPROVAL') {
         toast.error('⏳ Account pending admin approval. Please wait.');
-      } else if (err.response?.status === 401) {
-        toast.error('Invalid email or password');
+      } else if (status === 401) {
+        toast.error('Invalid email or password. Please try again.');
+      } else if (status === 400) {
+        // Validation error from Joi — show the clean message from backend
+        toast.error(msg);
+      } else if (status === 429) {
+        toast.error('Too many attempts. Please wait 15 minutes and try again.');
       } else {
-        toast.error(msg || 'Authentication failed');
+        toast.error(msg);
       }
     } finally {
       setLoading(false);

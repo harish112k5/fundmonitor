@@ -10,14 +10,14 @@ const pool = require('../db');
  * Viewer (role_id=6)     = only assigned via project_team.
  */
 async function getAllowedProjectIds(userId, roleId) {
-  if (roleId === 1 || roleId === 4) {
-    // Admin & Accountant: all projects
+  if (roleId === 1) {
+    // Admin: all projects
     const [rows] = await pool.query('SELECT project_id as id FROM projects WHERE is_deleted = 0');
     return rows.map(r => r.id);
   }
 
-  if ([2, 3, 5, 6].includes(roleId)) {
-    // Manager, Engineer, Supervisor, Viewer: assigned projects via project_team
+  if ([2, 3, 4, 5, 6].includes(roleId)) {
+    // Manager, Engineer, Accountant, Supervisor, Viewer: assigned projects via project_team
     const [teamRows] = await pool.query(
       'SELECT project_id as id FROM project_team WHERE user_id = ?',
       [userId]

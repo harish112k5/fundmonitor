@@ -29,7 +29,7 @@ export default function Expenses() {
 
   const load = () => {
     Promise.all([API.get('/expenses'), API.get('/projects'), API.get('/expense-categories'), API.get('/users')])
-      .then(([d, p, c, u]) => { setData(d.data); setProjects(p.data); setCategories(c.data); setUsers(u.data); })
+      .then(([d, p, c, u]) => { setData(d.data?.data || d.data); setProjects(p.data?.data || p.data); setCategories(c.data?.data || c.data); setUsers(u.data?.data || u.data); })
       .catch(() => toast.error('Failed')).finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
