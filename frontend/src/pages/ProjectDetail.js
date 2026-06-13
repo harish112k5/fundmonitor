@@ -397,6 +397,7 @@ export default function ProjectDetail() {
   ];
 
   return (
+    <>
     <PageWrapper>
       {/* ── Page Header ── */}
       <AnimatedItem delayIndex={0}>
@@ -932,6 +933,6 @@ export default function ProjectDetail() {
           onCancel={() => setDeleteTarget(null)}
         />
       </Modal>
-    </div>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { SkeletonTable } from '../components/SkeletonCard';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
