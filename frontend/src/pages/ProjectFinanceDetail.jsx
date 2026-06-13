@@ -34,9 +34,34 @@ export default function ProjectFinanceDetail() {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await API.get(`/projects/${id}/finance-summary`);
-        if (res.data.success) setData(res.data.data);
-        else setError(res.data.message || 'Failed to load');
+        const res = await API.get(`/projects/${id}/finance`);
+        // API interceptor auto-unwraps { success: true, data: X } → res.data = X
+        // So res.data is already the inner payload (project, billing, expenses, etc.)
+        const d = res.data;
+        if (d && d.project) {
+          setData({
+            project: d.project || {},
+            billing_summary: d.billing?.summary || {
+              total_billable: 0,
+              total_submitted: 0,
+              total_certified: 0,
+              total_received: 0,
+              pending_payment: 0,
+              pending_approval: 0
+            },
+            actual_cost: {
+              total: d.expenses?.total || 0,
+              material: 0, manpower: 0, machine: 0, expenses: 0
+            },
+            billing_records: d.billing?.records || [],
+            computed: {
+              budget_utilization: 0,
+              roi: 0,
+              net_profit: d.profit_loss || 0
+            }
+          });
+        }
+        else setError('Failed to load');
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load project finance data');
       } finally {
@@ -71,8 +96,8 @@ export default function ProjectFinanceDetail() {
   if (!data) return null;
 
   const { project, billing_summary, actual_cost, billing_records, computed } = data;
-  const pendingPayment = billing_summary.total_certified - billing_summary.total_received;
-  const pendingRecovery = billing_summary.pending_approval + billing_summary.pending_payment;
+  const pendingPayment = (billing_summary?.total_certified || 0) - (billing_summary?.total_received || 0);
+  const pendingRecovery = (billing_summary?.pending_approval || 0) + (billing_summary?.pending_payment || 0);
 
   // Determine the latest stage from billing records
   const latestStage = billing_records.length > 0

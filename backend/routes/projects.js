@@ -61,6 +61,137 @@ router.get('/', asyncHandler(async (req, res) => {
   return res.json({ success: true, data: rows, message: 'Assigned projects retrieved' });
 }));
 
+// GET /api/projects/:projectId/finance
+router.get('/:projectId/finance', asyncHandler(async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+
+    if (!projectId || isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    // QUERY 1: GET PROJECT
+    // projects table: project_id (PRI), estimated_budget (decimal)
+    const [projectRows] = await db.query(
+      'SELECT *, estimated_budget AS tender_value FROM projects WHERE project_id = ? AND is_deleted = 0',
+      [projectId]
+    );
+
+    if (!projectRows || projectRows.length === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    const project = projectRows[0];
+
+    // QUERY 2: GET BILLING SUMMARY
+    // billing table: billing_id (PRI), project_id (FK), amount, billable_amount,
+    //   submitted_amount, certified_amount, payment_received, billing_date, billing_stage
+    let billingSummary = {
+      total_billable: 0,
+      total_submitted: 0,
+      total_certified: 0,
+      total_received: 0,
+      pending_payment: 0
+    };
+    let billingRecords = [];
+
+    try {
+      const [bSum] = await db.query(
+        `SELECT
+          COALESCE(SUM(billable_amount), 0) as total_billable,
+          COALESCE(SUM(submitted_amount), 0) as total_submitted,
+          COALESCE(SUM(certified_amount), 0) as total_certified,
+          COALESCE(SUM(payment_received), 0) as total_received
+        FROM billing
+        WHERE project_id = ?`,
+        [projectId]
+      );
+      if (bSum && bSum[0]) {
+        billingSummary = {
+          total_billable: Number(bSum[0].total_billable) || 0,
+          total_submitted: Number(bSum[0].total_submitted) || 0,
+          total_certified: Number(bSum[0].total_certified) || 0,
+          total_received: Number(bSum[0].total_received) || 0,
+          pending_payment: (Number(bSum[0].total_certified) || 0) - (Number(bSum[0].total_received) || 0)
+        };
+      }
+
+      const [bRec] = await db.query(
+        'SELECT * FROM billing WHERE project_id = ? ORDER BY billing_id DESC LIMIT 50',
+        [projectId]
+      );
+      billingRecords = bRec || [];
+    } catch (e) {
+      console.warn('Billing query skipped:', e.message);
+    }
+
+    // QUERY 3: GET EXPENSES
+    // expenses table: expense_id (PRI), project_id (FK), amount, expense_date
+    let expensesTotal = 0;
+    let expensesRecords = [];
+
+    try {
+      const [eSum] = await db.query(
+        'SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE project_id = ?',
+        [projectId]
+      );
+      expensesTotal = Number(eSum[0]?.total) || 0;
+
+      const [eRec] = await db.query(
+        'SELECT * FROM expenses WHERE project_id = ? ORDER BY expense_date DESC LIMIT 50',
+        [projectId]
+      );
+      expensesRecords = eRec || [];
+    } catch (e) {
+      console.warn('Expenses query skipped:', e.message);
+    }
+
+    // QUERY 4: INVESTORS — via project_investments join
+    // investors table has NO project_id column; project_investments links them
+    let investors = [];
+    try {
+      const [inv] = await db.query(
+        `SELECT i.*, pi.amount as investment_amount, pi.investment_date
+         FROM project_investments pi
+         JOIN investors i ON i.investor_id = pi.investor_id
+         WHERE pi.project_id = ?`,
+        [projectId]
+      );
+      investors = inv || [];
+    } catch (e) { /* table doesn't exist yet, that's fine */ }
+
+    // QUERY 5: LOANS — table is project_loans
+    let loans = [];
+    try {
+      const [ln] = await db.query(
+        'SELECT * FROM project_loans WHERE project_id = ?',
+        [projectId]
+      );
+      loans = ln || [];
+    } catch (e) { /* table doesn't exist yet, that's fine */ }
+
+    // FINAL RESPONSE
+    const tenderValue = Number(project.tender_value) || 0;
+    return res.json({
+      success: true,
+      data: {
+        project: { ...project, tender_value: tenderValue },
+        billing: { summary: billingSummary, records: billingRecords },
+        expenses: { total: expensesTotal, records: expensesRecords },
+        investors,
+        loans,
+        profit_loss: tenderValue - expensesTotal
+      }
+    });
+
+  } catch (err) {
+    console.error('FINANCE ROUTE FATAL:', err.message, err.sql);
+    return res.status(500).json({
+      error: 'Failed to load project finance data',
+      detail: err.message
+    });
+  }
+}));
+
 // GET /api/projects/:id
 router.get('/:id', asyncHandler(async (req, res) => {
   const [rows] = await db.query(`
