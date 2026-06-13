@@ -61,7 +61,7 @@ export default function Investors() {
   const totalRepaid = investors.reduce((s, i) => s + parseFloat(i.total_repaid || 0), 0);
   const totalPending = investors.reduce((s, i) => s + parseFloat(i.pending_return || 0), 0);
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   return (
     <PageWrapper>

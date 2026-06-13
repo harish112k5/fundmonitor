@@ -1,123 +1,160 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import CountUp from 'react-countup';
+import { useInView } from 'react-intersection-observer';
 
-export default function AnimatedKPICard({ 
-  label, 
-  value, 
-  subtitle, 
-  icon, 
-  color = '#F59E0B', 
-  onClick, 
+const AnimatedKPICard = ({
+  label,
+  value,
+  subtitle,
+  icon: Icon,
+  accentColor = '#F59E0B',
   isMoney = false,
-  prefix = '',
+  onClick = null,
   index = 0
-}) {
-  const isNumeric = typeof value === 'number' || !isNaN(Number(value));
-  const numericValue = isNumeric ? Number(value) : 0;
+}) => {
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
+
+  // Helper to parse numeric value for CountUp if it's a string with symbols
+  const parseNumericValue = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    const stripped = String(val).replace(/[^0-9.-]+/g, '');
+    const num = parseFloat(stripped);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const numericValue = parseNumericValue(value);
+  const isPlainString = typeof value === 'string' && isNaN(parseFloat(value.toString().replace(/[^0-9.-]+/g, '')));
 
   return (
-    <div
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 24, scale: 0.96 }}
+      animate={inView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 24, scale: 0.96 }}
+      transition={{ duration: 0.4, delay: index * 0.07 }}
+      whileHover={{
+        y: -5,
+        boxShadow: `0 12px 32px rgba(0,0,0,0.5), 0 0 32px ${accentColor}33`
+      }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
       style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '8px',
-        padding: '18px 20px',
+        backgroundColor: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderTop: `3px solid ${accentColor}`,
+        borderRadius: 'var(--radius-md)',
+        padding: '20px',
         position: 'relative',
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
-        minHeight: '100px',
-        transition: 'all 0.25s ease',
-        animation: `pageEnter 0.35s ease ${index * 0.05}s both`,
-        /* Blueprint grid */
-        backgroundImage: `
-          repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.02) 19px, rgba(255,255,255,0.02) 20px),
-          repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.02) 19px, rgba(255,255,255,0.02) 20px)
-        `,
-        backgroundColor: 'var(--bg-card)'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.4)';
-        e.currentTarget.style.transform = 'translateY(-3px)';
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--border-subtle)';
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = 'none';
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '16px',
+        minHeight: '110px'
       }}
     >
-      {/* Top accent line */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '3px',
-        background: color
-      }} />
-
-      {/* Icon in top-right */}
-      {icon && (
-        <div style={{
+      {/* Background glow decoration */}
+      <div
+        style={{
           position: 'absolute',
-          top: '14px',
-          right: '14px',
-          fontSize: '24px',
-          color: `${color}4D`, // ~30% opacity
+          bottom: '-10px',
+          right: '-10px',
+          width: '80px',
+          height: '80px',
+          borderRadius: '50%',
+          backgroundColor: accentColor,
+          opacity: 0.05,
+          filter: 'blur(20px)',
+          zIndex: 0
+        }}
+      />
+
+      {/* Icon Area */}
+      {Icon && (
+        <div style={{
+          width: '44px',
+          height: '44px',
+          borderRadius: '8px',
+          backgroundColor: `${accentColor}15`,
+          color: accentColor,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          fontSize: '20px',
+          flexShrink: 0,
+          zIndex: 1
         }}>
-          {icon}
+          <Icon />
         </div>
       )}
 
-      {/* Label */}
-      <div style={{
-        fontSize: '10px',
-        fontFamily: "'Inter', sans-serif",
-        fontWeight: '700',
-        textTransform: 'uppercase',
-        letterSpacing: '1.5px',
-        color: 'var(--text-muted)',
-        marginBottom: '10px'
-      }}>
-        {label}
-      </div>
+      {/* Content Area */}
+      <div style={{ flex: 1, zIndex: 1, position: 'relative' }}>
+        <div style={{
+          fontFamily: 'var(--font-heading)',
+          fontSize: '11px',
+          textTransform: 'uppercase',
+          letterSpacing: '1.5px',
+          color: 'var(--text-muted)',
+          fontWeight: 700,
+          marginBottom: '4px'
+        }}>
+          {label}
+        </div>
 
-      {/* Value */}
-      <div style={{
-        fontFamily: "'Oswald', sans-serif",
-        fontSize: '28px',
-        fontWeight: '700',
-        color: 'var(--text-primary)',
-        lineHeight: '1'
-      }}>
-        {isNumeric && isMoney ? (
-          <>
-            {prefix}{prefix === '-' ? '' : ''}₹<CountUp end={numericValue} duration={1.5} separator="," />
-          </>
-        ) : isNumeric ? (
-          <>
-            {prefix}<CountUp end={numericValue} duration={1.5} separator="," />
-          </>
-        ) : (
-          <>{prefix}{value}</>
+        <div style={{
+          fontFamily: 'var(--font-heading)',
+          fontSize: '28px',
+          fontWeight: 700,
+          color: accentColor,
+          lineHeight: 1
+        }}>
+          {isPlainString ? (
+            value
+          ) : (
+            <>
+              {isMoney && '₹'}
+              {inView ? (
+                <CountUp
+                  duration={1.8}
+                  separator=","
+                  start={0}
+                  end={numericValue}
+                  decimals={numericValue % 1 !== 0 ? 2 : 0}
+                />
+              ) : '0'}
+            </>
+          )}
+        </div>
+
+        {subtitle && (
+          <div style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '11px',
+            color: 'var(--text-muted)',
+            marginTop: '6px'
+          }}>
+            {subtitle}
+          </div>
         )}
       </div>
 
-      {/* Subtitle */}
-      {subtitle && (
-        <div style={{
-          fontSize: '11px',
-          fontFamily: "'Inter', sans-serif",
-          color: 'var(--text-muted)',
-          marginTop: '6px'
-        }}>
-          {subtitle}
-        </div>
-      )}
-    </div>
+      {/* Hover animated bottom line */}
+      <motion.div
+        initial={{ width: '0%' }}
+        whileHover={{ width: '100%' }}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          height: '2px',
+          backgroundColor: accentColor,
+          opacity: 0.4
+        }}
+      />
+    </motion.div>
   );
-}
+};
+
+export default AnimatedKPICard;

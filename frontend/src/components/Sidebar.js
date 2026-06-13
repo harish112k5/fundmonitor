@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   DashboardIcon, ProjectIcon, MaterialIcon, WorkerIcon, MachineIcon,
   FinanceIcon, InvestorIcon, LoanIcon, ExpenseIcon, BillingIcon,
@@ -72,7 +73,6 @@ export default function Sidebar() {
   }, [roleId, location.pathname, hasRoleId]);
 
   // Navigation sections defined by role_id arrays
-  // role_ids: 1=Admin, 2=Manager, 3=Engineer, 4=Accountant, 5=Supervisor, 6=Viewer
   const navSections = [
     {
       title: 'Overview',
@@ -184,166 +184,180 @@ export default function Sidebar() {
         {mobileOpen ? <HiOutlineX /> : <HiOutlineMenu />}
       </button>
 
-      {mobileOpen && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }}
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99, backdropFilter: 'blur(2px)' }}
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
-      <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${mobileOpen ? 'open' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Brand */}
         <div className="sidebar-brand">
-          <div className="sidebar-brand-icon">
+          <div className="sidebar-brand-icon" style={{ color: 'var(--accent)' }}>
             <HelmetIcon size={32} />
           </div>
           <div>
-            <h1>BillX</h1>
-            <span>Financial Infrastructure</span>
+            <h1 style={{ fontFamily: 'var(--font-heading)', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0, fontSize: '20px' }}>BillX</h1>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '1px', textTransform: 'uppercase' }}>Financial Infrastructure</span>
           </div>
         </div>
 
         {/* User info */}
         {user && (
-          <div className="sidebar-user" onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
-            <div className="sidebar-user-avatar" style={{ position: 'relative' }}>
+          <motion.div 
+            whileHover={{ backgroundColor: 'rgba(245,158,11,0.05)' }}
+            className="sidebar-user" 
+            onClick={handleProfileClick} 
+            style={{ cursor: 'pointer', borderRadius: 'var(--radius-sm)', transition: 'background-color 0.2s' }}
+          >
+            <div className="sidebar-user-avatar" style={{ position: 'relative', border: '1px solid var(--accent)' }}>
               {user.name?.charAt(0)?.toUpperCase()}
               {/* Online indicator */}
               <span style={{
                 position: 'absolute', bottom: -1, right: -1,
-                width: 6, height: 6, borderRadius: '50%',
-                background: '#16A34A', border: '1px solid var(--bg-secondary)',
-                animation: 'sitePulse 2s ease-in-out infinite'
+                width: 8, height: 8, borderRadius: '50%',
+                background: '#10B981', border: '2px solid var(--bg-secondary)',
+                animation: 'pulse-glow 2s ease-in-out infinite'
               }} />
             </div>
             <div className="sidebar-user-info">
-              <div className="sidebar-user-name">{user.name}</div>
-              <div className="sidebar-user-role">
+              <div className="sidebar-user-name" style={{ fontFamily: 'var(--font-heading)', letterSpacing: '0.5px' }}>{user.name}</div>
+              <div className="sidebar-user-role" style={{ color: 'var(--accent)' }}>
                 {user.role_name?.charAt(0).toUpperCase() + user.role_name?.slice(1)}
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" style={{ flex: 1 }}>
           {filteredSections.map((section) => (
             <div key={section.title} className="sidebar-section">
-              <div className="sidebar-section-title">{section.title}</div>
+              <div className="sidebar-section-title" style={{ fontFamily: 'var(--font-heading)', letterSpacing: '1px' }}>{section.title}</div>
               {section.items.map((item) => {
                 const isActive = location.pathname === item.path ||
                   (item.path !== '/' && location.pathname.startsWith(item.path + '/'));
                 const IconComponent = iconMap[item.path] || DashboardIcon;
 
                 return (
-                  <div
+                  <motion.div
                     key={item.path}
+                    whileHover={{ x: 4, backgroundColor: isActive ? 'var(--accent-glow)' : 'rgba(255,255,255,0.02)' }}
                     onClick={() => { navigate(item.path); setMobileOpen(false); }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
                       padding: '0 12px', height: '40px', cursor: 'pointer',
-                      borderLeft: isActive ? '3px solid var(--text-accent)' : '3px solid transparent',
+                      borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
                       background: isActive ? 'var(--accent-glow)' : 'transparent',
                       color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
                       fontWeight: isActive ? '600' : '500',
                       fontSize: '13px',
-                      transition: 'all 0.15s ease',
-                      justifyContent: 'space-between'
-                    }}
-                    onMouseEnter={e => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = 'var(--bg-card-hover)';
-                        e.currentTarget.style.color = 'var(--text-primary)';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-muted)';
-                      }
+                      transition: 'color 0.2s ease, background-color 0.2s ease, border-left-color 0.2s ease',
+                      justifyContent: 'space-between',
+                      fontFamily: 'var(--font-body)'
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <IconComponent size={16} />
-                      <span>{item.label}</span>
+                      <span style={{ color: isActive ? 'var(--text-primary)' : 'inherit' }}>{item.label}</span>
                     </div>
                     {item.badge > 0 && (
                       <span style={{
-                        backgroundColor: '#DC2626',
-                        color: 'var(--text-primary)',
-                        borderRadius: '4px',
-                        padding: '1px 6px',
+                        backgroundColor: '#EF4444',
+                        color: '#FFFFFF',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '2px 6px',
                         fontSize: '10px',
-                        fontWeight: '700'
+                        fontWeight: '700',
+                        fontFamily: 'var(--font-mono)'
                       }}>
                         {item.badge}
                       </span>
                     )}
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
           ))}
         </nav>
 
-        {/* Theme Toggle */}
-        <div style={{ padding: '8px' }}>
-          <button
-            onClick={toggleTheme}
-            style={{
-              width: '100%',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '8px 12px', borderRadius: '6px',
-              border: '1px solid var(--border-medium)',
-              background: 'transparent',
-              cursor: 'pointer', color: 'var(--text-muted)',
-              fontSize: '10px', fontWeight: '500',
-              fontFamily: "'Inter', sans-serif",
-              textTransform: 'uppercase', letterSpacing: '1px',
-              transition: 'all 0.2s',
+        {/* Bottom Actions */}
+        <div style={{ padding: '16px', borderTop: '1px solid var(--border)' }}>
+          {/* Theme Toggle */}
+          <div style={{ marginBottom: '12px' }}>
+            <button
+              onClick={toggleTheme}
+              style={{
+                width: '100%',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)',
+                background: 'rgba(255,255,255,0.02)',
+                cursor: 'pointer', color: 'var(--text-muted)',
+                fontSize: '11px', fontWeight: '600',
+                fontFamily: 'var(--font-heading)',
+                textTransform: 'uppercase', letterSpacing: '1px',
+                transition: 'all 0.2s',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 14 }}>{isDark ? '☀️' : '🌙'}</span>
+                {isDark ? 'Day Mode' : 'Dark Mode'}
+              </span>
+              <span style={{
+                width: 32, height: 16,
+                borderRadius: 8,
+                background: isDark ? 'var(--accent)' : 'var(--border-medium)',
+                position: 'relative',
+                transition: 'background 0.3s',
+                flexShrink: 0,
+              }}>
+                <span style={{
+                  position: 'absolute',
+                  top: 2, left: isDark ? 16 : 2,
+                  width: 12, height: 12,
+                  borderRadius: '50%',
+                  background: '#0A0A0F',
+                  transition: 'left 0.3s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                }} />
+              </span>
+            </button>
+          </div>
+
+          {/* Logout */}
+          <motion.button 
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }}
+            whileTap={{ scale: 0.98 }}
+            onClick={logout} 
+            style={{ 
+              width: '100%', 
+              border: '1px solid var(--border)', 
+              background: 'transparent', 
+              cursor: 'pointer', 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '10px',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-heading)',
+              fontSize: '13px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              transition: 'all 0.2s'
             }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 14 }}>{isDark ? '☀️' : '🌙'}</span>
-              {isDark ? 'Day Mode' : 'Dark Site'}
-            </span>
-            <span style={{
-              width: 32, height: 16,
-              borderRadius: 8,
-              background: isDark ? 'var(--text-accent)' : 'var(--border-medium)',
-              position: 'relative',
-              transition: 'background 0.3s',
-              flexShrink: 0,
-            }}>
-              <span style={{
-                position: 'absolute',
-                top: 2, left: isDark ? 16 : 2,
-                width: 12, height: 12,
-                borderRadius: '50%',
-                background: '#fff',
-                transition: 'left 0.3s',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-              }} />
-            </span>
-          </button>
-        </div>
-
-        {/* Subtle crane illustration */}
-        <div style={{ padding: '0 16px 4px', opacity: 0.08 }}>
-          <svg width="180" height="40" viewBox="0 0 180 40" fill="none">
-            <line x1="90" y1="5" x2="90" y2="38" stroke="#F59E0B" strokeWidth="1" />
-            <line x1="50" y1="5" x2="160" y2="5" stroke="#F59E0B" strokeWidth="1" />
-            <line x1="160" y1="5" x2="150" y2="30" stroke="#F59E0B" strokeWidth="0.5" />
-            <rect x="20" y="25" width="40" height="15" stroke="#F59E0B" strokeWidth="0.5" fill="none" />
-            <rect x="120" y="30" width="50" height="10" stroke="#F59E0B" strokeWidth="0.5" fill="none" />
-          </svg>
-        </div>
-
-        {/* Logout */}
-        <div className="sidebar-logout">
-          <button className="sidebar-link" onClick={logout} style={{ width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}>
-            <span className="sidebar-link-icon"><HiOutlineLogout /></span>
+            <HiOutlineLogout size={16} />
             Sign Out
-          </button>
+          </motion.button>
         </div>
       </aside>
     </>

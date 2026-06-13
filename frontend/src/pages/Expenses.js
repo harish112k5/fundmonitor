@@ -96,7 +96,7 @@ export default function Expenses() {
     { header: 'Recorded By', accessor: 'recorded_by_name', render: r => r.recorded_by_name || '—' },
   ];
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   return (
     <PageWrapper>

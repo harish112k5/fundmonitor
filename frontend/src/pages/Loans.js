@@ -74,7 +74,7 @@ export default function Loans() {
   const totalInterestPaid = data.reduce((s, d) => s + parseFloat(d.total_interest_paid || 0), 0);
   const totalOverdue = data.reduce((s, d) => s + parseInt(d.overdue_count || 0), 0);
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   return (
     <PageWrapper>

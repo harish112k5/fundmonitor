@@ -23,7 +23,7 @@ export default function AlertsPage() {
 
   const fmt = (n) => n ? `₹${Number(n).toLocaleString('en-IN')}` : '₹0';
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   return (
     <PageWrapper>

@@ -1,27 +1,32 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
-// Construction-themed badge — angular, no pill shape
-export function AnimatedBadge({ status, color = '#F59E0B' }) {
-  const bgColor = color + '26'; // ~15% opacity
-  const borderColor = color + '4D'; // ~30% opacity
-
+const AnimatedBadge = ({ status, color = '#F59E0B' }) => {
   return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '3px 8px',
-      borderRadius: '4px',
-      fontSize: '10px',
-      fontFamily: "'Inter', sans-serif",
-      fontWeight: '700',
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px',
-      color: color,
-      background: bgColor,
-      border: `1px solid ${borderColor}`,
-      whiteSpace: 'nowrap'
-    }}>
+    <motion.span
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.06 }}
+      style={{
+        backgroundColor: `${color}18`, // 18 hex = ~9.4% opacity
+        color: color,
+        border: `1px solid ${color}35`, // 35 hex = ~20% opacity
+        borderRadius: 'var(--radius-sm)',
+        padding: '3px 8px',
+        fontSize: '11px',
+        fontWeight: 700,
+        fontFamily: 'var(--font-heading)',
+        letterSpacing: '0.5px',
+        textTransform: 'uppercase',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        whiteSpace: 'nowrap'
+      }}
+    >
       {status}
-    </span>
+    </motion.span>
   );
-}
+};
+
+export default AnimatedBadge;

@@ -148,7 +148,7 @@ export default function Billing() {
 
   const showRejection = ['CERTIFIED','PARTIALLY_PAID','PAYMENT_RECEIVED'].includes(form.billing_stage);
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   const inputStyle = { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '8px 10px', fontSize: 13, width: '100%', outline: 'none', transition: 'border-color 0.2s' };
   const labelStyle = { fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4, display: 'block' };

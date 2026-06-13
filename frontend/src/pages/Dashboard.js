@@ -4,7 +4,9 @@ import API from '../api';
 import { useAuth } from '../context/AuthContext';
 import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import AnimatedKPICard from '../components/AnimatedKPICard';
+import SkeletonCard, { SkeletonKPI } from '../components/SkeletonCard';
 import { SkylineSVG } from '../components/CivilIcons';
+import { motion } from 'framer-motion';
 import {
   HiOutlineOfficeBuilding,
   HiOutlineUsers,
@@ -12,14 +14,14 @@ import {
   HiOutlineCurrencyDollar,
   HiOutlineCash,
   HiOutlineDocumentText,
-  HiOutlineCube,
   HiOutlineChartBar,
   HiOutlineExclamationCircle,
   HiOutlineArrowRight,
   HiOutlineRefresh,
   HiOutlineTrendingUp,
   HiOutlineTrendingDown,
-  HiOutlineCog
+  HiOutlineCog,
+  HiOutlineCube
 } from 'react-icons/hi';
 import AccountantDashboard from './AccountantDashboard';
 import SupervisorDashboard from './SupervisorDashboard';
@@ -47,7 +49,7 @@ function DashboardContent() {
   const fetchData = () => {
     setStatsLoading(true); setStatsError(false);
     API.get('/dashboard/stats')
-      .then(res => setStats(res.data || res)) // In case api interceptor does not run
+      .then(res => setStats(res.data || res))
       .catch(() => setStatsError(true))
       .finally(() => setStatsLoading(false));
 
@@ -98,89 +100,111 @@ function DashboardContent() {
   return (
     <PageWrapper>
       {noAccess ? (
-        <AnimatedItem delay={0} style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏗️</div>
-          <h3 style={{ fontFamily: "'Oswald', sans-serif", color: 'var(--text-primary)', marginBottom: '8px', textTransform: 'uppercase' }}>No Projects Assigned Yet</h3>
-          <p>Your admin will assign you to a project shortly. Check back soon.</p>
-          <button onClick={fetchData} className="btn-premium" style={{ margin: '24px auto 0' }}>
-            <HiOutlineRefresh size={16} /> Refresh
-          </button>
+        <AnimatedItem delayIndex={0}>
+          <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }} className="animate-float">🏗️</div>
+            <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              No Projects Assigned Yet
+            </h3>
+            <p>Your admin will assign you to a project shortly. Check back soon.</p>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={fetchData} 
+              className="btn-premium" 
+              style={{ margin: '24px auto 0' }}
+            >
+              <HiOutlineRefresh size={16} /> Refresh
+            </motion.button>
+          </div>
         </AnimatedItem>
       ) : (
         <>
           {/* HERO BANNER */}
-          <AnimatedItem delay={0}>
+          <AnimatedItem delayIndex={0}>
             <div style={{
               background: 'var(--bg-card)',
-              border: '1px solid var(--border-subtle)',
-              borderLeft: '4px solid #F59E0B',
-              borderRadius: '8px',
-              padding: '20px 24px',
-              marginBottom: '28px',
+              border: '1px solid var(--border)',
+              borderLeft: '4px solid var(--accent)',
+              borderRadius: 'var(--radius-md)',
+              padding: '24px',
+              marginBottom: '32px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              minHeight: '80px',
+              minHeight: '88px',
               overflow: 'hidden',
-              position: 'relative'
+              position: 'relative',
+              boxShadow: 'var(--shadow-sm)'
             }}>
               <div style={{ zIndex: 1 }}>
-                <h1 style={{
-                  fontFamily: "'Oswald', sans-serif",
-                  fontSize: '24px',
+                <h1 className="text-gradient" style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '28px',
                   fontWeight: '700',
-                  color: 'var(--text-primary)',
                   textTransform: 'uppercase',
-                  letterSpacing: '1px',
+                  letterSpacing: '2px',
                   margin: 0
                 }}>
                   SITE COMMAND CENTER
                 </h1>
                 <p style={{
+                  fontFamily: 'var(--font-body)',
                   fontSize: '13px',
                   color: 'var(--text-secondary)',
-                  marginTop: '4px'
+                  marginTop: '6px',
+                  letterSpacing: '0.5px'
                 }}>
-                  {greeting}, {user?.name || 'User'} — {stats?.projects?.total_projects || 0} active projects
+                  {greeting}, <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{user?.name || 'User'}</span> — {stats?.projects?.total_projects || 0} active projects
                 </p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', zIndex: 1 }}>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
                 <div style={{ 
-                  fontFamily: "'Roboto Mono', monospace", 
+                  fontFamily: 'var(--font-mono)', 
                   fontSize: '12px', color: 'var(--text-muted)', textAlign: 'right' 
                 }}>
                   {now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                   <br />
-                  {now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  <span style={{ color: 'var(--accent)' }}>
+                    {now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
                 {!alertsLoading && !alertsError && alertCount > 0 && (
                   <Link to="/alerts" style={{ textDecoration: 'none' }}>
-                    <button style={{
-                      backgroundColor: 'rgba(220, 38, 38, 0.12)',
-                      border: '1px solid rgba(220, 38, 38, 0.3)',
-                      color: '#DC2626', borderRadius: '6px',
-                      padding: '8px 14px', cursor: 'pointer', fontSize: '12px',
-                      fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px',
-                      textTransform: 'uppercase', letterSpacing: '0.5px',
-                      fontFamily: "'Inter', sans-serif"
-                    }}>
+                    <motion.button 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="animate-pulse-glow"
+                      style={{
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        color: '#EF4444', 
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '8px 16px', cursor: 'pointer', fontSize: '12px',
+                        fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px',
+                        textTransform: 'uppercase', letterSpacing: '0.5px',
+                        fontFamily: 'var(--font-heading)'
+                      }}
+                    >
                       <HiOutlineExclamationCircle size={16} /> {alertCount} Alert{alertCount !== 1 ? 's' : ''}
-                    </button>
+                    </motion.button>
                   </Link>
                 )}
-                <button
+                <motion.button
+                  whileHover={{ rotate: 180, backgroundColor: 'rgba(255,255,255,0.05)' }}
                   onClick={fetchData}
                   style={{
-                    background: 'transparent', border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-secondary)', borderRadius: '6px',
+                    background: 'transparent', border: '1px solid var(--border)',
+                    color: 'var(--text-secondary)', borderRadius: 'var(--radius-sm)',
                     width: '36px', height: '36px', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.15s'
                   }}
                 >
                   <HiOutlineRefresh size={16} />
-                </button>
+                </motion.button>
               </div>
+              
               {/* Skyline illustration */}
               <div style={{ 
                 position: 'absolute', bottom: 0, right: 0, 
@@ -192,40 +216,30 @@ function DashboardContent() {
           </AnimatedItem>
 
           {/* PRIMARY METRICS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
             {statsLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
-                  <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                  <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                </div>
-              ))
+              Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
             ) : (
               <>
-                <AnimatedKPICard index={0} icon={<HiOutlineOfficeBuilding size={24} />} color="#F59E0B" label="TOTAL PROJECTS" value={stats?.projects?.total_projects || 0} subtitle={`${stats?.projects?.ongoing || 0} ongoing · ${stats?.projects?.completed || 0} completed`} onClick={() => navigate('/projects')} />
-                <AnimatedKPICard index={1} icon={<HiOutlineUsers size={24} />} color="var(--text-secondary)" label="ACTIVE WORKERS" value={stats?.workers?.active_workers || 0} subtitle={`of ${stats?.workers?.total_workers || 0} total workers`} onClick={() => navigate('/workers')} />
-                <AnimatedKPICard index={2} icon={<HiOutlineTruck size={24} />} color="#0284C7" label="MACHINES" value={stats?.machines?.total_machines || 0} subtitle={`${stats?.machines?.available || 0} available · ${stats?.machines?.in_use || 0} in use`} onClick={() => navigate('/machines')} />
-                <AnimatedKPICard index={3} icon={<HiOutlineCurrencyDollar size={24} />} color="#F59E0B" label="TOTAL BUDGET" value={fmt(stats?.projects?.total_budget)} isMoney={true} subtitle="Across all projects" onClick={() => navigate('/projects')} />
+                <AnimatedKPICard index={0} icon={HiOutlineOfficeBuilding} accentColor="#F59E0B" label="TOTAL PROJECTS" value={stats?.projects?.total_projects || 0} subtitle={`${stats?.projects?.ongoing || 0} ongoing · ${stats?.projects?.completed || 0} completed`} onClick={() => navigate('/projects')} />
+                <AnimatedKPICard index={1} icon={HiOutlineUsers} accentColor="#9CA3AF" label="ACTIVE WORKERS" value={stats?.workers?.active_workers || 0} subtitle={`of ${stats?.workers?.total_workers || 0} total workers`} onClick={() => navigate('/workers')} />
+                <AnimatedKPICard index={2} icon={HiOutlineTruck} accentColor="#3B82F6" label="MACHINES" value={stats?.machines?.total_machines || 0} subtitle={`${stats?.machines?.available || 0} available · ${stats?.machines?.in_use || 0} in use`} onClick={() => navigate('/machines')} />
+                <AnimatedKPICard index={3} icon={HiOutlineCurrencyDollar} accentColor="#F59E0B" label="TOTAL BUDGET" value={fmt(stats?.projects?.total_budget)} isMoney={true} subtitle="Across all projects" onClick={() => navigate('/projects')} />
               </>
             )}
           </div>
 
           {/* FINANCIAL METRICS (Admin & Manager only) */}
           {(user?.role_id === 1 || user?.role_id === 2) && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
               {statsLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
-                    <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                    <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                  </div>
-                ))
+                Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
               ) : (
                 <>
-                  <AnimatedKPICard index={4} icon={<HiOutlineChartBar size={24} />} color="#DC2626" label="ACTUAL COST" value={fmt(stats?.costs?.total)} isMoney={true} subtitle="Total spending" onClick={() => navigate('/expenses')} />
-                  <AnimatedKPICard index={5} icon={<HiOutlineDocumentText size={24} />} color="#16A34A" label="BILLED (REVENUE)" value={fmt(stats?.financial?.billed)} isMoney={true} subtitle={`${fmtCurrency(stats?.financial?.paid)} paid`} onClick={() => navigate('/billing')} />
-                  <AnimatedKPICard index={6} icon={isProfit ? <HiOutlineTrendingUp size={24} /> : <HiOutlineTrendingDown size={24} />} color={isProfit ? '#16A34A' : '#DC2626'} label="NET PROFIT / LOSS" value={Math.abs(netProfit)} isMoney={true} prefix={isProfit ? '+' : '-'} subtitle="Revenue − Actual Cost" onClick={() => navigate('/billing')} />
-                  <AnimatedKPICard index={7} icon={<HiOutlineCash size={24} />} color="#F59E0B" label="TOTAL INVESTMENTS" value={fmt(stats?.financial?.investments)} isMoney={true} subtitle="From all investors" onClick={() => navigate('/investments')} />
+                  <AnimatedKPICard index={4} icon={HiOutlineChartBar} accentColor="#EF4444" label="ACTUAL COST" value={fmt(stats?.costs?.total)} isMoney={true} subtitle="Total spending" onClick={() => navigate('/expenses')} />
+                  <AnimatedKPICard index={5} icon={HiOutlineDocumentText} accentColor="#10B981" label="BILLED (REVENUE)" value={fmt(stats?.financial?.billed)} isMoney={true} subtitle={`${fmtCurrency(stats?.financial?.paid)} paid`} onClick={() => navigate('/billing')} />
+                  <AnimatedKPICard index={6} icon={isProfit ? HiOutlineTrendingUp : HiOutlineTrendingDown} accentColor={isProfit ? '#10B981' : '#EF4444'} label="NET PROFIT / LOSS" value={Math.abs(netProfit)} isMoney={true} subtitle="Revenue − Actual Cost" onClick={() => navigate('/billing')} />
+                  <AnimatedKPICard index={7} icon={HiOutlineCash} accentColor="#F59E0B" label="TOTAL INVESTMENTS" value={fmt(stats?.financial?.investments)} isMoney={true} subtitle="From all investors" onClick={() => navigate('/investments')} />
                 </>
               )}
             </div>
@@ -233,144 +247,143 @@ function DashboardContent() {
 
           {/* RESOURCE COST BREAKDOWN (Admin, Manager, Engineer only) */}
           {(user?.role_id === 1 || user?.role_id === 2 || user?.role_id === 3) && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '14px', marginBottom: '28px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
               {statsLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '18px 20px', minHeight: '100px' }}>
-                    <div style={{ width: '60%', height: '10px', background: 'var(--border-subtle)', borderRadius: '2px', marginBottom: '12px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                    <div style={{ width: '40%', height: '24px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                  </div>
-                ))
+                Array.from({ length: 3 }).map((_, i) => <SkeletonKPI key={i} />)
               ) : (
                 <>
-                  <AnimatedKPICard index={8} icon={<HiOutlineCube size={24} />} color="#F59E0B" label="MATERIAL COST" value={fmt(stats?.costs?.material)} isMoney={true} subtitle="Raw materials used" onClick={() => navigate('/materials')} />
-                  <AnimatedKPICard index={9} icon={<HiOutlineUsers size={24} />} color="var(--text-secondary)" label="MANPOWER COST" value={fmt(stats?.costs?.manpower)} isMoney={true} subtitle="Labour wages total" onClick={() => navigate('/workers')} />
-                  <AnimatedKPICard index={10} icon={<HiOutlineCog size={24} />} color="#0284C7" label="MACHINE COST" value={fmt(stats?.costs?.machine)} isMoney={true} subtitle="Equipment usage cost" onClick={() => navigate('/machines')} />
+                  <AnimatedKPICard index={8} icon={HiOutlineCube} accentColor="#F59E0B" label="MATERIAL COST" value={fmt(stats?.costs?.material)} isMoney={true} subtitle="Raw materials used" onClick={() => navigate('/materials')} />
+                  <AnimatedKPICard index={9} icon={HiOutlineUsers} accentColor="#9CA3AF" label="MANPOWER COST" value={fmt(stats?.costs?.manpower)} isMoney={true} subtitle="Labour wages total" onClick={() => navigate('/workers')} />
+                  <AnimatedKPICard index={10} icon={HiOutlineCog} accentColor="#3B82F6" label="MACHINE COST" value={fmt(stats?.costs?.machine)} isMoney={true} subtitle="Equipment usage cost" onClick={() => navigate('/machines')} />
                 </>
               )}
             </div>
           )}
 
           {/* RECENT ACTIVITY */}
-          <AnimatedItem delay={0.2}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {/* Recent Projects */}
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '3px', height: '16px', background: '#F59E0B', borderRadius: '1px', display: 'inline-block' }} />
-                    RECENT SITES
-                  </h3>
-                  <Link to="/projects" style={{ fontSize: '13px', color: '#F59E0B', fontWeight: '500', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    View All <HiOutlineArrowRight />
-                  </Link>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {projectsLoading ? (
-                    [1,2,3].map(i => (
-                      <div key={i} style={{ padding: '12px 14px', background: 'var(--bg-card)', borderRadius: '6px' }}>
-                        <div style={{ width: '40%', height: '14px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
-                      </div>
-                    ))
-                  ) : projectsError ? (
-                    <p style={{ color: '#DC2626', fontSize: '13px', margin: 0 }}>Failed to load</p>
-                  ) : recentProjects.length > 0 ? (
-                    recentProjects.map((p, i) => (
-                      <div
-                        key={p.project_id}
-                        onClick={() => navigate('/projects')}
-                        style={{
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          padding: '12px 14px', background: 'var(--bg-card)', border: '1px solid transparent',
-                          borderRadius: '6px', cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          animation: `pageEnter 0.3s ease ${i * 0.08}s both`
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.05)'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.2)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'transparent'; }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-primary)' }}>{p.project_name}</div>
-                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{p.location || 'No Location'}</div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span className={`badge badge-${p.status}`}>{p.status?.replace('_', ' ')}</span>
-                          <span style={{ fontFamily: "'Roboto Mono', monospace", fontWeight: '500', fontSize: '13px', color: 'var(--text-primary)' }}>
-                            {fmtCurrency(p.estimated_budget)}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No recent projects</p>
-                  )}
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+            {/* Recent Projects */}
+            <AnimatedItem delayIndex={3} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px', boxShadow: 'var(--shadow-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', fontWeight: '600', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '4px', height: '18px', background: 'var(--accent)', borderRadius: '2px', display: 'inline-block' }} />
+                  RECENT SITES
+                </h3>
+                <Link to="/projects" style={{ fontFamily: 'var(--font-heading)', fontSize: '13px', color: 'var(--accent)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  View All <HiOutlineArrowRight />
+                </Link>
               </div>
-
-              {/* Recent Expenses */}
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '3px', height: '16px', background: '#F59E0B', borderRadius: '1px', display: 'inline-block' }} />
-                    RECENT EXPENDITURE
-                  </h3>
-                  <Link to="/expenses" style={{ fontSize: '13px', color: '#F59E0B', fontWeight: '500', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    View All <HiOutlineArrowRight />
-                  </Link>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {expensesLoading ? (
-                    [1,2,3,4,5].map(i => (
-                      <div key={i} style={{ padding: '12px 14px', background: 'var(--bg-card)', borderRadius: '6px' }}>
-                        <div style={{ width: '50%', height: '14px', background: 'var(--border-subtle)', borderRadius: '2px', animation: 'sitePulse 1.5s ease-in-out infinite' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {projectsLoading ? (
+                  [1,2,3].map(i => (
+                    <div key={i} style={{ padding: '16px', background: 'var(--bg-page)', borderRadius: 'var(--radius-md)' }}>
+                      <div className="animate-shimmer" style={{ width: '40%', height: '14px', borderRadius: '4px' }} />
+                    </div>
+                  ))
+                ) : projectsError ? (
+                  <p style={{ color: '#EF4444', fontSize: '13px', margin: 0, fontFamily: 'var(--font-body)' }}>Failed to load projects</p>
+                ) : recentProjects.length > 0 ? (
+                  recentProjects.map((p, i) => (
+                    <motion.div
+                      key={p.project_id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: i * 0.1 }}
+                      whileHover={{ backgroundColor: 'rgba(245,158,11,0.08)', x: 4 }}
+                      onClick={() => navigate('/projects')}
+                      style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '16px', background: 'var(--bg-page)', border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-md)', cursor: 'pointer'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', letterSpacing: '0.5px' }}>{p.project_name}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', fontFamily: 'var(--font-body)' }}>{p.location || 'No Location'}</div>
                       </div>
-                    ))
-                  ) : expensesError ? (
-                    <p style={{ color: '#DC2626', fontSize: '13px', margin: 0 }}>Failed to load</p>
-                  ) : recentExpenses.length > 0 ? (
-                    recentExpenses.map((e, i) => (
-                      <div
-                        key={e.expense_id}
-                        onClick={() => navigate('/expenses')}
-                        style={{
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          padding: '12px 14px', background: 'var(--bg-card)', border: '1px solid transparent',
-                          borderRadius: '6px', cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          animation: `pageEnter 0.3s ease ${i * 0.08}s both`
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.05)'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.2)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'transparent'; }}
-                      >
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span className="badge badge-pending" style={{ margin: 0 }}>{e.category_name || 'Expense'}</span>
-                            <span style={{ fontWeight: '500', fontSize: '13px', color: '#D6D3CE' }}>
-                              {e.description ? (e.description.length > 30 ? e.description.substring(0, 30) + '...' : e.description) : 'No description'}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                            Project: {e.project_name} · {e.expense_date ? new Date(e.expense_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                          </div>
-                        </div>
-                        <span style={{ fontFamily: "'Roboto Mono', monospace", fontWeight: '500', fontSize: '13px', color: '#DC2626' }}>
-                          {fmtCurrency(e.amount)}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ 
+                          backgroundColor: p.status === 'Ongoing' ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)',
+                          color: p.status === 'Ongoing' ? '#3B82F6' : '#10B981',
+                          border: `1px solid ${p.status === 'Ongoing' ? 'rgba(59,130,246,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                          padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase'
+                        }}>
+                          {p.status?.replace('_', ' ')}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '500', fontSize: '14px', color: 'var(--text-primary)' }}>
+                          {fmtCurrency(p.estimated_budget)}
                         </span>
                       </div>
-                    ))
-                  ) : (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No recent expenses</p>
-                  )}
-                </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No recent projects</p>
+                )}
               </div>
-            </div>
-          </AnimatedItem>
+            </AnimatedItem>
 
-          <style>{`
-            @media (max-width: 768px) {
-              .recent-activity-grid { grid-template-columns: 1fr !important; }
-            }
-          `}</style>
+            {/* Recent Expenses */}
+            <AnimatedItem delayIndex={4} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px', boxShadow: 'var(--shadow-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', fontWeight: '600', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '4px', height: '18px', background: 'var(--accent)', borderRadius: '2px', display: 'inline-block' }} />
+                  RECENT EXPENDITURE
+                </h3>
+                <Link to="/expenses" style={{ fontFamily: 'var(--font-heading)', fontSize: '13px', color: 'var(--accent)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  View All <HiOutlineArrowRight />
+                </Link>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {expensesLoading ? (
+                  [1,2,3,4].map(i => (
+                    <div key={i} style={{ padding: '16px', background: 'var(--bg-page)', borderRadius: 'var(--radius-md)' }}>
+                      <div className="animate-shimmer" style={{ width: '50%', height: '14px', borderRadius: '4px' }} />
+                    </div>
+                  ))
+                ) : expensesError ? (
+                  <p style={{ color: '#EF4444', fontSize: '13px', margin: 0, fontFamily: 'var(--font-body)' }}>Failed to load expenses</p>
+                ) : recentExpenses.length > 0 ? (
+                  recentExpenses.map((e, i) => (
+                    <motion.div
+                      key={e.expense_id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: i * 0.1 }}
+                      whileHover={{ backgroundColor: 'rgba(245,158,11,0.08)', x: 4 }}
+                      onClick={() => navigate('/expenses')}
+                      style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '16px', background: 'var(--bg-page)', border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-md)', cursor: 'pointer'
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ 
+                            backgroundColor: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)',
+                            padding: '3px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', fontFamily: 'var(--font-heading)'
+                          }}>
+                            {e.category_name || 'Expense'}
+                          </span>
+                          <span style={{ fontWeight: '500', fontSize: '14px', color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>
+                            {e.description ? (e.description.length > 30 ? e.description.substring(0, 30) + '...' : e.description) : 'No description'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px', fontFamily: 'var(--font-body)' }}>
+                          {e.project_name} <span style={{ opacity: 0.5 }}>|</span> {e.expense_date ? new Date(e.expense_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </div>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '600', fontSize: '14px', color: '#EF4444' }}>
+                        {fmtCurrency(e.amount)}
+                      </span>
+                    </motion.div>
+                  ))
+                ) : (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No recent expenses</p>
+                )}
+              </div>
+            </AnimatedItem>
+          </div>
         </>
       )}
     </PageWrapper>

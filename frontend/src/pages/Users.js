@@ -56,7 +56,7 @@ export default function Users() {
     { header: 'Created', accessor: 'created_at', render: r => new Date(r.created_at).toLocaleDateString() },
   ];
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   return (
     <PageWrapper>

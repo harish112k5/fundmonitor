@@ -67,7 +67,7 @@ export default function ProjectProgress() {
     { header: 'Remarks', accessor: 'remarks', render: r => r.remarks ? r.remarks.substring(0, 40) : '—' },
   ];
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   return (
     <PageWrapper>

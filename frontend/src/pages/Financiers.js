@@ -59,7 +59,7 @@ export default function Financiers() {
   const totalOutstanding = financiers.reduce((s, f) => s + parseFloat(f.outstanding || 0), 0);
   const closedLoans = financiers.reduce((s, f) => s + parseInt(f.closed_loans || 0), 0);
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   return (
     <PageWrapper>

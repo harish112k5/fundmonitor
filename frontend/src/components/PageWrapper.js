@@ -1,22 +1,40 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Simple CSS-only page wrapper with page-enter animation
-export function PageWrapper({ children, style }) {
+export const PageWrapper = ({ children, className = '' }) => {
   return (
-    <div className="page-enter" style={style}>
-      {children}
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+        className={`blueprint-bg ${className}`}
+        style={{
+          backgroundColor: 'var(--bg-page)',
+          minHeight: '100vh',
+          padding: '24px',
+          color: 'var(--text-primary)',
+          fontFamily: 'var(--font-body)'
+        }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
-}
+};
 
-// Simple animated item — just a div with optional delay
-export function AnimatedItem({ children, delay = 0, style }) {
+export const AnimatedItem = ({ children, delayIndex = 0 }) => {
   return (
-    <div style={{ 
-      animation: `pageEnter 0.35s ease ${delay}s both`,
-      ...style 
-    }}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-20px" }}
+      transition={{ duration: 0.4, delay: Math.min(delayIndex * 0.05, 0.4) }}
+    >
       {children}
-    </div>
+    </motion.div>
   );
-}
+};
+
+export default PageWrapper;

@@ -94,7 +94,7 @@ export default function BudgetComparison() {
     return { color: '#4ade80', label: 'Healthy' };
   };
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   return (
     <PageWrapper>

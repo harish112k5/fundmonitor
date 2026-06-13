@@ -60,7 +60,7 @@ export default function MyProfile() {
     load();
   }, [user]);
 
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   const roleId = user?.role_id;
   const roleLabel = ROLE_LABELS[roleId] || user?.role_name;

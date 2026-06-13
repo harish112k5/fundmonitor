@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -78,6 +79,7 @@ const SuspenseLoader = () => (
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -99,138 +101,140 @@ function AppRoutes() {
         <ProtectedRoute>
           <Layout>
             <Suspense fallback={<SuspenseLoader />}>
-              <Routes>
-                {/* Everyone (all authenticated) */}
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/unauthorized" element={<Unauthorized />} />
-                <Route path="/profile" element={<MyProfile />} />
+              <AnimatePresence mode="wait">
+                <Routes location={location} key={location.pathname}>
+                  {/* Everyone (all authenticated) */}
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/unauthorized" element={<Unauthorized />} />
+                  <Route path="/profile" element={<MyProfile />} />
 
-                {/* Projects: Admin(1), Manager(2), Engineer(3), Supervisor(5), Viewer(6) */}
-                <Route path="/projects" element={
-                  <ProtectedRoute roles={[1,2,3,5,6]}><Projects /></ProtectedRoute>
-                } />
-                <Route path="/projects/:id" element={
-                  <ProtectedRoute roles={[1,2,3,5,6]}><ProjectDetail /></ProtectedRoute>
-                } />
-                <Route path="/projects/:id/finance" element={
-                  <ProtectedRoute roles={[1,2,3]}><ProjectFinanceDetail /></ProtectedRoute>
-                } />
-                <Route path="/project-progress" element={
-                  <ProtectedRoute roles={[1,2,3]}><ProjectProgress /></ProtectedRoute>
-                } />
-                <Route path="/alerts" element={
-                  <ProtectedRoute roles={[1,2,3]}><AlertsPage /></ProtectedRoute>
-                } />
+                  {/* Projects: Admin(1), Manager(2), Engineer(3), Supervisor(5), Viewer(6) */}
+                  <Route path="/projects" element={
+                    <ProtectedRoute roles={[1,2,3,5,6]}><Projects /></ProtectedRoute>
+                  } />
+                  <Route path="/projects/:id" element={
+                    <ProtectedRoute roles={[1,2,3,5,6]}><ProjectDetail /></ProtectedRoute>
+                  } />
+                  <Route path="/projects/:id/finance" element={
+                    <ProtectedRoute roles={[1,2,3]}><ProjectFinanceDetail /></ProtectedRoute>
+                  } />
+                  <Route path="/project-progress" element={
+                    <ProtectedRoute roles={[1,2,3]}><ProjectProgress /></ProtectedRoute>
+                  } />
+                  <Route path="/alerts" element={
+                    <ProtectedRoute roles={[1,2,3]}><AlertsPage /></ProtectedRoute>
+                  } />
 
-                {/* Admin + Manager */}
-                <Route path="/project-team" element={
-                  <ProtectedRoute roles={[1, 2]}><ProjectTeam /></ProtectedRoute>
-                } />
-                <Route path="/import" element={
-                  <ProtectedRoute roles={[1, 2]}><ImportProject /></ProtectedRoute>
-                } />
-                <Route path="/recycle-bin" element={
-                  <ProtectedRoute roles={[1, 2]}><RecycleBin /></ProtectedRoute>
-                } />
+                  {/* Admin + Manager */}
+                  <Route path="/project-team" element={
+                    <ProtectedRoute roles={[1, 2]}><ProjectTeam /></ProtectedRoute>
+                  } />
+                  <Route path="/import" element={
+                    <ProtectedRoute roles={[1, 2]}><ImportProject /></ProtectedRoute>
+                  } />
+                  <Route path="/recycle-bin" element={
+                    <ProtectedRoute roles={[1, 2]}><RecycleBin /></ProtectedRoute>
+                  } />
 
-                {/* Resources: Admin(1), Manager(2), Engineer(3) — master data */}
-                <Route path="/materials" element={
-                  <ProtectedRoute roles={[1, 2, 3]}><Materials /></ProtectedRoute>
-                } />
-                <Route path="/machines" element={
-                  <ProtectedRoute roles={[1, 2, 3]}><Machines /></ProtectedRoute>
-                } />
-                <Route path="/workers" element={
-                  <ProtectedRoute roles={[1, 2, 3]}><Workers /></ProtectedRoute>
-                } />
+                  {/* Resources: Admin(1), Manager(2), Engineer(3) — master data */}
+                  <Route path="/materials" element={
+                    <ProtectedRoute roles={[1, 2, 3]}><Materials /></ProtectedRoute>
+                  } />
+                  <Route path="/machines" element={
+                    <ProtectedRoute roles={[1, 2, 3]}><Machines /></ProtectedRoute>
+                  } />
+                  <Route path="/workers" element={
+                    <ProtectedRoute roles={[1, 2, 3]}><Workers /></ProtectedRoute>
+                  } />
 
-                {/* Usage: Admin(1), Manager(2), Engineer(3), Supervisor(5), Viewer(6) */}
-                <Route path="/material-usage" element={
-                  <ProtectedRoute roles={[1,2,3,5,6]}><MaterialUsage /></ProtectedRoute>
-                } />
-                <Route path="/manpower-usage" element={
-                  <ProtectedRoute roles={[1,2,3,5,6]}><ManpowerUsage /></ProtectedRoute>
-                } />
-                <Route path="/machine-usage" element={
-                  <ProtectedRoute roles={[1,2,3,5,6]}><MachineUsage /></ProtectedRoute>
-                } />
+                  {/* Usage: Admin(1), Manager(2), Engineer(3), Supervisor(5), Viewer(6) */}
+                  <Route path="/material-usage" element={
+                    <ProtectedRoute roles={[1,2,3,5,6]}><MaterialUsage /></ProtectedRoute>
+                  } />
+                  <Route path="/manpower-usage" element={
+                    <ProtectedRoute roles={[1,2,3,5,6]}><ManpowerUsage /></ProtectedRoute>
+                  } />
+                  <Route path="/machine-usage" element={
+                    <ProtectedRoute roles={[1,2,3,5,6]}><MachineUsage /></ProtectedRoute>
+                  } />
 
-                {/* Finance: Admin(1), Manager(2) */}
-                <Route path="/investors" element={
-                  <ProtectedRoute roles={[1, 2]}><Investors /></ProtectedRoute>
-                } />
-                <Route path="/financiers" element={
-                  <ProtectedRoute roles={[1, 2]}><Financiers /></ProtectedRoute>
-                } />
-                <Route path="/investments" element={
-                  <ProtectedRoute roles={[1, 2]}><Investments /></ProtectedRoute>
-                } />
-                <Route path="/loans" element={
-                  <ProtectedRoute roles={[1, 2]}><Loans /></ProtectedRoute>
-                } />
-                <Route path="/interest-payments" element={
-                  <ProtectedRoute roles={[1, 2]}><InterestPayments /></ProtectedRoute>
-                } />
+                  {/* Finance: Admin(1), Manager(2) */}
+                  <Route path="/investors" element={
+                    <ProtectedRoute roles={[1, 2]}><Investors /></ProtectedRoute>
+                  } />
+                  <Route path="/financiers" element={
+                    <ProtectedRoute roles={[1, 2]}><Financiers /></ProtectedRoute>
+                  } />
+                  <Route path="/investments" element={
+                    <ProtectedRoute roles={[1, 2]}><Investments /></ProtectedRoute>
+                  } />
+                  <Route path="/loans" element={
+                    <ProtectedRoute roles={[1, 2]}><Loans /></ProtectedRoute>
+                  } />
+                  <Route path="/interest-payments" element={
+                    <ProtectedRoute roles={[1, 2]}><InterestPayments /></ProtectedRoute>
+                  } />
 
-                {/* Accounting: Admin(1), Manager(2), Engineer(3), Accountant(4), Viewer(6) */}
-                <Route path="/expenses" element={
-                  <ProtectedRoute roles={[1, 2, 3, 4, 6]}><Expenses /></ProtectedRoute>
-                } />
-                <Route path="/billing" element={
-                  <ProtectedRoute roles={[1, 2, 4]}><Billing /></ProtectedRoute>
-                } />
-                <Route path="/budget-comparison" element={
-                  <ProtectedRoute roles={[1, 2, 4]}><BudgetComparison /></ProtectedRoute>
-                } />
+                  {/* Accounting: Admin(1), Manager(2), Engineer(3), Accountant(4), Viewer(6) */}
+                  <Route path="/expenses" element={
+                    <ProtectedRoute roles={[1, 2, 3, 4, 6]}><Expenses /></ProtectedRoute>
+                  } />
+                  <Route path="/billing" element={
+                    <ProtectedRoute roles={[1, 2, 4]}><Billing /></ProtectedRoute>
+                  } />
+                  <Route path="/budget-comparison" element={
+                    <ProtectedRoute roles={[1, 2, 4]}><BudgetComparison /></ProtectedRoute>
+                  } />
 
-                {/* Finance Module Pages: Admin(1), Manager(2) */}
-                <Route path="/finance/budgeting" element={
-                  <ProtectedRoute roles={[1, 2]}><Budgeting /></ProtectedRoute>
-                } />
-                <Route path="/finance/dashboard" element={
-                  <ProtectedRoute roles={[1, 2]}><FinancialDashboard /></ProtectedRoute>
-                } />
-                <Route path="/finance/forecast" element={
-                  <ProtectedRoute roles={[1, 2]}><FinancialForecast /></ProtectedRoute>
-                } />
-                <Route path="/finance/planning" element={
-                  <ProtectedRoute roles={[1, 2]}><FinancialPlanning /></ProtectedRoute>
-                } />
-                <Route path="/finance/ratios" element={
-                  <ProtectedRoute roles={[1, 2]}><FinancialRatios /></ProtectedRoute>
-                } />
-                <Route path="/finance/statements" element={
-                  <ProtectedRoute roles={[1, 2]}><FinancialStatements /></ProtectedRoute>
-                } />
-                <Route path="/finance/tax" element={
-                  <ProtectedRoute roles={[1, 2]}><TaxCompliance /></ProtectedRoute>
-                } />
-                
-                {/* Investor Module: Admin(1) only */}
-                <Route path="/investor/dashboard" element={
-                  <ProtectedRoute roles={[1]}><InvestorDashboard /></ProtectedRoute>
-                } />
-                <Route path="/investor/onboarding" element={
-                  <ProtectedRoute roles={[1]}><InvestorOnboarding /></ProtectedRoute>
-                } />
-                <Route path="/investor/fund-tracking" element={
-                  <ProtectedRoute roles={[1]}><FundTracking /></ProtectedRoute>
-                } />
+                  {/* Finance Module Pages: Admin(1), Manager(2) */}
+                  <Route path="/finance/budgeting" element={
+                    <ProtectedRoute roles={[1, 2]}><Budgeting /></ProtectedRoute>
+                  } />
+                  <Route path="/finance/dashboard" element={
+                    <ProtectedRoute roles={[1, 2]}><FinancialDashboard /></ProtectedRoute>
+                  } />
+                  <Route path="/finance/forecast" element={
+                    <ProtectedRoute roles={[1, 2]}><FinancialForecast /></ProtectedRoute>
+                  } />
+                  <Route path="/finance/planning" element={
+                    <ProtectedRoute roles={[1, 2]}><FinancialPlanning /></ProtectedRoute>
+                  } />
+                  <Route path="/finance/ratios" element={
+                    <ProtectedRoute roles={[1, 2]}><FinancialRatios /></ProtectedRoute>
+                  } />
+                  <Route path="/finance/statements" element={
+                    <ProtectedRoute roles={[1, 2]}><FinancialStatements /></ProtectedRoute>
+                  } />
+                  <Route path="/finance/tax" element={
+                    <ProtectedRoute roles={[1, 2]}><TaxCompliance /></ProtectedRoute>
+                  } />
+                  
+                  {/* Investor Module: Admin(1) only */}
+                  <Route path="/investor/dashboard" element={
+                    <ProtectedRoute roles={[1]}><InvestorDashboard /></ProtectedRoute>
+                  } />
+                  <Route path="/investor/onboarding" element={
+                    <ProtectedRoute roles={[1]}><InvestorOnboarding /></ProtectedRoute>
+                  } />
+                  <Route path="/investor/fund-tracking" element={
+                    <ProtectedRoute roles={[1]}><FundTracking /></ProtectedRoute>
+                  } />
 
-                {/* Admin only */}
-                <Route path="/users" element={
-                  <ProtectedRoute roles={[1]}><Users /></ProtectedRoute>
-                } />
-                <Route path="/audit-log" element={
-                  <ProtectedRoute roles={[1]}><AuditLog /></ProtectedRoute>
-                } />
-                <Route path="/admin" element={
-                  <ProtectedRoute roles={[1]}><AdminPanel /></ProtectedRoute>
-                } />
+                  {/* Admin only */}
+                  <Route path="/users" element={
+                    <ProtectedRoute roles={[1]}><Users /></ProtectedRoute>
+                  } />
+                  <Route path="/audit-log" element={
+                    <ProtectedRoute roles={[1]}><AuditLog /></ProtectedRoute>
+                  } />
+                  <Route path="/admin" element={
+                    <ProtectedRoute roles={[1]}><AdminPanel /></ProtectedRoute>
+                  } />
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </AnimatePresence>
             </Suspense>
           </Layout>
         </ProtectedRoute>

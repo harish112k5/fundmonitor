@@ -6,8 +6,10 @@ import {
   HiOutlineDocumentText,
   HiOutlineCurrencyDollar,
   HiOutlineChartBar,
-  HiOutlineDocumentReport
+  HiOutlineCash,
+  HiOutlineExclamationCircle
 } from 'react-icons/hi';
+import AnimatedKPICard from '../components/AnimatedKPICard';
 
 export default function AccountantDashboard() {
   const navigate = useNavigate();
@@ -55,8 +57,8 @@ export default function AccountantDashboard() {
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
 
   const cardStyle = {
-    background: 'var(--bg-card)', border: '1px solid var(--border-subtle)',
-    borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 8
+    background: 'var(--bg-card)', border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-lg)', padding: 20, display: 'flex', flexDirection: 'column', gap: 8
   };
 
   const actionStyle = {
@@ -76,28 +78,15 @@ export default function AccountantDashboard() {
         </div>
 
         {loading ? (
-          <div className="loading-spinner"><div className="spinner" /></div>
+          <SkeletonTable rows={5} />
         ) : (
           <>
             {/* KPI Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
-              <div style={cardStyle}>
-                <div style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, textTransform: 'uppercase' }}>Total Billed</div>
-                <div style={{ color: '#4ade80', fontSize: 28, fontWeight: 700 }}>{formatCurrency(stats?.totalBilled)}</div>
-              </div>
-              <div style={cardStyle}>
-                <div style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, textTransform: 'uppercase' }}>Pending Receivables</div>
-                <div style={{ color: '#f87171', fontSize: 28, fontWeight: 700 }}>{formatCurrency(stats?.pendingAmount)}</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>{stats?.pendingCount} invoices pending</div>
-              </div>
-              <div style={cardStyle}>
-                <div style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, textTransform: 'uppercase' }}>Month Expenses</div>
-                <div style={{ color: '#fbbf24', fontSize: 28, fontWeight: 700 }}>{formatCurrency(stats?.thisMonthExp)}</div>
-              </div>
-              <div style={cardStyle}>
-                <div style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, textTransform: 'uppercase' }}>Total Received</div>
-                <div style={{ color: 'var(--text-primary)', fontSize: 28, fontWeight: 700 }}>{formatCurrency(stats?.totalReceived)}</div>
-              </div>
+              <AnimatedKPICard index={1} label="Total Billed" value={stats?.totalBilled} isMoney={true} icon={HiOutlineDocumentText} accentColor="#10B981" />
+              <AnimatedKPICard index={2} label="Pending Receivables" value={stats?.pendingAmount} isMoney={true} icon={HiOutlineExclamationCircle} accentColor="#EF4444" subtitle={`${stats?.pendingCount || 0} invoices pending`} />
+              <AnimatedKPICard index={3} label="Month Expenses" value={stats?.thisMonthExp} isMoney={true} icon={HiOutlineCurrencyDollar} accentColor="#F59E0B" />
+              <AnimatedKPICard index={4} label="Total Received" value={stats?.totalReceived} isMoney={true} icon={HiOutlineCash} accentColor="var(--accent)" />
             </div>
 
             {/* Quick Actions */}

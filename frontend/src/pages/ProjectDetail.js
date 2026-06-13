@@ -4,10 +4,14 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 import API from '../api';
 import { useAuth } from '../context/AuthContext';
+import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
+import AnimatedKPICard from '../components/AnimatedKPICard';
 import Modal from '../components/Modal';
 import DeleteConfirm from '../components/DeleteConfirm';
+import { SkeletonTable } from '../components/SkeletonCard';
 import toast from 'react-hot-toast';
 import {
   HiOutlineArrowLeft,
@@ -147,28 +151,18 @@ function TabGroup({ tabs, active, onChange }) {
 }
 
 // ─── Finance Card ───────────────────────────────────────────────────────────
-function FinanceCard({ label, value, sub, icon: Icon, color = '#6366f1', highlight }) {
+function FinanceCard({ label, value, sub, icon: Icon, color = '#6366f1', highlight, index = 0 }) {
+  // Translate the old FinanceCard to use our new AnimatedKPICard
   return (
-    <div style={{
-      padding: '16px 20px',
-      background: 'rgba(255,255,255,0.03)',
-      border: `1px solid ${highlight ? color + '55' : 'var(--border-subtle)'}`,
-      borderRadius: 'var(--radius-sm, 10px)',
-      display: 'flex', gap: 14, alignItems: 'flex-start'
-    }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: 10, background: `${color}22`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color, fontSize: '1.2rem', flexShrink: 0
-      }}>
-        <Icon />
-      </div>
-      <div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: highlight || 'var(--text-primary)', marginTop: 2 }}>{value}</div>
-        {sub && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>}
-      </div>
-    </div>
+    <AnimatedKPICard
+      index={index}
+      label={label}
+      value={value}
+      subtitle={sub}
+      icon={Icon}
+      accentColor={highlight || color}
+      isMoney={true} // Since most are money
+    />
   );
 }
 
@@ -355,16 +349,20 @@ export default function ProjectDetail() {
   }, [data]);
 
   // ── Early Returns ──
-  if (loading) return <div className="loading-spinner"><div className="spinner" /></div>;
+  if (loading) return <div style={{ padding: '24px' }}><SkeletonTable rows={5} /></div>;
 
   if (error || !data) {
     return (
-      <div className="animate-in" style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>🚫</div>
-        <h2 style={{ color: 'var(--danger)' }}>Project Not Found</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: 24 }}>{error || 'Unknown error'}</p>
-        <Link to="/projects" className="btn btn-secondary">← Back to Projects</Link>
-      </div>
+      <PageWrapper>
+        <AnimatedItem delayIndex={0}>
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div className="animate-float" style={{ fontSize: '3rem', marginBottom: 16 }}>🚫</div>
+            <h2 style={{ color: 'var(--danger)', fontFamily: 'var(--font-heading)' }}>Project Not Found</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: 24 }}>{error || 'Unknown error'}</p>
+            <Link to="/projects" className="btn btn-secondary">← Back to Projects</Link>
+          </div>
+        </AnimatedItem>
+      </PageWrapper>
     );
   }
 
@@ -399,393 +397,421 @@ export default function ProjectDetail() {
   ];
 
   return (
-    <div className="animate-in">
+    <PageWrapper>
       {/* ── Page Header ── */}
-      <div className="page-header" style={{ flexWrap: 'wrap', gap: 12 }}>
-        <div className="page-header-left">
-          <Link
-            to="/projects"
-            className="btn btn-secondary btn-sm"
-            style={{ marginBottom: 10, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: '0.82rem' }}
-          >
-            <HiOutlineArrowLeft /> Back to Projects
-          </Link>
-          <h1 style={{ margin: 0 }}>{project.project_name}</h1>
-          <p style={{ margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {project.location && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                <HiOutlineLocationMarker /> {project.location}
-              </span>
-            )}
-          </p>
-        </div>
-        <StatusBadge status={project.status} />
-      </div>
-
-      {/* ── SECTION 1: Project Overview ── */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <SectionHeader icon={HiOutlineOfficeBuilding} title="Project Overview" />
-        <InfoGrid items={[
-          { label: 'Project ID', value: `#${project.project_id}` },
-          { label: 'Location', value: project.location || '—' },
-          { label: 'Start Date', value: fmtDate(project.start_date) },
-          { label: 'End Date', value: fmtDate(project.end_date) },
-          { label: 'Estimated Budget', value: fmt(project.estimated_budget), color: 'var(--accent-start, #6366f1)' },
-          { label: 'Created By', value: project.created_by_name || '—' },
-          { label: 'Created At', value: fmtDate(project.created_at) },
-          { label: 'Status', value: project.status?.replace('_', ' ') || '—' },
-        ]} />
-        {progress && (
-          <div style={{ marginTop: 20, maxWidth: 360 }}>
-            <ProgressBar pct={progress.progress_percentage} />
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>
-              Latest: {progress.month}/{progress.year}
-            </div>
-            {progress.remarks && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 6 }}>
-                📝 {progress.remarks}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── SECTION 2: Financial Summary (hidden for viewers) ── */}
-      {isManager && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <SectionHeader icon={HiOutlineCurrencyDollar} title="Financial Summary" color="#10b981" />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14, marginBottom: 16 }}>
-            <FinanceCard label="Estimated Budget" value={fmt(project.estimated_budget)} icon={HiOutlineChartBar} color="#6366f1" />
-            <FinanceCard label="Actual Cost" value={fmt(financials.actual_cost)} icon={HiOutlineCash} color="#f59e0b" />
-            <FinanceCard
-              label="Budget Variance"
-              value={fmt(Math.abs(financials.budget_variance))}
-              sub={isOverBudget ? '⚠ Over budget' : '✓ Under budget'}
-              icon={HiOutlineChartBar}
-              color={isOverBudget ? '#ef4444' : '#10b981'}
-              highlight={isOverBudget ? '#ef4444' : null}
-            />
-            <FinanceCard label="Total Investments" value={fmt(financials.total_investments)} icon={HiOutlineCurrencyDollar} color="#10b981" />
-            <FinanceCard label="Total Loans" value={fmt(financials.total_loans)} icon={HiOutlineCash} color="#3b82f6" />
-            <FinanceCard label="Pending Interest" value={fmt(financials.pending_interest)} icon={HiOutlineDocumentText} color={financials.pending_interest > 0 ? '#ef4444' : '#6b7280'} />
-            <FinanceCard
-              label="Total Billed"
-              value={fmt(financials.total_billed)}
-              sub={`${financials.pending_invoices} invoice${financials.pending_invoices !== 1 ? 's' : ''} pending`}
-              icon={HiOutlineDocumentText}
-              color="#a78bfa"
-            />
-            <FinanceCard label="Total Expenses" value={fmt(financials.expense_cost)} icon={HiOutlineClipboardList} color="#f59e0b" />
-          </div>
-
-          {/* Cost breakdown mini row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {[
-              { label: '🧱 Materials', val: financials.material_cost },
-              { label: '👷 Manpower', val: financials.manpower_cost },
-              { label: '🚜 Machines', val: financials.machine_cost },
-            ].map(({ label, val }) => (
-              <div key={label} style={{
-                textAlign: 'center', padding: '10px 12px',
-                background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 8
-              }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{label}</div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', marginTop: 4 }}>{fmt(val)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Tabbed View: Analytics & Resources ── */}
-      <TabGroup tabs={mainTabs} active={activeTab} onChange={setActiveTab} />
-
-      {activeTab === 'analytics' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginBottom: 20 }}>
-          
-          {/* Chart 1: Budget vs Actual */}
-          <div style={chartCardStyle}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Budget vs Actual Cost</h3>
-            <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {isOverBudget ? (
-                <span style={{ color: '#ef4444' }}>{formatINR(Math.abs(financials.budget_variance))} Over Budget</span>
-              ) : (
-                <span style={{ color: '#10b981' }}>{formatINR(financials.budget_variance)} Under Budget</span>
+      <AnimatedItem delayIndex={0}>
+        <div className="page-header" style={{ flexWrap: 'wrap', gap: 12 }}>
+          <div className="page-header-left">
+            <Link
+              to="/projects"
+              className="btn btn-secondary btn-sm"
+              style={{ marginBottom: 10, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: '0.82rem' }}
+            >
+              <HiOutlineArrowLeft /> Back to Projects
+            </Link>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font-heading)', textTransform: 'uppercase', letterSpacing: '1px' }}>{project.project_name}</h1>
+            <p style={{ margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {project.location && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  <HiOutlineLocationMarker /> {project.location}
+                </span>
               )}
             </p>
-            <div style={{ height: 250 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={budgetData} margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
-                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
-                  <Tooltip cursor={{ fill: 'var(--border-subtle)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} isAnimationActive={true}>
-                    {budgetData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
           </div>
+          <StatusBadge status={project.status} />
+        </div>
+      </AnimatedItem>
 
-          {/* Chart 2: Cost Breakdown */}
-          <div style={chartCardStyle}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Cost Breakdown</h3>
-            <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Distribution of actual project expenses</p>
-            <div style={{ height: 250 }}>
-              {costBreakdown.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                    <Pie data={costBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" stroke="rgba(0,0,0,0.5)" strokeWidth={2} isAnimationActive={true}>
-                      {costBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available yet</div>
-              )}
-            </div>
-          </div>
-
-          {/* Chart 3: Monthly Cost Trend */}
-          <div style={{ ...chartCardStyle, gridColumn: '1 / -1' }}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Monthly Cost Trend</h3>
-            <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Expenditure progression over time</p>
-            <div style={{ height: 320 }}>
-              {monthlyTrend.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
-                    <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
-                    <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem', paddingTop: 15 }} />
-                    <Line type="monotone" dataKey="materials" name="Materials" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
-                    <Line type="monotone" dataKey="manpower" name="Manpower" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
-                    <Line type="monotone" dataKey="machines" name="Machines" stroke="#a855f7" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
-                    <Line type="monotone" dataKey="expenses" name="Other Expenses" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available yet</div>
-              )}
-            </div>
-          </div>
-
-          {/* Chart 4: Resource Utilization (Stacked) */}
-          <div style={chartCardStyle}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Resource Utilization Split</h3>
-            <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Monthly 3M distribution</p>
-            <div style={{ height: 260 }}>
-              {monthlyTrend.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyTrend} margin={{ left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
-                    <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
-                    <Tooltip cursor={{ fill: 'var(--border-subtle)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem', paddingTop: 10 }} />
-                    <Bar dataKey="materials" name="Materials" stackId="a" fill="#3b82f6" isAnimationActive={true} />
-                    <Bar dataKey="manpower" name="Manpower" stackId="a" fill="#f97316" isAnimationActive={true} />
-                    <Bar dataKey="machines" name="Machines" stackId="a" fill="#a855f7" radius={[4, 4, 0, 0]} isAnimationActive={true} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available yet</div>
-              )}
-            </div>
-          </div>
-
-          {/* Chart 5: Funding vs Expense */}
-          <div style={chartCardStyle}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Funding Sources vs Burn</h3>
-            <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total investments, loans and expenses</p>
-            <div style={{ height: 260 }}>
-              {fundingData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={fundingData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
-                    <XAxis type="number" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
-                    <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                    <Tooltip cursor={{ fill: 'var(--border-subtle)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30} isAnimationActive={true}>
-                      {fundingData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available yet</div>
-              )}
-            </div>
-          </div>
-
-          {/* Chart 6: Billing Status (Manager+ only) */}
-          {isManager && (
-            <div style={{ ...chartCardStyle }}>
-              <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)' }}>Billing Status Breakdown</h3>
-              <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Invoice statuses by count</p>
-              <div style={{ height: 260, position: 'relative' }}>
-                {billingBreakdown.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                        <Pie data={billingBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" stroke="rgba(0,0,0,0.5)" strokeWidth={2} isAnimationActive={true} labelLine={false}>
-                          {billingBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
-                        </Pie>
-                        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => [val, 'Invoices']} />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem' }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div style={{ position: 'absolute', top: '43%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{billing.length}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>Total</div>
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No billing data available</div>
-                )}
+      {/* ── SECTION 1: Project Overview ── */}
+      <AnimatedItem delayIndex={1}>
+        <div className="card" style={{ marginBottom: 20 }}>
+          <SectionHeader icon={HiOutlineOfficeBuilding} title="Project Overview" />
+          <InfoGrid items={[
+            { label: 'Project ID', value: `#${project.project_id}` },
+            { label: 'Location', value: project.location || '—' },
+            { label: 'Start Date', value: fmtDate(project.start_date) },
+            { label: 'End Date', value: fmtDate(project.end_date) },
+            { label: 'Estimated Budget', value: fmt(project.estimated_budget), color: 'var(--accent)' },
+            { label: 'Created By', value: project.created_by_name || '—' },
+            { label: 'Created At', value: fmtDate(project.created_at) },
+            { label: 'Status', value: project.status?.replace('_', ' ') || '—' },
+          ]} />
+          {progress && (
+            <div style={{ marginTop: 20, maxWidth: 360 }}>
+              <ProgressBar pct={progress.progress_percentage} />
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                Latest: {progress.month}/{progress.year}
               </div>
+              {progress.remarks && (
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                  📝 {progress.remarks}
+                </p>
+              )}
             </div>
           )}
         </div>
-      )}
+      </AnimatedItem>
 
-      {/* ── SECTION 3: Resource Usage ── */}
-      {['materials', 'manpower', 'machines'].includes(activeTab) && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: 10, background: `#f59e0b22`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', fontSize: '1.1rem'
-              }}>
-                <HiOutlineCube />
-              </div>
-              <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Usage Details</h2>
+      {/* ── SECTION 2: Financial Summary (hidden for viewers) ── */}
+      {isManager && (
+        <AnimatedItem delayIndex={2}>
+          <div className="card" style={{ marginBottom: 20 }}>
+            <SectionHeader icon={HiOutlineCurrencyDollar} title="Financial Summary" color="#10B981" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14, marginBottom: 16 }}>
+              <FinanceCard index={0} label="Estimated Budget" value={fmt(project.estimated_budget)} icon={HiOutlineChartBar} color="#F59E0B" />
+              <FinanceCard index={1} label="Actual Cost" value={fmt(financials.actual_cost)} icon={HiOutlineCash} color="#EF4444" />
+              <FinanceCard
+                index={2}
+                label="Budget Variance"
+                value={fmt(Math.abs(financials.budget_variance))}
+                sub={isOverBudget ? '⚠ Over budget' : '✓ Under budget'}
+                icon={HiOutlineChartBar}
+                color={isOverBudget ? '#EF4444' : '#10B981'}
+                highlight={isOverBudget ? '#EF4444' : null}
+              />
+              <FinanceCard index={3} label="Total Investments" value={fmt(financials.total_investments)} icon={HiOutlineCurrencyDollar} color="#10B981" />
+              <FinanceCard index={4} label="Total Loans" value={fmt(financials.total_loans)} icon={HiOutlineCash} color="#3B82F6" />
+              <FinanceCard index={5} label="Pending Interest" value={fmt(financials.pending_interest)} icon={HiOutlineDocumentText} color={financials.pending_interest > 0 ? '#EF4444' : '#6B7280'} />
+              <FinanceCard
+                index={6}
+                label="Total Billed"
+                value={fmt(financials.total_billed)}
+                sub={`${financials.pending_invoices} invoice${financials.pending_invoices !== 1 ? 's' : ''} pending`}
+                icon={HiOutlineDocumentText}
+                color="#A855F7"
+              />
+              <FinanceCard index={7} label="Total Expenses" value={fmt(financials.expense_cost)} icon={HiOutlineClipboardList} color="#F59E0B" />
             </div>
-            <button className="btn-premium btn-sm" onClick={() => openAddModal(activeTab)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <HiOutlinePlus /> Add {activeTab === 'materials' ? 'Material' : activeTab === 'manpower' ? 'Manpower' : 'Machine'}
-            </button>
+
+            {/* Cost breakdown mini row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {[
+                { label: '🧱 Materials', val: financials.material_cost },
+                { label: '👷 Manpower', val: financials.manpower_cost },
+                { label: '🚜 Machines', val: financials.machine_cost },
+              ].map(({ label, val }) => (
+                <div key={label} style={{
+                  textAlign: 'center', padding: '10px 12px',
+                  background: 'var(--bg-page)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)'
+                }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{label}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', marginTop: 4, fontFamily: 'var(--font-mono)' }}>{fmt(val)}</div>
+                </div>
+              ))}
+            </div>
           </div>
-
-        {activeTab === 'materials' && (
-          <SimpleTable
-            emptyMsg="No material usage recorded for this project."
-            columns={[
-              { key: 'material_name', label: 'Material', render: r => <strong style={{ color: 'var(--text-primary)' }}>{r.material_name}</strong> },
-              { key: 'quantity', label: 'Qty', render: r => r.quantity ?? '—' },
-              { key: 'unit', label: 'Unit' },
-              { key: 'unit_price', label: 'Unit Price', render: r => fmt(r.unit_price) },
-              { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.total_cost)}</span> },
-              { key: 'usage_date', label: 'Date', render: r => fmtDate(r.usage_date) },
-              { key: 'actions', label: 'Actions', render: r => (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn-icon" onClick={() => openEditModal('materials', r)} title="Edit"><HiOutlinePencil /></button>
-                  <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'materials', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
-                </div>
-              )}
-            ]}
-            rows={material_usage}
-          />
-        )}
-
-        {activeTab === 'manpower' && (
-          <SimpleTable
-            emptyMsg="No manpower usage recorded for this project."
-            columns={[
-              { key: 'worker_name', label: 'Worker', render: r => <strong style={{ color: 'var(--text-primary)' }}>{r.worker_name}</strong> },
-              { key: 'work_days', label: 'Days' },
-              { key: 'daily_rate', label: 'Daily Rate', render: r => fmt(r.daily_rate) },
-              { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.total_cost)}</span> },
-              { key: 'work_date', label: 'Date', render: r => fmtDate(r.work_date) },
-              { key: 'actions', label: 'Actions', render: r => (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn-icon" onClick={() => openEditModal('manpower', r)} title="Edit"><HiOutlinePencil /></button>
-                  <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'manpower', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
-                </div>
-              )}
-            ]}
-            rows={manpower_usage}
-          />
-        )}
-
-        {activeTab === 'machines' && (
-          <SimpleTable
-            emptyMsg="No machine usage recorded for this project."
-            columns={[
-              { key: 'machine_name', label: 'Machine', render: r => <strong style={{ color: 'var(--text-primary)' }}>{r.machine_name}</strong> },
-              { key: 'usage_hours', label: 'Hours' },
-              { key: 'hourly_rate', label: 'Hourly Rate', render: r => fmt(r.hourly_rate) },
-              { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.total_cost)}</span> },
-              { key: 'usage_date', label: 'Date', render: r => fmtDate(r.usage_date) },
-              { key: 'actions', label: 'Actions', render: r => (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn-icon" onClick={() => openEditModal('machines', r)} title="Edit"><HiOutlinePencil /></button>
-                  <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'machines', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
-                </div>
-              )}
-            ]}
-            rows={machine_usage}
-          />
-        )}
-        </div>
+        </AnimatedItem>
       )}
+
+      {/* ── Tabbed View: Analytics & Resources ── */}
+      <AnimatedItem delayIndex={3}>
+        <TabGroup tabs={mainTabs} active={activeTab} onChange={setActiveTab} />
+      </AnimatedItem>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -16 }}
+          transition={{ duration: 0.2 }}
+        >
+          {activeTab === 'analytics' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginBottom: 20 }}>
+              
+              {/* Chart 1: Budget vs Actual */}
+              <div style={chartCardStyle}>
+                <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Budget vs Actual Cost</h3>
+                <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  {isOverBudget ? (
+                    <span style={{ color: '#EF4444' }}>{formatINR(Math.abs(financials.budget_variance))} Over Budget</span>
+                  ) : (
+                    <span style={{ color: '#10B981' }}>{formatINR(financials.budget_variance)} Under Budget</span>
+                  )}
+                </p>
+                <div style={{ height: 250 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={budgetData} margin={{ left: -10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
+                      <Tooltip cursor={{ fill: 'var(--border)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} isAnimationActive={true}>
+                        {budgetData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Chart 2: Cost Breakdown */}
+              <div style={chartCardStyle}>
+                <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Cost Breakdown</h3>
+                <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Distribution of actual project expenses</p>
+                <div style={{ height: 250 }}>
+                  {costBreakdown.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                        <Pie data={costBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" stroke="rgba(0,0,0,0.5)" strokeWidth={2} isAnimationActive={true}>
+                          {costBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
+                        </Pie>
+                        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available yet</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Chart 3: Monthly Cost Trend */}
+              <div style={{ ...chartCardStyle, gridColumn: '1 / -1' }}>
+                <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Monthly Cost Trend</h3>
+                <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Expenditure progression over time</p>
+                <div style={{ height: 320 }}>
+                  {monthlyTrend.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                        <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
+                        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem', paddingTop: 15 }} />
+                        <Line type="monotone" dataKey="materials" name="Materials" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
+                        <Line type="monotone" dataKey="manpower" name="Manpower" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
+                        <Line type="monotone" dataKey="machines" name="Machines" stroke="#a855f7" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
+                        <Line type="monotone" dataKey="expenses" name="Other Expenses" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available yet</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Chart 4: Resource Utilization (Stacked) */}
+              <div style={chartCardStyle}>
+                <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Resource Utilization Split</h3>
+                <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Monthly 3M distribution</p>
+                <div style={{ height: 260 }}>
+                  {monthlyTrend.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyTrend} margin={{ left: -10 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                        <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
+                        <Tooltip cursor={{ fill: 'var(--border)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem', paddingTop: 10 }} />
+                        <Bar dataKey="materials" name="Materials" stackId="a" fill="#3b82f6" isAnimationActive={true} />
+                        <Bar dataKey="manpower" name="Manpower" stackId="a" fill="#f97316" isAnimationActive={true} />
+                        <Bar dataKey="machines" name="Machines" stackId="a" fill="#a855f7" radius={[4, 4, 0, 0]} isAnimationActive={true} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available yet</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Chart 5: Funding vs Expense */}
+              <div style={chartCardStyle}>
+                <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Funding Sources vs Burn</h3>
+                <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total investments, loans and expenses</p>
+                <div style={{ height: 260 }}>
+                  {fundingData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={fundingData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                        <XAxis type="number" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatINR} />
+                        <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                        <Tooltip cursor={{ fill: 'var(--border)' }} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => formatINR(val)} />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30} isAnimationActive={true}>
+                          {fundingData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available yet</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Chart 6: Billing Status (Manager+ only) */}
+              {isManager && (
+                <div style={{ ...chartCardStyle }}>
+                  <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Billing Status Breakdown</h3>
+                  <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Invoice statuses by count</p>
+                  <div style={{ height: 260, position: 'relative' }}>
+                    {billingBreakdown.length > 0 ? (
+                      <>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                            <Pie data={billingBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" stroke="rgba(0,0,0,0.5)" strokeWidth={2} isAnimationActive={true} labelLine={false}>
+                              {billingBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
+                            </Pie>
+                            <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)' }} formatter={(val) => [val, 'Invoices']} />
+                            <Legend iconType="circle" wrapperStyle={{ fontSize: '0.8rem' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{ position: 'absolute', top: '43%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{billing.length}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>Total</div>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No billing data available</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── SECTION 3: Resource Usage ── */}
+          {['materials', 'manpower', 'machines'].includes(activeTab) && (
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, background: `#f59e0b22`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', fontSize: '1.1rem'
+                  }}>
+                    <HiOutlineCube />
+                  </div>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Usage Details</h2>
+                </div>
+                <button className="btn-premium btn-sm" onClick={() => openAddModal(activeTab)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <HiOutlinePlus /> Add {activeTab === 'materials' ? 'Material' : activeTab === 'manpower' ? 'Manpower' : 'Machine'}
+                </button>
+              </div>
+
+            {activeTab === 'materials' && (
+              <SimpleTable
+                emptyMsg="No material usage recorded for this project."
+                columns={[
+                  { key: 'material_name', label: 'Material', render: r => <strong style={{ color: 'var(--text-primary)' }}>{r.material_name}</strong> },
+                  { key: 'quantity', label: 'Qty', render: r => r.quantity ?? '—' },
+                  { key: 'unit', label: 'Unit' },
+                  { key: 'unit_price', label: 'Unit Price', render: r => fmt(r.unit_price) },
+                  { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)', fontFamily: 'var(--font-mono)' }}>{fmt(r.total_cost)}</span> },
+                  { key: 'usage_date', label: 'Date', render: r => fmtDate(r.usage_date) },
+                  { key: 'actions', label: 'Actions', render: r => (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn-icon" onClick={() => openEditModal('materials', r)} title="Edit"><HiOutlinePencil /></button>
+                      <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'materials', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
+                    </div>
+                  )}
+                ]}
+                rows={material_usage}
+              />
+            )}
+
+            {activeTab === 'manpower' && (
+              <SimpleTable
+                emptyMsg="No manpower usage recorded for this project."
+                columns={[
+                  { key: 'worker_name', label: 'Worker', render: r => <strong style={{ color: 'var(--text-primary)' }}>{r.worker_name}</strong> },
+                  { key: 'work_days', label: 'Days' },
+                  { key: 'daily_rate', label: 'Daily Rate', render: r => fmt(r.daily_rate) },
+                  { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)', fontFamily: 'var(--font-mono)' }}>{fmt(r.total_cost)}</span> },
+                  { key: 'work_date', label: 'Date', render: r => fmtDate(r.work_date) },
+                  { key: 'actions', label: 'Actions', render: r => (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn-icon" onClick={() => openEditModal('manpower', r)} title="Edit"><HiOutlinePencil /></button>
+                      <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'manpower', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
+                    </div>
+                  )}
+                ]}
+                rows={manpower_usage}
+              />
+            )}
+
+            {activeTab === 'machines' && (
+              <SimpleTable
+                emptyMsg="No machine usage recorded for this project."
+                columns={[
+                  { key: 'machine_name', label: 'Machine', render: r => <strong style={{ color: 'var(--text-primary)' }}>{r.machine_name}</strong> },
+                  { key: 'usage_hours', label: 'Hours' },
+                  { key: 'hourly_rate', label: 'Hourly Rate', render: r => fmt(r.hourly_rate) },
+                  { key: 'total_cost', label: 'Total Cost', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)', fontFamily: 'var(--font-mono)' }}>{fmt(r.total_cost)}</span> },
+                  { key: 'usage_date', label: 'Date', render: r => fmtDate(r.usage_date) },
+                  { key: 'actions', label: 'Actions', render: r => (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn-icon" onClick={() => openEditModal('machines', r)} title="Edit"><HiOutlinePencil /></button>
+                      <button className="btn-icon" onClick={() => setDeleteTarget({ type: 'machines', row: r })} title="Delete"><HiOutlineTrash color="var(--danger)" /></button>
+                    </div>
+                  )}
+                ]}
+                rows={machine_usage}
+              />
+            )}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       {/* ── SECTION 4: Team ── */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <SectionHeader icon={HiOutlineUserGroup} title="Project Team" color="#3b82f6" />
-        <SimpleTable
-          emptyMsg="No team members assigned to this project."
-          columns={[
-            { key: 'user_name', label: 'Name', render: r => <strong style={{ color: 'var(--text-primary)' }}>{r.user_name}</strong> },
-            { key: 'role', label: 'Role', render: r => <span className={`badge badge-${r.role === 'admin' ? 'overdue' : r.role === 'manager' ? 'on_hold' : 'active'}`}>{r.role}</span> },
-            { key: 'assigned_date', label: 'Assigned On', render: r => fmtDate(r.assigned_date) },
-          ]}
-          rows={team}
-        />
-      </div>
+      <AnimatedItem delayIndex={4}>
+        <div className="card" style={{ marginBottom: 20 }}>
+          <SectionHeader icon={HiOutlineUserGroup} title="Project Team" color="#3B82F6" />
+          <SimpleTable
+            emptyMsg="No team members assigned to this project."
+            columns={[
+              { key: 'user_name', label: 'Name', render: r => <strong style={{ color: 'var(--text-primary)' }}>{r.user_name}</strong> },
+              { key: 'role', label: 'Role', render: r => <span className={`badge badge-${r.role === 'admin' ? 'overdue' : r.role === 'manager' ? 'on_hold' : 'active'}`}>{r.role}</span> },
+              { key: 'assigned_date', label: 'Assigned On', render: r => fmtDate(r.assigned_date) },
+            ]}
+            rows={team}
+          />
+        </div>
+      </AnimatedItem>
 
       {/* ── SECTION 5: Billing & Invoices ── */}
       {isManager && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <SectionHeader icon={HiOutlineDocumentText} title="Billing & Invoices" color="#a78bfa" />
-          <SimpleTable
-            emptyMsg="No invoices raised for this project."
-            columns={[
-              { key: 'invoice_number', label: 'Invoice No', render: r => <code style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>{r.invoice_number}</code> },
-              { key: 'amount', label: 'Amount', render: r => <span style={{ fontWeight: 700 }}>{fmt(r.amount)}</span> },
-              { key: 'status', label: 'Status', render: r => {
-                const map = { paid: 'active', sent: 'on_hold', draft: 'draft', overdue: 'overdue' };
-                return <span className={`badge badge-${map[r.status] || 'draft'}`}>{r.status}</span>;
-              }},
-              { key: 'due_date', label: 'Due Date', render: r => {
-                const isOverdue = r.status !== 'paid' && r.due_date && new Date(r.due_date) < new Date();
-                return <span style={{ color: isOverdue ? 'var(--danger)' : undefined }}>{fmtDate(r.due_date)}</span>;
-              }},
-            ]}
-            rows={billing}
-          />
-        </div>
+        <AnimatedItem delayIndex={5}>
+          <div className="card" style={{ marginBottom: 20 }}>
+            <SectionHeader icon={HiOutlineDocumentText} title="Billing & Invoices" color="#A855F7" />
+            <SimpleTable
+              emptyMsg="No invoices raised for this project."
+              columns={[
+                { key: 'invoice_number', label: 'Invoice No', render: r => <code style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>{r.invoice_number}</code> },
+                { key: 'amount', label: 'Amount', render: r => <span style={{ fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{fmt(r.amount)}</span> },
+                { key: 'status', label: 'Status', render: r => {
+                  const map = { paid: 'active', sent: 'on_hold', draft: 'draft', overdue: 'overdue' };
+                  return <span className={`badge badge-${map[r.status] || 'draft'}`}>{r.status}</span>;
+                }},
+                { key: 'due_date', label: 'Due Date', render: r => {
+                  const isOverdue = r.status !== 'paid' && r.due_date && new Date(r.due_date) < new Date();
+                  return <span style={{ color: isOverdue ? 'var(--danger)' : undefined }}>{fmtDate(r.due_date)}</span>;
+                }},
+              ]}
+              rows={billing}
+            />
+          </div>
+        </AnimatedItem>
       )}
 
       {/* ── SECTION 6: Expenses ── */}
       {isManager && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <SectionHeader icon={HiOutlineClipboardList} title="Expenses" color="#f59e0b" />
-          <SimpleTable
-            emptyMsg="No expenses recorded for this project."
-            columns={[
-              { key: 'category_name', label: 'Category', render: r => <span className="badge badge-draft">{r.category_name}</span> },
-              { key: 'description', label: 'Description', render: r => r.description || '—' },
-              { key: 'amount', label: 'Amount', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.amount)}</span> },
-              { key: 'expense_date', label: 'Date', render: r => fmtDate(r.expense_date) },
-            ]}
-            rows={expenses}
-          />
-        </div>
+        <AnimatedItem delayIndex={6}>
+          <div className="card" style={{ marginBottom: 20 }}>
+            <SectionHeader icon={HiOutlineClipboardList} title="Expenses" color="#F59E0B" />
+            <SimpleTable
+              emptyMsg="No expenses recorded for this project."
+              columns={[
+                { key: 'category_name', label: 'Category', render: r => <span className="badge badge-draft">{r.category_name}</span> },
+                { key: 'description', label: 'Description', render: r => r.description || '—' },
+                { key: 'amount', label: 'Amount', render: r => <span style={{ fontWeight: 700, color: 'var(--danger)', fontFamily: 'var(--font-mono)' }}>{fmt(r.amount)}</span> },
+                { key: 'expense_date', label: 'Date', render: r => fmtDate(r.expense_date) },
+              ]}
+              rows={expenses}
+            />
+          </div>
+        </AnimatedItem>
       )}
+      
+      </PageWrapper>
       {/* ── Modals for Adding/Editing Resources ── */}
       <Modal
         isOpen={activeModal === 'materials'}

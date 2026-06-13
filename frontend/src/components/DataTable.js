@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { HiOutlineSearch, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi';
+import AnimatedTableRow from './AnimatedTableRow';
 
 export default function DataTable({
   columns,
@@ -31,9 +32,9 @@ export default function DataTable({
       {/* Header row */}
       <div style={{
         background: 'var(--bg-card)',
-        border: '1px solid var(--border-subtle)',
-        borderBottom: '1px solid var(--border-subtle)',
-        borderRadius: '8px 8px 0 0',
+        border: '1px solid var(--border)',
+        borderBottom: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -42,16 +43,22 @@ export default function DataTable({
         flexWrap: 'nowrap',
       }}>
         <div className="table-search">
-          <HiOutlineSearch className="table-search-icon" />
+          <HiOutlineSearch className="table-search-icon" style={{ color: 'var(--text-muted)' }} />
           <input
             type="text"
             placeholder={searchPlaceholder}
             value={search}
             onChange={e => setSearch(e.target.value)}
+            style={{ 
+              fontFamily: 'var(--font-body)', 
+              background: 'var(--bg-input)', 
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border)' 
+            }}
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <span style={{ color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', fontFamily: "'Inter', sans-serif" }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', fontFamily: 'var(--font-body)' }}>
             {filtered.length} record{filtered.length !== 1 ? 's' : ''}
           </span>
           {addButton}
@@ -61,16 +68,16 @@ export default function DataTable({
       {/* Table body */}
       <div style={{
         background: 'var(--bg-card)',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid var(--border)',
         borderTop: 'none',
-        borderRadius: '0 0 8px 8px',
+        borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
         overflow: 'hidden',
       }}>
         {filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">{emptyIcon}</div>
-            <h3>{emptyTitle}</h3>
-            <p>{emptyMessage}</p>
+            <div className="empty-state-icon animate-float">{emptyIcon}</div>
+            <h3 style={{ fontFamily: 'var(--font-heading)' }}>{emptyTitle}</h3>
+            <p style={{ fontFamily: 'var(--font-body)' }}>{emptyMessage}</p>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -78,23 +85,21 @@ export default function DataTable({
               <thead>
                 <tr>
                   {columns.map(col => (
-                    <th key={col.accessor || col.header} style={col.style}>
+                    <th key={col.accessor || col.header} style={{ ...col.style, fontFamily: 'var(--font-heading)', textTransform: 'uppercase', letterSpacing: '1px' }}>
                       {col.header}
                     </th>
                   ))}
-                  {(onEdit || onDelete || renderActions) && <th>Actions</th>}
+                  {(onEdit || onDelete || renderActions) && <th style={{ fontFamily: 'var(--font-heading)', textTransform: 'uppercase', letterSpacing: '1px' }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((row, idx) => (
-                  <tr 
+                  <AnimatedTableRow 
                     key={row.id || row[columns[0]?.accessor] || idx}
-                    style={{
-                      animation: `pageEnter 0.3s ease ${idx * 0.03}s both`,
-                    }}
+                    index={idx}
                   >
                     {columns.map(col => (
-                      <td key={col.accessor || col.header} style={col.style}>
+                      <td key={col.accessor || col.header} style={{ ...col.style, fontFamily: 'var(--font-body)' }}>
                         {col.render ? col.render(row) : row[col.accessor]}
                       </td>
                     ))}
@@ -126,7 +131,7 @@ export default function DataTable({
                         </div>
                       </td>
                     )}
-                  </tr>
+                  </AnimatedTableRow>
                 ))}
               </tbody>
             </table>
