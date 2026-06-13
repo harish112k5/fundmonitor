@@ -1,3 +1,4 @@
+import { SkeletonTable } from '../components/SkeletonCard';
 import React, { useState, useEffect } from 'react';
 import { PageWrapper, AnimatedItem } from '../components/PageWrapper';
 import API from '../api';
