@@ -81,7 +81,7 @@ export default function ImportProject() {
       {/* Header */}
       <div style={{ marginBottom:28 }}>
         <h1 style={C.hdr}>📥 Import Project from Excel</h1>
-        <p style={C.sub}>Upload the Finfra template to create a project with all resources in one step.</p>
+        <p style={C.sub}>Upload the BillX template to create a project with all resources in one step.</p>
       </div>
 
       {/* Prerequisites */}
@@ -129,7 +129,7 @@ export default function ImportProject() {
               <p style={{ fontSize:12, color:'#64748b', margin:'0 0 12px' }}>or click to browse — .xlsx only, max 10MB</p>
               <a
                 href={`${axios.defaults.baseURL}/template/download`}
-                download="Finfra_Import_Template.xlsx"
+                download="BillX_Import_Template.xlsx"
                 onClick={e => e.stopPropagation()}
                 style={{ fontSize:12, color:'#FCD34D', textDecoration:'underline' }}
               >

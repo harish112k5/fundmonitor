@@ -66,7 +66,7 @@ export default function Sidebar() {
       import('../api').then(API => {
         API.default.get('/recycle-bin')
           .then(res => setRecycleCount(res.data.length))
-          .catch(() => {});
+          .catch(() => { });
       });
     }
   }, [roleId, location.pathname, hasRoleId]);
@@ -198,7 +198,7 @@ export default function Sidebar() {
             <HelmetIcon size={32} />
           </div>
           <div>
-            <h1>FINFRA</h1>
+            <h1>BillX</h1>
             <span>Financial Infrastructure</span>
           </div>
         </div>
@@ -230,10 +230,10 @@ export default function Sidebar() {
             <div key={section.title} className="sidebar-section">
               <div className="sidebar-section-title">{section.title}</div>
               {section.items.map((item) => {
-                const isActive = location.pathname === item.path || 
+                const isActive = location.pathname === item.path ||
                   (item.path !== '/' && location.pathname.startsWith(item.path + '/'));
                 const IconComponent = iconMap[item.path] || DashboardIcon;
-                
+
                 return (
                   <div
                     key={item.path}

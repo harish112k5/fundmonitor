@@ -31,12 +31,12 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Finfra API',
+      title: 'BillX API',
       version: '1.0.0',
       description:
         'REST API for the Construction Project Management & Fund Monitor system. ' +
         'All protected routes require a Bearer JWT token obtained from `/api/auth/login`.',
-      contact: { name: 'Finfra Team' },
+      contact: { name: 'BillX Team' },
     },
     servers: [
       { url: process.env.API_BASE_URL || `http://localhost:${process.env.PORT}`, description: 'Active server' },
@@ -605,7 +605,7 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Swagger UI
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'Finfra API Docs',
+  customSiteTitle: 'BillX API Docs',
   customCss: `
     .swagger-ui .topbar { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
     .swagger-ui .topbar-wrapper .link { display: none; }
@@ -632,7 +632,7 @@ db.query('SELECT 1')
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    name: 'Finfra API',
+    name: 'BillX API',
     version: '1.0.0',
     description: 'Backend API for the Construction Project Management & Fund Monitor system.',
     docs:   `${req.protocol}://${req.get('host')}/api/docs`,

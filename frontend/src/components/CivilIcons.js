@@ -315,7 +315,7 @@ export const ConstructionSVG = ({ width = '100%', height = '100%' }) => (
     {/* Ground */}
     <line x1="0" y1="470" x2="400" y2="470" stroke="var(--border-subtle)" strokeWidth="2" />
     {/* Company branding */}
-    <text x="200" y="520" textAnchor="middle" fill="#F59E0B" fontFamily="Oswald" fontSize="28" fontWeight="700" letterSpacing="3">FINFRA</text>
+    <text x="200" y="520" textAnchor="middle" fill="#F59E0B" fontFamily="Oswald" fontSize="28" fontWeight="700" letterSpacing="3">BillX</text>
     <text x="200" y="545" textAnchor="middle" fill="var(--text-muted)" fontFamily="Inter" fontSize="11" letterSpacing="3">FINANCIAL INFRASTRUCTURE INTELLIGENCE</text>
   </svg>
 );

@@ -69,7 +69,7 @@ export default function LoginPage() {
             <div className="login-brand-icon">
               <HelmetIcon size={48} />
             </div>
-            <h1>FINFRA</h1>
+            <h1>BillX</h1>
             <p>Financial Infrastructure System</p>
           </div>
 

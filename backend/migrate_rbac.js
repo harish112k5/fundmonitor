@@ -12,7 +12,7 @@ async function migrateRBAC() {
   });
 
   try {
-    console.log('=== FINFRA RBAC Migration ===');
+    console.log('=== BillX RBAC Migration ===');
     console.log(`Database: ${process.env.DB_DATABASE}\n`);
 
     // 0. Check roles table schema
